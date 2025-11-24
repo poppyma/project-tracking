@@ -2,21 +2,22 @@ import { NextResponse } from 'next/server';
 import { initTables, query } from '../../../lib/db';
 import fs from 'fs/promises';
 import path from 'path';
+import { supabase } from '../../../lib/supabaseClient';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
-
-async function ensureUploadDir() {
-  try {
-    await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  } catch (err) {
-    console.warn('Could not create upload dir', err);
-  }
-}
+  
+// async function ensureUploadDir() {
+//   try {
+//     await fs.mkdir(UPLOAD_DIR, { recursive: true });
+//   } catch (err) {
+//     console.warn('Could not create upload dir', err);
+//   }
+// }
 
 export async function POST(req: Request) {
   try {
     await initTables();
-    await ensureUploadDir();
+    //await ensureUploadDir();
 
     const form = await req.formData();
     const projectId = form.get('projectId') ? Number(form.get('projectId')) : null;
@@ -34,14 +35,29 @@ export async function POST(req: Request) {
       // f is a File-like object (Web API) with .name and .arrayBuffer
       const filename = String(f.name || 'file');
       const safeName = `${Date.now()}-${Math.random().toString(36).slice(2,8)}-${filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const outPath = path.join(UPLOAD_DIR, safeName);
       const buffer = Buffer.from(await f.arrayBuffer());
-      await fs.writeFile(outPath, buffer);
 
-      const relPath = `/uploads/${safeName}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('uploads')        
+        .upload(`uploads/${safeName}`, buffer, {
+          contentType: f.type || 'application/octet-stream'
+        });
 
-      const res = await query(`INSERT INTO uploads (project_id, material_id, filename, path, size, mime, status_index) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, project_id, material_id, filename, path, size, mime, status_index, created_at`, [projectId, materialId, filename, relPath, buffer.length, f.type || null, statusIndex]);
+      if (uploadError) {
+        return NextResponse.json({ error: uploadError.message }, { status: 500 });
+      }
+
+      // relPath pakai path yang dikembalikan Supabase, kalau tidak ada fallback
+      const relPath = uploadData?.path || `uploads/${safeName}`;
+
+      const res = await query(
+        `INSERT INTO uploads (project_id, material_id, filename, path, size, mime, status_index) 
+        VALUES ($1,$2,$3,$4,$5,$6,$7) 
+        RETURNING id, project_id, material_id, filename, path, size, mime, status_index, created_at`,
+        [projectId, materialId, filename, relPath, buffer.length, f.type || null, statusIndex]
+      );
       saved.push(res.rows[0]);
+
     }
 
     return NextResponse.json({ uploaded: saved }, { status: 201 });
