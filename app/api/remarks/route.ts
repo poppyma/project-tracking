@@ -4,7 +4,13 @@ import { initTables, query } from '../../../lib/db';
 export async function GET(req: Request) {
   try {
     await initTables();
-    const url = new URL(req.url);
+
+    // Aman untuk Vercel, fallback ke localhost jika req.url undefined
+    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : 'http://localhost:3000';
+    const url = new URL(req.url || baseUrl);
+
     const projectId = url.searchParams.get('projectId');
     const statusIndex = url.searchParams.get('statusIndex');
 
@@ -29,6 +35,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
 
 export async function POST(req: Request) {
   try {
