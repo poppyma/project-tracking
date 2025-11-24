@@ -1,18 +1,13 @@
-import { NextResponse } from 'next/server';
 import { initTables, query } from '../../../lib/db';
 
-export async function GET(req: Request) {
+import { NextResponse, NextRequest } from 'next/server';
+
+export async function GET(req: NextRequest) {
   try {
     await initTables();
 
-    // Aman untuk Vercel, fallback ke localhost jika req.url undefined
-    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
-      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-      : 'http://localhost:3000';
-    const url = new URL(req.url || baseUrl);
-
-    const projectId = url.searchParams.get('projectId');
-    const statusIndex = url.searchParams.get('statusIndex');
+    const projectId = req.nextUrl.searchParams.get('projectId');
+    const statusIndex = req.nextUrl.searchParams.get('statusIndex');
 
     let sql = `SELECT id, project_id, status_index, text, created_at FROM remarks`;
     const params: any[] = [];
@@ -35,6 +30,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
 
 
 export async function POST(req: Request) {
