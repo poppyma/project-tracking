@@ -1,65 +1,1273 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
+
+type Material = { id: number; name: string; percent?: number; status?: boolean[] };
+type Attachment = { id: number; filename: string; path: string; size?: number; mime?: string; created_at?: string };
+type MaterialExt = Material & { attachments?: Attachment[] };
+
+type Project = {
+  id: number;
+  name: string;
+  customer: string;
+  application: string;
+  productLine: string;
+  anualVolume: string;
+  estSop: string;
+  materials: Material[];
+  percent?: number;
+};
 
 export default function Home() {
+  const [showModal, setShowModal] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+
+  // const [form, setForm] = useState({
+  //   name: "",
+  //   customer: "",
+  //   application: "",
+  //   productLine: "",
+  //   anualVolume: "",
+  //   estSop: "",
+  // });
+
+  const [materialInput, setMaterialInput] = useState("");
+  const [materials, setMaterials] = useState<string[]>([]);
+
+  function resetForm() {
+    setForm({ name: "", customer: "", application: "", productLine: "", anualVolume: "", estSop: "", material: ""});
+    setMaterials([]);
+    setMaterialInput("");
+  }
+
+  async function reloadProjects() {
+    try {
+      const res = await fetch('/api/projects');
+      if (!res.ok) return;
+      const data = await res.json();
+      const list: Project[] = data.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        customer: r.customer,
+        application: r.application,
+        productLine: r.product_line ?? r.productLine ?? '',
+        anualVolume: r.anual_volume ?? r.anualVolume ?? '',
+        estSop: r.est_sop ?? r.estSop ?? '',
+        percent: r.percent ?? 0,
+        materials: (r.materials || []).map((m: any) => ({ id: m.id, name: m.name, percent: m.percent, status: m.status, attachments: m.attachments })) as any,
+      }));
+
+      const initialStatuses: Record<number, boolean[][]> = {};
+      list.forEach((proj) => {
+        initialStatuses[proj.id] = (proj.materials || []).map((m: any) => normalizeStatusArray((m as any).status));
+      });
+
+      setProjects(list);
+      setStatuses(initialStatuses);
+      // restore selected project from localStorage if present
+      try {
+        if (typeof window !== 'undefined') {
+          const stored = window.localStorage.getItem('selectedProjectId');
+          if (stored) {
+            const sid = Number(stored);
+            const found = list.find((p) => p.id === sid);
+            if (found) {
+              // use selectProject to ensure uploads/remarks/statuses are fetched
+              selectProject(sid);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to restore selected project', err);
+      }
+    } catch (err) {
+      console.error('Failed to load projects', err);
+    }
+  }
+
+  useEffect(() => { reloadProjects(); }, []);
+
+  async function handleSave() {
+    try {
+      const payload = {
+        name: form.name,
+        customer: form.customer,
+        application: form.application,
+        productLine: form.productLine,
+        anualVolume: form.anualVolume,
+        estSop: form.estSop,
+        materials,
+      };
+
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error('Failed to save project');
+
+      const created = await res.json();
+
+      // normalize fields coming from server
+      const proj: Project = {
+        id: created.id,
+        name: created.name,
+        customer: created.customer,
+        application: created.application,
+        productLine: created.product_line ?? created.productLine ?? '',
+        anualVolume: created.anual_volume ?? created.anualVolume ?? '',
+        estSop: created.est_sop ?? created.estSop ?? '',
+        percent: created.percent ?? 0,
+        materials: created.materials ?? [],
+      };
+
+      // ensure statuses map contains this new project
+      const newStatusesEntry = (created.materials || []).map((m: any) => normalizeStatusArray((m as any).status));
+
+      setProjects((p) => [proj, ...p]);
+      setStatuses((s) => ({ ...s, [proj.id]: newStatusesEntry }));
+      setShowModal(false);
+      resetForm();
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2200);
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menyimpan data. Cek console untuk detail.');
+    }
+  }
+
+  function addMaterial() {
+  if (!materialInput.trim()) {
+    setErrors(prev => ({ ...prev, material: "Material is required" }));
+    return;
+  }
+
+  // sukses tambah → hapus error
+  setMaterials(prev => [...prev, materialInput.trim()]);
+  setMaterialInput("");
+  setErrors(prev => ({ ...prev, material: "" }));
+}
+
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [projectUploads, setProjectUploads] = useState<Attachment[]>([]);
+  const [attachmentsModal, setAttachmentsModal] = useState<{ open: boolean; statusIndex?: number; items?: any[] }>({ open: false });
+  const [remarkModal, setRemarkModal] = useState<{ open: boolean; statusIndex?: number; text?: string }>({ open: false });
+  const [remarksMap, setRemarksMap] = useState<Record<number, any[]>>({});
+  const [remarksModal, setRemarksModal] = useState<{ open: boolean; statusIndex?: number; items?: any[]; editingId?: number; editingText?: string }>({ open: false });
+
+  // statuses[projectId] = array of materials -> array of booleans for each status column
+  const [statuses, setStatuses] = useState<Record<number, boolean[][]>>({});
+
+  const STATUS_COUNT = 9; // number of checkbox columns between Material and Status(%)/end
+  const STATUS_WEIGHTS = [10,20,10,10,20,10,10,5,5];
+
+  function computeMaterialPercentFromChecks(checks: boolean[]) {
+    return checks.reduce((acc, c, i) => acc + (c ? STATUS_WEIGHTS[i] : 0), 0);
+  }
+
+  function normalizeStatusArray(src: any): boolean[] {
+    if (!Array.isArray(src)) return Array(STATUS_COUNT).fill(false);
+    const arr = src.map((v: any) => Boolean(v));
+    if (arr.length < STATUS_COUNT) return arr.concat(Array(STATUS_COUNT - arr.length).fill(false));
+    return arr.slice(0, STATUS_COUNT);
+  }
+
+  // hover preview for material status (shows list with weights)
+  const [hover, setHover] = useState<{ open: boolean; x?: number; y?: number; items?: Array<{label:string, weight:number, checked:boolean}> }>({ open: false });
+
+  function showHover(projectId: number, materialIndex: number, e: React.MouseEvent) {
+    const proj = projects.find((p) => p.id === projectId);
+    if (!proj) return;
+    const matStatuses = (statuses[projectId] && statuses[projectId][materialIndex]) || (proj.materials[materialIndex] && (proj.materials[materialIndex].status || Array(STATUS_COUNT).fill(false))) || Array(STATUS_COUNT).fill(false);
+    const labels = ['Sourching','Quotation','PO Sample','Sample Received','Trial Proses & Report','MOC Release','PPAP & PSW','PO Maspro','Item Receive'];
+    const items = labels.map((lbl, i) => ({ label: lbl, weight: STATUS_WEIGHTS[i], checked: Boolean(matStatuses[i]) }));
+    // clamp popup inside viewport so it doesn't get cut off near edges
+    const popupWidth = 280;
+    const popupHeight = Math.min(280, items.length * 28 + 64);
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    let x = rect.left + rect.width / 2 - popupWidth / 2; // rata tengah dengan angka %
+    let y = rect.top - popupHeight - 8; // muncul tepat di atas teks persen
+    if (x + popupWidth > window.innerWidth) x = Math.max(8, window.innerWidth - popupWidth - 12);
+    if (y + popupHeight > window.innerHeight) y = Math.max(8, window.innerHeight - popupHeight - 12);
+    setHover({ open: true, x, y, items });
+  }
+
+  function hideHover() {
+    setTimeout(() => {
+      setHover(prev => prev.open ? { open: false } : prev);
+    }, 120); // delay 120ms biar tidak flicker
+  }
+  
+  function ensureStatuses(proj: Project) {
+    if (!proj) return;
+    if (statuses[proj.id]) return;
+    // initialize statuses from material.status if available, otherwise default false arrays
+    const arr = proj.materials.map((m) => normalizeStatusArray((m as any).status));
+    setStatuses((s) => ({ ...s, [proj.id]: arr }));
+  }
+
+  function selectProject(id: number) {
+    setSelectedProjectId(id);
+    const proj = projects.find((p) => p.id === id);
+    if (proj) ensureStatuses(proj);
+    // fetch project-level uploads
+    (async () => {
+      try {
+        const res = await fetch(`/api/uploads?projectId=${id}`);
+        if (!res.ok) return setProjectUploads([]);
+        const data = await res.json();
+        setProjectUploads(data || []);
+      } catch (err) {
+        console.error('Failed to load project uploads', err);
+        setProjectUploads([]);
+      }
+    })();
+    // fetch remarks for this project
+    (async () => {
+      try {
+        const r = await fetch(`/api/remarks?projectId=${id}`);
+        if (!r.ok) return setRemarksMap({});
+        const data = await r.json();
+        const grouped: Record<number, any[]> = {};
+        (data || []).forEach((it: any) => {
+          const si = Number(it.status_index);
+          grouped[si] = grouped[si] || [];
+          grouped[si].push(it);
+        });
+        setRemarksMap(grouped);
+      } catch (err) {
+        console.error('Failed to load remarks', err);
+        setRemarksMap({});
+      }
+    })();
+    // persist selection to localStorage so it survives a page reload
+    try { if (typeof window !== 'undefined') window.localStorage.setItem('selectedProjectId', String(id)); } catch (err) { /* ignore */ }
+  }
+
+  async function openRemarks(statusIndex: number) {
+    if (!selectedProjectId) return;
+    try {
+      const res = await fetch(`/api/remarks?projectId=${selectedProjectId}&statusIndex=${statusIndex}`);
+      const data = res.ok ? await res.json() : [];
+      setRemarksModal({ open: true, statusIndex, items: data || [], editingId: undefined, editingText: '' });
+    } catch (err) {
+      console.error('Failed to open remarks', err);
+      setRemarksModal({ open: true, statusIndex, items: [], editingId: undefined, editingText: '' });
+    }
+  }
+
+  async function deleteRemark(id: number) {
+    if (!window.confirm('Hapus remark ini?')) return;
+    try {
+      const res = await fetch('/api/remarks', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Gagal menghapus');
+      // refresh modal list
+      if (remarksModal.statusIndex != null) await openRemarks(remarksModal.statusIndex);
+      // refresh header quick list
+      if (selectedProjectId) {
+        const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
+        if (r.ok) {
+          const list = await r.json();
+          const grouped: Record<number, any[]> = {};
+          (list || []).forEach((it: any) => { const idx = Number(it.status_index); grouped[idx] = grouped[idx] || []; grouped[idx].push(it); });
+          setRemarksMap(grouped);
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.message || 'Gagal menghapus remark');
+    }
+  }
+
+  async function startEditRemark(id: number, text: string) {
+    setRemarksModal((s) => ({ ...s, editingId: id, editingText: text }));
+  }
+
+  async function saveEditRemark() {
+    try {
+      const id = remarksModal.editingId;
+      const text = (remarksModal.editingText || '').trim();
+      if (!id) return; if (!text) { alert('Masukkan teks remark'); return; }
+      const res = await fetch('/api/remarks', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, text }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Gagal menyimpan perubahan');
+      // refresh
+      if (remarksModal.statusIndex != null) await openRemarks(remarksModal.statusIndex);
+      if (selectedProjectId) {
+        const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
+        if (r.ok) {
+          const list = await r.json();
+          const grouped: Record<number, any[]> = {};
+          (list || []).forEach((it: any) => { const idx = Number(it.status_index); grouped[idx] = grouped[idx] || []; grouped[idx].push(it); });
+          setRemarksMap(grouped);
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.message || 'Gagal menyimpan remark');
+    }
+  }
+
+  // confirmation state for marking a status complete
+  const [confirm, setConfirm] = useState<{ open: boolean; projectId?: number; materialIndex?: number; statusIndex?: number; materialId?: number }>({ open: false });
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  
+  // Upload modal state for per-cell uploads in the detail grid
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadTarget, setUploadTarget] = useState<{ projectId?: number; materialId?: number; materialIndex?: number; statusIndex?: number } | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [showUploadSuccess, setShowUploadSuccess] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Project; direction: "asc" | "desc" } | null>(null);
+  const getSortIcon = (key: keyof Project) => {
+  if (!sortConfig || sortConfig.key !== key) return "⇅"; // default
+  return sortConfig.direction === "asc" ? "▲" : "▼";       // up or down
+  };
+
+
+  function toggleStatus(projectId: number, materialIndex: number, statusIndex: number) {
+    // open confirmation modal; when confirmed we'll persist
+    const proj = projects.find((p) => p.id === projectId);
+    const mat = proj?.materials?.[materialIndex];
+    if (!mat) return;
+    // determine current checked state (prefer in-memory statuses map)
+    const currentChecks = (statuses[projectId] && statuses[projectId][materialIndex]) || (mat.status && Array.isArray(mat.status) ? mat.status.map((v:any)=>Boolean(v)) : Array(STATUS_COUNT).fill(false));
+    if (currentChecks[statusIndex]) {
+      // already confirmed/completed — do nothing (locked)
+      return;
+    }
+    setConfirm({ open: true, projectId, materialIndex, statusIndex, materialId: mat.id });
+  }
+
+  async function confirmYes() {
+    if (!confirm.open || confirm.materialId == null || confirm.statusIndex == null || confirm.projectId == null) return;
+    setLoadingProgress(5);
+    try {
+      const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: true }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Failed to update');
+
+      // update local statuses (keeps in-sync with server)
+      const serverMat = data.material; // { id, name, status, percent }
+      setStatuses((s) => {
+        const copy = { ...s };
+        const matArr = copy[confirm.projectId!] ? copy[confirm.projectId!].map((r) => [...r]) : [];
+        if (!matArr[confirm.materialIndex!]) matArr[confirm.materialIndex!] = Array(STATUS_COUNT).fill(false);
+        // prefer server-provided status array when available
+        if (serverMat && Array.isArray(serverMat.status)) {
+          matArr[confirm.materialIndex!] = serverMat.status.map((v: any) => Boolean(v));
+        } else {
+          matArr[confirm.materialIndex!][confirm.statusIndex!] = true;
+        }
+        copy[confirm.projectId!] = matArr;
+        return copy;
+      });
+
+      // update project and material percent shown in list
+      setProjects((p) => p.map((pr) => {
+        if (pr.id !== data.projectId) return pr;
+        const updatedMaterials = pr.materials.map((m, idx) => {
+          if (!serverMat) return m;
+          if (m.id === serverMat.id) {
+            return { ...m, percent: serverMat.percent, status: serverMat.status } as Material;
+          }
+          return m;
+        });
+        return { ...pr, percent: data.projectPercent, materials: updatedMaterials } as Project;
+      }));
+
+      setLoadingProgress(100);
+      setTimeout(() => { setConfirm({ open: false }); setLoadingProgress(0); }, 250);
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui status');
+      setConfirm({ open: false });
+      setLoadingProgress(0);
+    }
+  }
+
+  function confirmNo() { setConfirm({ open: false }); }
+
+  // Upload handlers
+  function openUpload(projectId: number, materialId?: number, materialIndex?: number, statusIndex?: number) {
+    setUploadTarget({ projectId, materialId, materialIndex, statusIndex });
+    setUploadFiles([]);
+    setShowUploadModal(true);
+  }
+
+  function onUploadFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const list = e.target.files;
+    if (!list) return;
+    setUploadFiles((f) => [...f, ...Array.from(list)]);
+  }
+
+  function onUploadDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const list = e.dataTransfer.files;
+    if (!list) return;
+    setUploadFiles((f) => [...f, ...Array.from(list)]);
+  }
+
+  function onUploadDragOver(e: React.DragEvent) { e.preventDefault(); }
+
+  function removeUploadFile(idx: number) { setUploadFiles((f) => f.filter((_, i) => i !== idx)); }
+
+  function sortBy(key: string) {
+    let direction: "asc" | "desc" = "asc";
+
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+
+    setSortConfig({ key, direction });
+  }
+
+  async function doUploadFiles() {
+    try {
+      if (!uploadTarget || !uploadTarget.projectId) {
+        alert('Tidak ada project terpilih');
+        return;
+      }
+      const fd = new FormData();
+      fd.append('projectId', String(uploadTarget.projectId));
+      if (uploadTarget.materialId) fd.append('materialId', String(uploadTarget.materialId));
+      if (uploadTarget.statusIndex != null) fd.append('statusIndex', String(uploadTarget.statusIndex));
+      uploadFiles.forEach((f) => fd.append('files', f));
+
+      const res = await fetch('/api/uploads', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || 'Upload failed');
+      }
+      const data = await res.json();
+
+      // refresh projects list to fetch new attachments
+      await reloadProjects();
+      // refresh project uploads if a project is selected
+      if (selectedProjectId) {
+        const r2 = await fetch(`/api/uploads?projectId=${selectedProjectId}`);
+        if (r2.ok) setProjectUploads(await r2.json());
+      }
+
+      setShowUploadModal(false);
+      setShowUploadSuccess(true);
+      setTimeout(() => setShowUploadSuccess(false), 1600);
+    } catch (err: any) {
+      console.error('Upload failed', err);
+      alert('Upload gagal: ' + (err?.message || String(err)));
+    }
+  }
+
+  async function deleteProjectById(projectId: number) {
+    if (!window.confirm('Hapus project ini?')) return;
+    try {
+      const res = await fetch('/api/projects', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: projectId }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Gagal menghapus project');
+      // refresh list
+      await reloadProjects();
+      if (selectedProjectId === projectId) {
+        setSelectedProjectId(null);
+        try { if (typeof window !== 'undefined') window.localStorage.removeItem('selectedProjectId'); } catch (err) { /* ignore */ }
+      }
+    } catch (err: any) {
+      console.error('Delete failed', err);
+      alert('Gagal menghapus project: ' + (err?.message || String(err)));
+    }
+  }
+
+  // open attachments modal for a given statusIndex (header-level)
+  async function openAttachments(statusIndex: number) {
+    if (!selectedProjectId) return;
+    try {
+      // fetch project-level uploads for this status
+      const res = await fetch(`/api/uploads?projectId=${selectedProjectId}&statusIndex=${statusIndex}`);
+      const projectFiles = res.ok ? await res.json() : [];
+      // also collect material-level attachments from loaded project materials
+      const proj = projects.find((p) => p.id === selectedProjectId);
+      const materialFiles: any[] = [];
+      if (proj) {
+        (proj.materials || []).forEach((m: any) => {
+          (m.attachments || []).forEach((a: any) => {
+            materialFiles.push({ ...a, materialId: m.id, materialName: m.name });
+          });
+        });
+      }
+
+      // combine: projectFiles (which are status-indexed) + materialFiles (all)
+      const items = [...(projectFiles || []), ...materialFiles];
+      setAttachmentsModal({ open: true, statusIndex, items });
+    } catch (err) {
+      console.error('Failed to load attachments', err);
+      setAttachmentsModal({ open: true, statusIndex, items: [] });
+    }
+  }
+
+  // prepare filtered projects for search
+  const q = searchQuery.trim().toLowerCase();
+  let filteredProjects = q.length === 0 ? projects : projects.filter((proj) => {
+    return (
+      (proj.name || '').toLowerCase().includes(q) ||
+      (proj.customer || '').toLowerCase().includes(q) ||
+      (proj.application || '').toLowerCase().includes(q) ||
+      (proj.productLine || '').toLowerCase().includes(q)
+    );
+  })
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProjects = filteredProjects.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortConfig]);
+
+    const [form, setForm] = useState({
+  name: "",
+  customer: "",
+  application: "",
+  productLine: "",
+    anualVolume: "",
+        estSop: "",
+        material: "",
+});
+
+const [errors, setErrors] = useState({
+  name: "",
+  customer: "",
+  application: "",
+  productLine: "",
+  anualVolume: "",
+        estSop: "",
+        material: "",
+});
+const handleSaveProject = () => {
+  let newErrors = {
+    name: form.name ? "" : "Project Name is required",
+    customer: form.customer ? "" : "Customer is required",
+    application: form.application ? "" : "Application is required",
+    productLine: form.productLine ? "" : "Product Line is required",
+    anualVolume: form.anualVolume ? "" : "Anual Volume is required",
+    estSop: form.estSop ? "" : "Est Sop is required",
+    material: materials.length > 0 ? "" : "Material is required", 
+  };
+
+  setErrors(newErrors);
+
+  // Stop kalau masih ada error
+  const isValid = Object.values(newErrors).every(x => x === "");
+  if (!isValid) return;
+
+  // lanjut simpan seperti biasa
+  handleSave();  // fungsi API kamu
+};
+
+
+
+    // Apply sorting
+  if (sortConfig) {
+    filteredProjects.sort((a, b) => {
+      const key = sortConfig.key;
+
+      let A: any = a[key];
+      let B: any = b[key];
+
+      // khusus status gunakan angka
+      if (key === "percent") {
+        A = a.percent ?? 0;
+        B = b.percent ?? 0;
+      } else {
+        A = String(A).toLowerCase();
+        B = String(B).toLowerCase();
+      }
+
+      if (A < B) return sortConfig.direction === "asc" ? -1 : 1;
+      if (A > B) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div>
+      <div className="top-line">Project Tracking Data Master</div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="page-title">Projects List</div>
+      </div>
+
+      <div className="card spaced">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button className="btn" onClick={() => setShowModal(true)}>Add Project</button>
+          <div style={{ width: '56%' }}>
+            <div className="search-row" style={{ position: "relative" }}>
+              <input
+                className="search-input"
+                placeholder="Search project"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ width: "100%" }}
+              />
+
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  style={{
+                    position: "absolute",
+                    right: 120,       
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    border: "none",
+                    background: "transparent",
+                    fontSize: 18,
+                    cursor: "pointer",
+                    color: "#000000"
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+
+              <button className="search-btn">Search</button>
+            </div>
+
+          </div>
+        </div>
+
+        <table className="projects-table spaced" aria-label="Projects table">
+          <thead>
+            <tr>
+              <th onClick={() => sortBy("name")}>
+                Project Name {getSortIcon("name")}
+              </th>
+              <th onClick={() => sortBy("customer")}>
+                Customer {getSortIcon("customer")}
+              </th>
+              <th>Application</th>
+              <th>Product Line</th>
+              <th>Anual Volume</th>
+              <th>Est SOP Plan</th>
+              <th onClick={() => sortBy("percent")}>
+                Status {getSortIcon("percent")}
+              </th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="table-empty">No Data</td>
+              </tr>
+            ) : (
+              currentProjects.map((proj) => {
+                // compute project percent using STATUS_WEIGHTS and known statuses (fall back to material.status if present)
+                const projStatuses = statuses[proj.id] ?? proj.materials.map((m) => (Array.isArray((m as any).status) ? (m as any).status.map((v:any)=>Boolean(v)) : Array(STATUS_COUNT).fill(false)));
+                let projPercent = 0;
+                if (proj.materials.length > 0) {
+                  const total = proj.materials.reduce((acc, m, mi) => {
+                    const checks = projStatuses[mi] ?? Array(STATUS_COUNT).fill(false);
+                    return acc + computeMaterialPercentFromChecks(checks);
+                  }, 0);
+                  projPercent = Math.round(total / Math.max(1, proj.materials.length));
+                }
+                return (
+                <tr key={proj.id} className={`clickable ${proj.id === selectedProjectId ? 'selected' : ''}text-base`} onClick={() => selectProject(proj.id)}>
+                  <td>{proj.name}</td>
+                  <td>{proj.customer}</td>
+                  <td>{proj.application}</td>
+                  <td>{proj.productLine}</td>
+                  <td>{proj.anualVolume}</td>
+                  <td>{proj.estSop}</td>
+                  <td className="status-percent">{proj.percent ?? projPercent}%</td>
+  <td>
+  <div className="flex items-center">
+
+    {/* Tombol View */}
+    <button
+      className="icon-view flex items-center justify-center w-10 h-10 rounded-lg bg-[#0071c5]"
+      title="View project"
+      onClick={(e) => {
+        e.stopPropagation();
+        router.push(`/project/${proj.id}`);
+      }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7z"
+          stroke="#fff"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        <circle
+          cx="12"
+          cy="12"
+          r="3"
+          stroke="#fff"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+
+    {/* Tombol Delete */}
+    <button
+      className="icon-delete flex items-center justify-center w-10 h-10 rounded-lg bg-[#e63946]"
+      title="Delete project"
+      onClick={(e) => {
+        e.stopPropagation();
+        deleteProjectById(proj.id);
+      }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6l-1 14H6L5 6"></path>
+        <path d="M10 11v6"></path>
+        <path d="M14 11v6"></path>
+        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+      </svg>
+    </button>
+
+  </div>
+</td>
+
+
+                </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+
+        <div className="pagination">
+  <button
+    className="btn secondary"
+    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+    disabled={currentPage === 1}
+  >
+    Previous
+  </button>
+
+  <div className="page-pill">{currentPage} / {totalPages}</div>
+
+  <button
+    className="btn secondary"
+    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+    disabled={currentPage === totalPages}
+  >
+    Next
+  </button>
+</div>
+
+      </div>
+
+      <div className="card spaced" style={{ marginTop: 28 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 8, // jarak antara teks kiri dan kanan
+            fontSize: 20,
+            fontWeight: 700,
+            marginBottom: 20,
+          }}
+        >
+    <div>
+    <span>Detail Status Project </span>
+
+    {selectedProjectId && (
+      <span style={{ fontSize: 18, fontWeight: 600, color: "#005bbb" }}>
+        - {projects.find((p) => p.id === selectedProjectId)?.name}
+      </span>
+    )}
+  </div>
+</div>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table className="status-grid" style={{ minWidth: 1000 }}>
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th>Sourching</th>
+                <th>Quotation</th>
+                <th>PO Sample</th>
+                <th>Sample Received</th>
+                <th>Trial Proses & Report</th>
+                <th>MOC Release</th>
+                <th>PPAP & PSW</th>
+                <th>PO Maspro</th>
+                <th>Item Receive</th>
+                <th>Status (%)</th>
+              </tr>
+              <tr>
+                <th></th>
+                {Array.from({ length: STATUS_COUNT }).map((_, i) => (
+                  <th key={i} style={{ fontWeight: 600 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+                      <button
+                        className="upload-btn"
+                        onClick={(e) => { e.stopPropagation(); if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; } openUpload(selectedProjectId, undefined, undefined, i); }}
+                        aria-label={`Upload column ${i}`}
+                      >⬆ Upload</button>
+
+                      <button
+                        className="attach-btn"
+                        onClick={(e) => { e.stopPropagation(); if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; } openAttachments(i); }}
+                        aria-label={`Attachments column ${i}`}
+                      >
+                        📎 {projectUploads.filter((u) => Number(u && (u as any).status_index) === i).length}
+                      </button>
+                      <button
+                        className="remark-btn"
+                        onClick={(e) => { e.stopPropagation(); if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; } setRemarkModal({ open: true, statusIndex: i, text: '' }); }}
+                        aria-label={`Remark column ${i}`}
+                      >
+                        📝 Remark
+                      </button>
+                      {remarksMap && remarksMap[i] && remarksMap[i].length > 0 && (
+                        <div onClick={(e) => { e.stopPropagation(); openRemarks(i); }} style={{ marginTop: 6, maxWidth: 160, textAlign: 'center', cursor: 'pointer' }}>
+                          <div style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{remarksMap[i][0].text}</div>
+                          <div style={{ fontSize: 10, color: 'var(--muted)' }}>{new Date(remarksMap[i][0].created_at).toLocaleString()}</div>
+                        </div>
+                      )}
+                    </div>
+                  </th>
+                ))}
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedProjectId == null ? (
+                <tr>
+                  <td colSpan={11} className="table-empty">Pilih project untuk melihat detail material</td>
+                </tr>
+              ) : (
+                (() => {
+                  const proj = projects.find((p) => p.id === selectedProjectId);
+                  if (!proj || proj.materials.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={11} className="table-empty">No materials for selected project</td>
+                      </tr>
+                    );
+                  }
+
+                  const projectStatuses = statuses[proj.id] ?? proj.materials.map(() => Array(STATUS_COUNT).fill(false));
+
+                  return proj.materials.map((m, mi) => {
+                    const checks = projectStatuses[mi] || Array(STATUS_COUNT).fill(false);
+                    const percent = computeMaterialPercentFromChecks(checks);
+                    return (
+                      <tr key={m.id ?? mi}>
+                        <td style={{ textAlign: 'left' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
+                            <div style={{ fontWeight: 700 }}>{m.name}</div>
+                            {(m as any).attachments && (m as any).attachments.length > 0 && (
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                {(m as any).attachments.map((a: any) => (
+                                  <a key={a.id} href={a.path} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--blue)' }}>
+                                    📎 {a.filename}
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        {checks.map((c, si) => (
+                          <td key={si}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                              <button
+                                onClick={() => toggleStatus(proj.id, mi, si)}
+                                className={`status-check ${c ? 'checked' : ''}`}
+                                title={c ? 'Completed' : 'Mark as done'}
+                              >
+                                {c ? '✓' : ''}
+                              </button>
+
+                              {/* per-material remark removed - use header-level remark for column */}
+                            </div>
+                          </td>
+                        ))}
+                        <td className="status-percent" onMouseEnter={(e)=>showHover(proj.id, mi, e)} onMouseLeave={hideHover}>{percent}%</td>
+                      </tr>
+                    );
+                  });
+                })()
+              )}
+            </tbody>
+          </table>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </div>
+
+      
+      {showModal && (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal">
+            <div className="modal-header">
+              <div className="modal-title">Add New Project</div>
+              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+            </div>
+
+            <div className="form-row">
+              <label className="form-label">Project Name</label>
+              <input
+                className="input"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+              {errors.name && <span className="error-text">{errors.name}</span>}
+            </div>
+
+            <div className="form-row">
+              <label className="form-label">Customer</label>
+              <input
+                className={`input ${errors.customer ? "input-error" : ""}`}
+                value={form.customer}
+                onChange={(e) => setForm({ ...form, customer: e.target.value })}
+              />
+              {errors.customer && <span className="error-text">{errors.customer}</span>}
+            </div>
+                        <div className="form-row">
+              <label className="form-label">Application</label>
+              <input
+                className={`input ${errors.application ? "input-error" : ""}`}
+                value={form.application}
+                onChange={(e) => setForm({ ...form, application: e.target.value })}
+              />
+              {errors.application && <span className="error-text">{errors.application}</span>}
+            </div>
+                      <div className="form-row">
+              <label className="form-label">Product Line</label>
+              <input
+                className={`input ${errors.productLine ? "input-error" : ""}`}
+                value={form.productLine}
+                onChange={(e) => setForm({ ...form, productLine: e.target.value })}
+              />
+              {errors.productLine && <span className="error-text">{errors.productLine}</span>}
+            </div>
+
+                        <div className="row">
+              <div className="grow form-row">
+                <label className="form-label">Anual Volume</label>
+                <input
+                  className={`input ${errors.anualVolume ? "input-error" : ""}`}
+                  value={form.anualVolume}
+                  onChange={(e) => setForm({ ...form, anualVolume: e.target.value })}
+                />
+                {errors.anualVolume && <span className="error-text">{errors.anualVolume}</span>}
+              </div>
+
+              <div style={{ width: 180 }} className="form-row">
+                <label className="form-label">Est SOP Plan</label>
+                <input
+                  className={`input ${errors.estSop ? "input-error" : ""}`}
+                  value={form.estSop}
+                  onChange={(e) => setForm({ ...form, estSop: e.target.value })}
+                />
+                {errors.estSop && <span className="error-text">{errors.estSop}</span>}
+              </div>
+            </div>
+
+            <div className="form-row">
+            <label className="form-label">Material</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                className={`input ${errors.material ? "input-error" : ""}`}
+                value={materialInput}
+                onChange={(e) => setMaterialInput(e.target.value)}
+              />
+              <button className="icon-btn" onClick={addMaterial}>+</button>
+            </div>
+
+  {errors.material && (
+    <span className="error-text">{errors.material}</span>
+  )}
+</div>
+
+
+            {materials.length > 0 && (
+              <div style={{ marginTop: 6 }}>
+                <strong style={{ fontSize: 13, color: 'var(--muted)' }}>Materials</strong>
+                <ul style={{ marginTop: 6 }}>
+                  {materials.map((m, i) => (
+                    <li key={i} style={{ padding: '6px 0' }}>{m}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button className="btn secondary" onClick={() => { setShowModal(false); resetForm(); }}>Cancel</button>
+              <button className="btn" onClick={handleSaveProject}>Save</button>
+            </div>
+          </div>
         </div>
-      </main>
+      )}
+
+      {showSuccess && (
+        <div className="modal-overlay">
+          <div className="success-box">
+            <div className="success-icon">✓</div>
+            <div className="success-title">Success!</div>
+            <div className="success-sub">Data added successfully</div>
+          </div>
+        </div>
+      )}
+      {/* Confirmation modal for marking complete */}
+      {confirm.open && (
+        <div className="modal-overlay" role="dialog">
+          <div className="confirm-modal">
+            <div className="confirm-header">
+              <div className="confirm-icon">?</div>
+              <h3 style={{ margin: 0 }}>Confirmation</h3>
+              <button style={{ marginLeft: 'auto', background: 'transparent', border: 'none', fontSize: 20 }} onClick={confirmNo}>✕</button>
+            </div>
+            <div className="confirm-body">Apakah Anda yakin ingin menandai sebagai selesai?</div>
+            <div className="confirm-actions">
+              <button className="btn secondary" onClick={confirmNo}>Tidak</button>
+              <button className="btn" onClick={confirmYes}>Ya</button>
+            </div>
+            {loadingProgress > 0 && (
+              <div className="progress-bar" aria-hidden>
+                <div className="progress-fill" style={{ width: `${loadingProgress}%` }} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Upload modal for per-cell uploads in the detail grid */}
+      {showUploadModal && (
+        <div className="modal-overlay" role="dialog" aria-modal>
+          <div className="upload-modal" onDrop={onUploadDrop} onDragOver={onUploadDragOver}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ margin: 0, color: 'var(--blue)' }}>Upload Files</h2>
+                <div style={{ color: 'var(--muted)', marginTop: 6 }}>Pilih berkas untuk diupload ke material</div>
+              </div>
+              <button className="modal-close" onClick={() => setShowUploadModal(false)}>✕</button>
+            </div>
+
+            <div className="drop-area" style={{ marginTop: 16 }}>
+              <div style={{ textAlign: 'center', padding: 30 }}>
+                <div style={{ fontSize: 44, color: '#bfc7cc' }}>☁︎</div>
+                <div style={{ color: 'var(--blue)', fontWeight: 700, marginTop: 8 }}>Drag and drop files here</div>
+                <div style={{ color: 'var(--muted)', marginTop: 6 }}>- OR -</div>
+                <label className="browse-btn" style={{ display: 'inline-block', marginTop: 12, cursor: 'pointer' }}>
+                  Browse Files
+                  <input type="file" multiple style={{ display: 'none' }} onChange={onUploadFileChange} />
+                </label>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 14 }}>
+              <strong>Upload Files</strong>
+              <div className="file-list" style={{ marginTop: 8 }}>
+                {uploadFiles.length === 0 ? (
+                  <div style={{ color: 'var(--muted)' }}>No files selected</div>
+                ) : uploadFiles.map((f, i) => (
+                  <div key={i} className="file-item">
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{f.name}</div>
+                      <div style={{ color: 'var(--muted)', fontSize: 12 }}>{Math.round(f.size/1024)} KB</div>
+                    </div>
+                    <button className="icon-btn" onClick={() => removeUploadFile(i)}>🗑</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="upload-actions">
+              <button className="btn secondary" onClick={() => setShowUploadModal(false)}>Cancel</button>
+              <button className="btn" onClick={doUploadFiles} disabled={uploadFiles.length === 0}>Upload</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload success popup */}
+      {showUploadSuccess && (
+        <div className="modal-overlay">
+          <div className="success-large">
+            <div className="success-icon" style={{ background: '#2ecc71' }}>✓</div>
+            <div style={{ fontSize: 28, fontWeight: 800, marginTop: 8 }}>Success!</div>
+            <div style={{ color: 'var(--muted)', marginTop: 6 }}>File Uploaded successfully</div>
+          </div>
+        </div>
+      )}
+
+      {/* Attachments modal (opened from header) */}
+      {attachmentsModal.open && (
+        <div className="modal-overlay" role="dialog" aria-modal>
+          <div className="modal" style={{ maxWidth: 820 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Attachments</h3>
+                <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 6 }}>Files for project and column {attachmentsModal.statusIndex}</div>
+              </div>
+              <button className="modal-close" onClick={() => setAttachmentsModal({ open: false })}>✕</button>
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              {(attachmentsModal.items || []).length === 0 ? (
+                <div style={{ color: 'var(--muted)' }}>No attachments</div>
+              ) : (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {(attachmentsModal.items || []).map((a: any) => (
+                    <div key={a.id || `${a.materialId}-${a.filename || a.path}` } style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 10, border: '1px solid var(--border)', borderRadius: 8 }}>
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                        <div style={{ fontSize: 20 }}>📎</div>
+                        <div>
+                          <div style={{ fontWeight: 700 }}>{a.filename}</div>
+                          <div style={{ fontSize: 12, color: 'var(--muted)' }}>{a.materialName ? `Material: ${a.materialName}` : 'Project file' } • {a.created_at ? new Date(a.created_at).toLocaleString() : ''}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <a className="btn secondary" href={a.path} target="_blank" rel="noreferrer">Open</a>
+                        <a className="btn" href={a.path} download>Download</a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remarks history modal (view/edit/delete) */}
+      {remarksModal.open && (
+        <div className="modal-overlay" role="dialog" aria-modal>
+          <div className="modal" style={{ maxWidth: 760 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Remarks</h3>
+                <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 6 }}>Column {remarksModal.statusIndex}</div>
+              </div>
+              <button className="modal-close" onClick={() => setRemarksModal({ open: false })}>✕</button>
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              {(remarksModal.items || []).length === 0 ? (
+                <div style={{ color: 'var(--muted)' }}>No remarks</div>
+              ) : (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {(remarksModal.items || []).map((r: any) => (
+                    <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 10, border: '1px solid var(--border)', borderRadius: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        {remarksModal.editingId === r.id ? (
+                          <textarea value={remarksModal.editingText || ''} onChange={(e) => setRemarksModal((s) => ({ ...s, editingText: e.target.value }))} style={{ width: '100%', minHeight: 80, padding: 8 }} />
+                        ) : (
+                          <div>
+                            <div style={{ fontWeight: 700 }}>{r.text}</div>
+                            <div style={{ fontSize: 12, color: 'var(--muted)' }}>{r.created_at ? new Date(r.created_at).toLocaleString() : ''}</div>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {remarksModal.editingId === r.id ? (
+                          <>
+                            <button className="btn secondary" onClick={() => setRemarksModal((s) => ({ ...s, editingId: undefined, editingText: '' }))}>Cancel</button>
+                            <button className="btn" onClick={saveEditRemark}>Save</button>
+                          </>
+                        ) : (
+                          <>
+                            <button className="btn secondary" onClick={() => startEditRemark(r.id, r.text)}>Edit</button>
+                            <button className="btn" onClick={() => deleteRemark(r.id)}>Delete</button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remark modal (simple local-only flow) */}
+      {remarkModal.open && (
+        <div className="modal-overlay" role="dialog" aria-modal>
+          <div className="modal">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Add Remark</h3>
+                <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 6 }}>Column {remarkModal.statusIndex}</div>
+              </div>
+              <button className="modal-close" onClick={() => setRemarkModal({ open: false })}>✕</button>
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <textarea style={{ width: '100%', minHeight: 120, padding: 10, borderRadius: 8, border: '1px solid var(--border)' }} value={remarkModal.text || ''} onChange={(e) => setRemarkModal((s) => ({ ...s, text: e.target.value }))} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
+              <button className="btn secondary" onClick={() => setRemarkModal({ open: false })}>Cancel</button>
+              <button className="btn" onClick={async () => {
+                try {
+                  if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; }
+                  const si = remarkModal.statusIndex;
+                  const text = (remarkModal.text || '').trim();
+                  if (si == null) { alert('Invalid column'); return; }
+                  if (!text) { alert('Masukkan remark terlebih dahulu'); return; }
+                  const res = await fetch('/api/remarks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: selectedProjectId, statusIndex: si, text }) });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data?.error || 'Gagal menyimpan remark');
+
+                  // refresh remarks for selected project
+                  try {
+                    const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
+                    if (r.ok) {
+                      const list = await r.json();
+                      const grouped: Record<number, any[]> = {};
+                      (list || []).forEach((it: any) => {
+                        const idx = Number(it.status_index);
+                        grouped[idx] = grouped[idx] || [];
+                        grouped[idx].push(it);
+                      });
+                      setRemarksMap(grouped);
+                    }
+                  } catch (err) {
+                    console.error('Failed to refresh remarks', err);
+                  }
+
+                  setRemarkModal({ open: false });
+                } catch (err: any) {
+                  console.error(err);
+                  alert(err?.message || 'Gagal menyimpan remark');
+                }
+              }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hover preview */}
+      {hover.open && hover.items && (
+        <div
+          className="status-hover-popup"
+          style={{ position: 'fixed', left: hover.x, top: hover.y }}
+          onMouseEnter={() => setHover(prev => ({ ...prev, open: true }))}
+          onMouseLeave={() => hideHover()}
+        >
+          <div style={{ padding: 10 }}>
+            <strong style={{ display: 'block', marginBottom: 8 }}>Detail</strong>
+            {hover.items.map((it, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                <div><input type="checkbox" checked={it.checked} readOnly /> {it.label}</div>
+                <div style={{ fontWeight: 700 }}>{it.weight}%</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
