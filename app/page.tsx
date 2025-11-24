@@ -482,31 +482,45 @@ export default function Home() {
   }
 
   // open attachments modal for a given statusIndex (header-level)
-  async function openAttachments(statusIndex: number) {
-    if (!selectedProjectId) return;
-    try {
-      // fetch project-level uploads for this status
-      const res = await fetch(`/api/uploads?projectId=${selectedProjectId}&statusIndex=${statusIndex}`);
-      const projectFiles = res.ok ? await res.json() : [];
-      // also collect material-level attachments from loaded project materials
-      const proj = projects.find((p) => p.id === selectedProjectId);
-      const materialFiles: any[] = [];
-      if (proj) {
-        (proj.materials || []).forEach((m: any) => {
-          (m.attachments || []).forEach((a: any) => {
-            materialFiles.push({ ...a, materialId: m.id, materialName: m.name });
+async function openAttachments(statusIndex: number) {
+  if (!selectedProjectId) return;
+
+  try {
+    // fetch project-level uploads for this status
+    const res = await fetch(`/api/uploads?projectId=${selectedProjectId}&statusIndex=${statusIndex}`);
+    const projectFiles = res.ok ? await res.json() : [];
+
+    // collect material-level attachments from loaded project materials
+    const proj = projects.find((p) => p.id === selectedProjectId);
+    const materialFiles: any[] = [];
+
+    if (proj) {
+      (proj.materials || []).forEach((m: any) => {
+        (m.attachments || []).forEach((a: any) => {
+          // pastikan ada publicUrl, fallback ke path kalau belum
+          materialFiles.push({
+            ...a,
+            materialId: m.id,
+            materialName: m.name,
+            path: a.path || '', // pastikan ada URL
           });
         });
-      }
-
-      // combine: projectFiles (which are status-indexed) + materialFiles (all)
-      const items = [...(projectFiles || []), ...materialFiles];
-      setAttachmentsModal({ open: true, statusIndex, items });
-    } catch (err) {
-      console.error('Failed to load attachments', err);
-      setAttachmentsModal({ open: true, statusIndex, items: [] });
+      });
     }
+
+    // combine projectFiles + materialFiles
+    const items = [
+      ...(projectFiles.map((f: any) => ({ ...f, materialName: null })) || []),
+      ...materialFiles,
+    ];
+
+    setAttachmentsModal({ open: true, statusIndex, items });
+  } catch (err) {
+    console.error('Failed to load attachments', err);
+    setAttachmentsModal({ open: true, statusIndex, items: [] });
   }
+}
+
 
   // prepare filtered projects for search
   const q = searchQuery.trim().toLowerCase();
@@ -873,9 +887,15 @@ const handleSaveProject = () => {
                             {(m as any).attachments && (m as any).attachments.length > 0 && (
                               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                 {(m as any).attachments.map((a: any) => (
-                                  <a key={a.id} href={a.path} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--blue)' }}>
-                                    📎 {a.filename}
-                                  </a>
+                                  <a
+  key={a.id}
+  href={a.path}
+  download={a.filename} // <- ini bikin file langsung download
+  style={{ fontSize: 12, color: 'var(--blue)' }}
+>
+  📎 {a.filename}
+</a>
+
                                 ))}
                               </div>
                             )}
