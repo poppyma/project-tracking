@@ -424,7 +424,7 @@ export default function Home() {
       direction = "desc";
     }
 
-    setSortConfig({ key, direction });
+    setSortConfig({ key: key as keyof Project, direction });
   }
 
   async function doUploadFiles() {
