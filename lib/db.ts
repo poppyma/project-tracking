@@ -11,6 +11,8 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+export default pool;
+
 export async function query(text: string, params?: any[]) {
   const client = await pool.connect();
   try {
