@@ -15,7 +15,7 @@ type Project = {
   productLine: string;
   anualVolume: string;
   estSop: string;
-  //materials: Material[];
+  materials: Material[];
   percent?: number;
 };
 
