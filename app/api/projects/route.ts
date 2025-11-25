@@ -35,46 +35,71 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, customer, application, productLine, anualVolume, estSop, materials } = body;
 
+    // 1️⃣ Insert Project
     const insertProject = await query(
-      `INSERT INTO projects (name, customer, application, product_line, anual_volume, est_sop) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, name, customer, application, product_line, anual_volume, est_sop, created_at`,
+      `INSERT INTO projects (name, customer, application, product_line, anual_volume, est_sop)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       RETURNING id, name, customer, application, product_line, anual_volume, est_sop, created_at`,
       [name, customer, application, productLine, anualVolume, estSop]
     );
 
     const proj = insertProject.rows[0];
-    const createdId = proj.id;
+    const projectId = proj.id;
 
+    // 2️⃣ Insert materials + atribut lengkap
     let createdMaterials: any[] = [];
     if (Array.isArray(materials) && materials.length > 0) {
-      // insert and RETURNING each material so we can return them immediately
+
       const STATUS_COUNT = 9;
       const defaultStatus = JSON.stringify(Array(STATUS_COUNT).fill(false));
-      const insertPromises = materials.map((m: string) => query(`INSERT INTO materials (project_id, name, status, percent) VALUES ($1,$2,$3,$4) RETURNING id, name, status, percent`, [createdId, m, defaultStatus, 0]));
-      const results = await Promise.all(insertPromises);
-      createdMaterials = results.flatMap((r: any) => r.rows || []);
+
+      const materialPromises = materials.map((m: any) =>
+        query(
+          `INSERT INTO materials
+           (project_id, name, component, category, bom_qty, "UoM", supplier, status, percent)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+           RETURNING id, name, component, category, bom_qty, "UoM", supplier, status, percent`,
+          [
+            projectId,
+            m.name ?? "",
+            m.component ?? "",
+            m.category ?? "",
+            m.bom_qty ?? 0,
+            m.UoM ?? "",
+            m.supplier ?? "",
+            defaultStatus,
+            0
+          ]
+        )
+      );
+
+      const results = await Promise.all(materialPromises);
+      createdMaterials = results.flatMap((r) => r.rows);
     }
 
-    // build response object for created project
-    const responseObj = {
-      id: createdId,
-      name: proj.name,
-      customer: proj.customer,
-      application: proj.application,
-      product_line: proj.product_line,
-      anual_volume: proj.anual_volume,
-      est_sop: proj.est_sop,
-      created_at: proj.created_at,
-      percent: proj.percent ?? 0,
-      materials: createdMaterials,
-    };
+    // 3️⃣ Build response JSON untuk frontend
+    return NextResponse.json(
+      {
+        id: projectId,
+        name: proj.name,
+        customer: proj.customer,
+        application: proj.application,
+        product_line: proj.product_line,
+        anual_volume: proj.anual_volume,
+        est_sop: proj.est_sop,
+        created_at: proj.created_at,
+        percent: proj.percent ?? 0,
+        materials: createdMaterials,
+      },
+      { status: 201 }
+    );
 
-    console.log('[api/projects] Created project', responseObj.id, 'materials count', createdMaterials.length);
-
-    return NextResponse.json(responseObj, { status: 201 });
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
 
 export async function PATCH(req: Request) {
   try {

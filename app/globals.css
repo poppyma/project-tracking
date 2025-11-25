@@ -23,6 +23,30 @@ body {
   min-height: 100vh;
 }
 
+.table-input {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.table-input th,
+.table-input td {
+  border: 1px solid #9e9e9e; /* warna abu biar rapi */
+  padding: 6px;
+}
+
+.table-input th {
+  background: #f3f3f3;
+  font-weight: 600;
+}
+.table-input th,
+.table-input td {
+  border: 1px solid #cfcfcf;
+}
+
+.table-input tr:hover td {
+  background: #f7faff;
+}
+
 .sidebar {
   width: 18rem;
   background: var(--sidebar-blue);

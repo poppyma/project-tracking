@@ -15,7 +15,7 @@ type Project = {
   productLine: string;
   anualVolume: string;
   estSop: string;
-  materials: Material[];
+  //materials: Material[];
   percent?: number;
 };
 
@@ -36,7 +36,34 @@ export default function Home() {
   // });
 
   const [materialInput, setMaterialInput] = useState("");
-  const [materials, setMaterials] = useState<string[]>([]);
+  //const [materials, setMaterials] = useState<string[]>([]);
+  const [materials, setMaterials] = useState([
+  { material: "", component: "", category: "", qty: "", uom: "", supplier: "" },
+]);
+
+
+const addRow = () => {
+  setMaterials([
+    ...materials,
+    { material: "", component: "", category: "", qty: "", uom: "", supplier: "" },
+  ]);
+};
+
+const deleteRow = (index: number) => {
+  setMaterials(materials.filter((_, i) => i !== index));
+};
+
+const handleChange = (
+  index: number,
+  field: keyof (typeof materials)[number],
+  value: string
+) => {
+  const updated = [...materials];
+  updated[index][field] = value;
+  setMaterials(updated);
+};
+
+
 
   function resetForm() {
     setForm({ name: "", customer: "", application: "", productLine: "", anualVolume: "", estSop: "", material: ""});
@@ -560,9 +587,18 @@ const [errors, setErrors] = useState({
   application: "",
   productLine: "",
   anualVolume: "",
-        estSop: "",
-        material: "",
+  estSop: "",
+  material: "",
 });
+
+const options = [
+  "Innering",
+  "Outer Ring",
+  "Seal",
+  "Cage",
+  "Ball",
+  "Grease",
+];
 const handleSaveProject = () => {
   let newErrors = {
     name: form.name ? "" : "Project Name is required",
@@ -583,8 +619,6 @@ const handleSaveProject = () => {
   // lanjut simpan seperti biasa
   handleSave();  // fungsi API kamu
 };
-
-
 
     // Apply sorting
   if (sortConfig) {
@@ -888,13 +922,13 @@ const handleSaveProject = () => {
                               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                 {(m as any).attachments.map((a: any) => (
                                   <a
-  key={a.id}
-  href={a.path}
-  download={a.filename} // <- ini bikin file langsung download
-  style={{ fontSize: 12, color: 'var(--blue)' }}
->
-  📎 {a.filename}
-</a>
+                                    key={a.id}
+                                    href={a.path}
+                                    download={a.filename} // <- ini bikin file langsung download
+                                    style={{ fontSize: 12, color: 'var(--blue)' }}
+                                  >
+                                    📎 {a.filename}
+                                  </a>
 
                                 ))}
                               </div>
@@ -996,7 +1030,7 @@ const handleSaveProject = () => {
               </div>
             </div>
 
-            <div className="form-row">
+            {/* <div className="form-row">
             <label className="form-label">Material</label>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
@@ -1007,13 +1041,127 @@ const handleSaveProject = () => {
               <button className="icon-btn" onClick={addMaterial}>+</button>
             </div>
 
-  {errors.material && (
-    <span className="error-text">{errors.material}</span>
-  )}
+            {errors.material && (
+              <span className="error-text">{errors.material}</span>
+            )} */}
+
+
+
+<div style={{ maxWidth: "100%", overflowX: "auto", marginTop: 10 }}>
+  <table
+    className="table-input"
+    style={{
+      width: "100%",
+      tableLayout: "fixed",
+      borderCollapse: "collapse",
+      border: "1px solid #ccc",
+    }}
+  >
+    <thead>
+      <tr style={{ background: "#f2f2f2" }}>
+        <th style={{ width: "18%", border: "1px solid #ccc", padding: "6px" }}>Material</th>
+        <th style={{ width: "18%", border: "1px solid #ccc", padding: "6px" }}>Component</th>
+        <th style={{ width: "14%", border: "1px solid #ccc", padding: "6px" }}>Category</th>
+        <th style={{ width: "14%", border: "1px solid #ccc", padding: "6px" }}>BOM Qty</th>
+        <th style={{ width: "12%", border: "1px solid #ccc", padding: "6px" }}>UoM</th>
+        <th style={{ width: "18%", border: "1px solid #ccc", padding: "6px" }}>Supplier</th>
+        <th style={{ width: "6%", border: "1px solid #ccc", padding: "6px" }}></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {materials.map((row, index) => (
+        <tr key={index}>
+          {/* Material dropdown */}
+          <td style={{ border: "1px solid #ccc" }}>
+            <select
+              style={{ width: "100%", border: "none", padding: "4px" }}
+              value={row.material}
+              onChange={(e) => handleChange(index, "material", e.target.value)}
+            >
+              <option value="">Select</option>
+              {options.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </td>
+
+          {/* Component input */}
+          <td style={{ border: "1px solid #ccc" }}>
+            <input
+              style={{ width: "100%", border: "none", padding: "4px" }}
+              value={row.component}
+              onChange={(e) => handleChange(index, "component", e.target.value)}
+            />
+          </td>
+
+          {/* Category dropdown */}
+          <td style={{ border: "1px solid #ccc" }}>
+            <select
+              style={{ width: "100%", border: "none", padding: "4px" }}
+              value={row.category}
+              onChange={(e) => handleChange(index, "category", e.target.value)}
+            >
+              <option value="">Select</option>
+              {options.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </td>
+
+          {/* Qty */}
+          <td style={{ border: "1px solid #ccc" }}>
+            <input
+              style={{ width: "100%", border: "none", padding: "4px" }}
+              value={row.qty}
+              onChange={(e) => handleChange(index, "qty", e.target.value)}
+            />
+          </td>
+
+          {/* UoM */}
+          <td style={{ border: "1px solid #ccc" }}>
+            <input
+              style={{ width: "100%", border: "none", padding: "4px" }}
+              value={row.uom}
+              onChange={(e) => handleChange(index, "uom", e.target.value)}
+            />
+          </td>
+
+          {/* Supplier */}
+          <td style={{ border: "1px solid #ccc" }}>
+            <input
+              style={{ width: "100%", border: "none", padding: "4px" }}
+              value={row.supplier}
+              onChange={(e) => handleChange(index, "supplier", e.target.value)}
+            />
+          </td>
+
+          {/* Delete button */}
+          <td style={{ border: "1px solid #ccc", textAlign: "center" }}>
+            <button
+              onClick={() => deleteRow(index)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "18px",
+                color: "#cc0000",
+              }}
+              title="Delete"
+            >
+              🗑
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
 </div>
 
+<button className="add-btn" onClick={addRow}>+ Add Material</button>
 
-            {materials.length > 0 && (
+
+            {/* {materials.length > 0 && (
               <div style={{ marginTop: 6 }}>
                 <strong style={{ fontSize: 13, color: 'var(--muted)' }}>Materials</strong>
                 <ul style={{ marginTop: 6 }}>
@@ -1022,7 +1170,7 @@ const handleSaveProject = () => {
                   ))}
                 </ul>
               </div>
-            )}
+            )} */}
 
             <div className="modal-actions">
               <button className="btn secondary" onClick={() => { setShowModal(false); resetForm(); }}>Cancel</button>

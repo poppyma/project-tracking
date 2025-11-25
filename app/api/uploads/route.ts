@@ -2,7 +2,12 @@
   import { initTables, query } from '../../../lib/db';
   import fs from 'fs/promises';
   import path from 'path';
-  import { supabase } from '../../../lib/supabaseClient';
+  import { createClient } from "@supabase/supabase-js";
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   export async function POST(req: Request) {
     try {
@@ -88,3 +93,5 @@
       return NextResponse.json({ error: err.message }, { status: 500 });
     }
   }
+
+  
