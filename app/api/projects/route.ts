@@ -53,28 +53,27 @@ export async function POST(req: Request) {
       const STATUS_COUNT = 9;
       const defaultStatus = JSON.stringify(Array(STATUS_COUNT).fill(false));
 
-      const materialPromises = materials.map((m: any) => {
-  const materialName =
-    m.name ?? m.material ?? m.namaMaterial ?? "";
-
-  return query(
+      
+      const materialPromises = materials.map((m: any) =>
+  query(
     `INSERT INTO materials
      (project_id, name, component, category, bom_qty, "UoM", supplier, status, percent)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
      RETURNING id, name, component, category, bom_qty, "UoM", supplier, status, percent`,
     [
       projectId,
-      materialName,
+      m.material ?? "",     // → name
       m.component ?? "",
       m.category ?? "",
-      m.bom_qty ?? 0,
-      m.UoM ?? "",
+      m.qty ?? 0,           // → bom_qty
+      m.uom ?? "",          // → UoM
       m.supplier ?? "",
       defaultStatus,
       0
     ]
-  );
-});
+  )
+);
+
 
 
       const results = await Promise.all(materialPromises);
