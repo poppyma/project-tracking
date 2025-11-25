@@ -209,14 +209,24 @@ const handleChange = (
     return checks.reduce((acc, c, i) => acc + (c ? STATUS_WEIGHTS[i] : 0), 0);
   }
 
-  function downloadFile(url: string, filename: string) {
+async function downloadFile(url: string, filename: string) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch file');
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
+    link.href = blobUrl;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
+    URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    console.error('Download failed', err);
+    alert('Download gagal');
   }
+}
 
   function normalizeStatusArray(src: any): boolean[] {
     if (!Array.isArray(src)) return Array(STATUS_COUNT).fill(false);
