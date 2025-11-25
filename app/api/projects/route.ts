@@ -11,10 +11,16 @@ export async function GET() {
           json_build_object(
             'id', m.id,
             'name', m.name,
+            'component', m.component,
+            'category', m.category,
+            'bom_qty', m.bom_qty,
+            'uom', m."UoM",
+            'supplier', m.supplier,
             'status', m.status,
             'percent', COALESCE(m.percent,0),
-            'attachments', COALESCE((SELECT json_agg(json_build_object('id', u.id, 'filename', u.filename, 'path', u.path, 'size', u.size, 'mime', u.mime, 'created_at', u.created_at)) FROM uploads u WHERE u.material_id = m.id), '[]')
+            'attachments', ...
           )
+
         ) FILTER (WHERE m.id IS NOT NULL), '[]') AS materials
       FROM projects p
       LEFT JOIN materials m ON m.project_id = p.id
