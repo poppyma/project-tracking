@@ -964,6 +964,8 @@ const handleSaveProject = () => {
                                     key={a.id}
                                     href={a.path}
                                     download={a.filename} // <- ini bikin file langsung download
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     style={{ fontSize: 12, color: 'var(--blue)' }}
                                   >
                                     📎 {a.filename}
