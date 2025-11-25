@@ -175,7 +175,17 @@ const handleChange = (
   }
 
   // sukses tambah → hapus error
-  setMaterials(prev => [...prev, materialInput.trim()]);
+  setMaterials(prev => [
+    ...prev,
+    {
+      material: materialInput.trim(),
+      component: "",
+      category: "",
+      qty: "",
+      uom: "",
+      supplier: ""
+    }
+  ]);
   setMaterialInput("");
   setErrors(prev => ({ ...prev, material: "" }));
 }
