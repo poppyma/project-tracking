@@ -75,102 +75,87 @@ export default function ProjectDetailPage() {
     ← Back to project list
   </button>
 
-  <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-    {/* Left Card: Project Details */}
-    <div className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
+  {/* Left Card: Project Details */}
+  <div className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
+    <div>
+      <div className="text-gray-500 font-semibold text-xl">Project Name:</div>
+      <div className="text-xl lg:text-4xl font-extrabold mt-2">{project.name}</div>
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div>
-        <div className="text-gray-500 font-semibold text-xl">Project Name:</div>
-        <div className="text-xl lg:text-4xl font-extrabold mt-2">{project.name}</div>
+        <div className="text-gray-500 text-base lg:text-lg">Customer:</div>
+        <div className="text-xl lg:text-xl">{project.customer}</div>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div>
-          <div className="text-gray-500 text-base lg:text-lg">Customer:</div>
-          <div className="text-xl lg:text-xl">{project.customer}</div>
-        </div>
-        <div>
-          <div className="text-gray-500 text-base lg:text-lg">Application:</div>
-          <div className="text-xl lg:text-xl">{project.application}</div>
-        </div>
-        <div>
-          <div className="text-gray-500 text-base lg:text-xl">Product Line:</div>
-          <div className="text-xl lg:text-xl">{project.product_line ?? project.productLine}</div>
-        </div>
-        <div>
-          <div className="text-gray-500 text-base lg:text-xl">Annual Volume:</div>
-          <div className="text-xl lg:text-xl">{project.anual_volume}</div>
-        </div>
-        <div className="sm:col-span-2">
-          <div className="text-gray-500 text-sm lg:text-xl">Est SOP Plan:</div>
-          <div className="text-xl lg:text-xl">{project.est_sop}</div>
-        </div>
+      <div>
+        <div className="text-gray-500 text-base lg:text-lg">Application:</div>
+        <div className="text-xl lg:text-xl">{project.application}</div>
+      </div>
+      <div>
+        <div className="text-gray-500 text-base lg:text-xl">Product Line:</div>
+        <div className="text-xl lg:text-xl">{project.product_line ?? project.productLine}</div>
+      </div>
+      <div>
+        <div className="text-gray-500 text-base lg:text-xl">Annual Volume:</div>
+        <div className="text-xl lg:text-xl">{project.anual_volume}</div>
+      </div>
+      <div className="sm:col-span-2">
+        <div className="text-gray-500 text-sm lg:text-xl">Est SOP Plan:</div>
+        <div className="text-xl lg:text-xl">{project.est_sop}</div>
       </div>
     </div>
-
-    {/* Right Card: Status & Materials */}
-    <div className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
-      {/* Status */}
-      <div className="flex flex-col items-start gap-5">
-        <div className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold text-lg lg:text-xl">
-          Status Project
-        </div>
-        <div className="text-6xl lg:text-5xl font-extrabold">{projPercent}%</div>
-      </div>
-
-      {/* Materials Table */}
-<div className="mt-10">
-  <div className="text-xl font-bold mb-4 text-blue-700">Material Details</div>
-
-  <div className="overflow-x-auto rounded-xl shadow">
-    <table className="min-w-full bg-white border border-gray-200 rounded-xl">
-      <thead>
-        <tr className="bg-blue-600 text-white text-left">
-          <th className="px-4 py-3">Name</th>
-          <th className="px-4 py-3">Component</th>
-          <th className="px-4 py-3">Category</th>
-          <th className="px-4 py-3">BOM Qty</th>
-          <th className="px-4 py-3">UoM</th>
-          <th className="px-4 py-3">Supplier</th>
-          <th className="px-4 py-3 text-center">Percent</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {project.materials.map((m) => (
-          <tr key={m.id} className="border-b hover:bg-gray-50 transition">
-            <td className="px-4 py-3 font-semibold">{m.name}</td>
-            <td className="px-4 py-3">
-              {m.component && m.component !== "" ? m.component : "-"}
-            </td>
-            <td className="px-4 py-3">
-              {m.category && m.category !== "" ? m.category : "-"}
-            </td>
-            <td className="px-4 py-3">
-              {m.bom_qty !== null && m.bom_qty !== undefined ? m.bom_qty : "-"}
-            </td>
-            <td className="px-4 py-3">
-              {m.UoM && m.UoM !== "" ? m.UoM : "-"}
-            </td>
-            <td className="px-4 py-3">
-              {m.supplier && m.supplier !== "" ? m.supplier : "-"}
-            </td>
-            <td className="px-4 py-3 text-center font-semibold text-blue-700">
-              {m.percent ?? 0}%
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
   </div>
-</div>
 
+  {/* Right Card: Status & Materials */}
+  <div className="bg-white rounded-2xl shadow-xl p-8 space-y-8">
+    {/* Status */}
+    <div className="flex flex-col items-start gap-5">
+      <div className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold text-lg lg:text-xl">
+        Status Project
+      </div>
+      <div className="text-6xl lg:text-5xl font-extrabold">{projPercent}%</div>
+    </div>
 
+    {/* Materials Table */}
+    <div className="mt-10">
+      <div className="text-xl font-bold mb-4 text-blue-700">Material Details</div>
 
-
+      <div className="overflow-x-auto rounded-xl shadow">
+        <table className="min-w-full bg-white border border-gray-200 rounded-xl">
+          <thead>
+            <tr className="bg-blue-600 text-white text-left">
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Component</th>
+              <th className="px-4 py-3">Category</th>
+              <th className="px-4 py-3">BOM Qty</th>
+              <th className="px-4 py-3">UoM</th>
+              <th className="px-4 py-3">Supplier</th>
+              <th className="px-4 py-3 text-center">Percent</th>
+            </tr>
+          </thead>
+          <tbody>
+            {project.materials.map((m) => (
+              <tr key={m.id} className="border-b hover:bg-gray-50 transition">
+                <td className="px-4 py-3 font-semibold">{m.name}</td>
+                <td className="px-4 py-3">{m.component || "-"}</td>
+                <td className="px-4 py-3">{m.category || "-"}</td>
+                <td className="px-4 py-3">{m.bom_qty ?? "-"}</td>
+                <td className="px-4 py-3">{m.UoM || "-"}</td>
+                <td className="px-4 py-3">{m.supplier || "-"}</td>
+                <td className="px-4 py-3 text-center font-semibold text-blue-700">{m.percent ?? 0}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
+
 </div>
+
+  </div>
 
   );
 }
