@@ -6,7 +6,21 @@ import { useParams, useRouter } from 'next/navigation';
 const STATUS_WEIGHTS = [10,20,10,10,20,10,10,5,5];
 const STATUS_LABELS = ['Sourching','Quotation','PO Sample','Sample Received','Trial Proses & Report','MOC Release','PPAP & PSW','PO Maspro','Item Receive'];
 
-type Material = { id: number; name: string; percent?: number; status?: boolean[] };
+// type Material = { id: number; name: string; percent?: number; status?: boolean[] };
+
+type Material = {
+  id: number;
+  project_id: number;
+  name: string;
+  component?: string;
+  category?: string;
+  bom_qty?: number;
+  UoM?: string;
+  supplier?: string;
+  status?: boolean[];
+  percent?: number;
+};
+
 type Project = { id: number; name: string; customer?: string; application?: string; product_line?: string; productLine?: string; anual_volume?: string; est_sop?: string; percent?: number; materials: Material[] };
 
 export default function ProjectDetailPage() {
@@ -104,26 +118,53 @@ export default function ProjectDetailPage() {
         <div className="text-6xl lg:text-5xl font-extrabold">{projPercent}%</div>
       </div>
 
-      {/* Materials List */}
-      <div className="space-y-4 mt-6">
-        {project.materials.map((m) => (
-          <div
-            key={m.id}
-            className="flex justify-between items-center p-4 rounded-xl bg-gray-50 shadow-md"
-          >
-            <div className="flex items-center gap-4">
-              <div
-                className={`w-5 h-5 rounded-sm border ${m.status?.[0] ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}
-              />
-              <div className="font-semibold text-lg lg:text-xl">{m.name}</div>
-              <div className="text-gray-400 text-lg lg:text-xl">({m.percent ?? 0}%)</div>
-            </div>
-            <div className="text-right text-gray-500 font-semibold text-lg lg:text-xl w-24">
-              {m.percent ?? 0}%
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Materials Table */}
+<div className="mt-6">
+  <table className="w-full border-collapse rounded-xl overflow-hidden shadow-md">
+    <thead>
+      <tr className="bg-blue-600 text-white text-left text-lg">
+        <th className="px-4 py-3">Name</th>
+        <th className="px-4 py-3">Component</th>
+        <th className="px-4 py-3">Category</th>
+        <th className="px-4 py-3">BOM Qty</th>
+        <th className="px-4 py-3">UoM</th>
+        <th className="px-4 py-3">Supplier</th>
+        <th className="px-4 py-3 text-center">Status</th>
+        <th className="px-4 py-3 text-center">Progress</th>
+      </tr>
+    </thead>
+    <tbody>
+      {project.materials.map((m, index) => (
+        <tr
+          key={m.id}
+          className={`text-lg ${
+            index % 2 === 0 ? "bg-white" : "bg-gray-50"
+          } hover:bg-gray-100 transition-colors`}
+        >
+          <td className="px-4 py-3 font-semibold">{m.name}</td>
+          <td className="px-4 py-3">{m.component}</td>
+          <td className="px-4 py-3">{m.category}</td>
+          <td className="px-4 py-3">{m.bom_qty}</td>
+          <td className="px-4 py-3">{m.UoM}</td>
+          <td className="px-4 py-3">{m.supplier}</td>
+
+          {/* Status → tampilkan jumlah status yg sudah true */}
+          <td className="px-4 py-3 text-center">
+            {Array.isArray(m.status)
+              ? `${m.status.filter(Boolean).length}/${m.status.length}`
+              : "0/9"}
+          </td>
+
+          {/* Percent */}
+          <td className="px-4 py-3 text-center font-semibold">
+            {m.percent ?? 0}%
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
     </div>
   </div>
 </div>
