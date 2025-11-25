@@ -1072,7 +1072,12 @@ const handleSaveProject = () => {
         <th style={{ width: "18%", border: "1px solid #ccc", padding: "6px" }}>Material</th>
         <th style={{ width: "18%", border: "1px solid #ccc", padding: "6px" }}>Component</th>
         <th style={{ width: "14%", border: "1px solid #ccc", padding: "6px" }}>Category</th>
-        <th style={{ width: "14%", border: "1px solid #ccc", padding: "6px" }}>BOM Qty</th>
+        <th style={{ width: "14%", border: "1px solid #ccc", padding: "6px" }}>
+          BOM Qty
+          <div style={{ fontSize: "10px", color: "red", fontWeight: "normal" }}>
+            Gunakan titik (.) sebagai desimal, bukan koma
+          </div>
+        </th>
         <th style={{ width: "12%", border: "1px solid #ccc", padding: "6px" }}>UoM</th>
         <th style={{ width: "18%", border: "1px solid #ccc", padding: "6px" }}>Supplier</th>
         <th style={{ width: "6%", border: "1px solid #ccc", padding: "6px" }}></th>
