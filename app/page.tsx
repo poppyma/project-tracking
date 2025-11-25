@@ -85,19 +85,7 @@ const handleChange = (
         anualVolume: r.anual_volume ?? r.anualVolume ?? '',
         estSop: r.est_sop ?? r.estSop ?? '',
         percent: r.percent ?? 0,
-        materials: (r.materials || []).map((m: any) => ({
-  id: m.id,
-  name: m.name,
-  component: m.component,
-  category: m.category,
-  qty: m.bom_qty,
-  uom: m.uom,
-  supplier: m.supplier,
-  percent: m.percent,
-  status: m.status,
-  attachments: m.attachments,
-}))
-
+        materials: (r.materials || []).map((m: any) => ({ id: m.id, name: m.name, percent: m.percent, status: m.status, attachments: m.attachments })) as any,
       }));
 
       const initialStatuses: Record<number, boolean[][]> = {};
