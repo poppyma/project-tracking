@@ -53,6 +53,8 @@ const deleteRow = (index: number) => {
   setMaterials(materials.filter((_, i) => i !== index));
 };
 
+const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
+
 const handleChange = (
   index: number,
   field: keyof (typeof materials)[number],
@@ -430,6 +432,7 @@ const handleChange = (
 
   function confirmNo() { setConfirm({ open: false }); }
 
+  
   // Upload handlers
   function openUpload(projectId: number, materialId?: number, materialIndex?: number, statusIndex?: number) {
     setUploadTarget({ projectId, materialId, materialIndex, statusIndex });
@@ -465,40 +468,45 @@ const handleChange = (
   }
 
   async function doUploadFiles() {
-    try {
-      if (!uploadTarget || !uploadTarget.projectId) {
-        alert('Tidak ada project terpilih');
-        return;
-      }
-      const fd = new FormData();
-      fd.append('projectId', String(uploadTarget.projectId));
-      if (uploadTarget.materialId) fd.append('materialId', String(uploadTarget.materialId));
-      if (uploadTarget.statusIndex != null) fd.append('statusIndex', String(uploadTarget.statusIndex));
-      uploadFiles.forEach((f) => fd.append('files', f));
-
-      const res = await fetch('/api/uploads', { method: 'POST', body: fd });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error || 'Upload failed');
-      }
-      const data = await res.json();
-
-      // refresh projects list to fetch new attachments
-      await reloadProjects();
-      // refresh project uploads if a project is selected
-      if (selectedProjectId) {
-        const r2 = await fetch(`/api/uploads?projectId=${selectedProjectId}`);
-        if (r2.ok) setProjectUploads(await r2.json());
-      }
-
-      setShowUploadModal(false);
-      setShowUploadSuccess(true);
-      setTimeout(() => setShowUploadSuccess(false), 1600);
-    } catch (err: any) {
-      console.error('Upload failed', err);
-      alert('Upload gagal: ' + (err?.message || String(err)));
-    }
+  if (!uploadTarget || !uploadTarget.projectId) {
+    alert('Tidak ada project terpilih');
+    return;
   }
+
+  try {
+    // mulai loading untuk kolom tertentu
+    setLoadingIndex(uploadTarget.statusIndex ?? null);
+
+    const fd = new FormData();
+    fd.append('projectId', String(uploadTarget.projectId));
+    if (uploadTarget.materialId) fd.append('materialId', String(uploadTarget.materialId));
+    if (uploadTarget.statusIndex != null) fd.append('statusIndex', String(uploadTarget.statusIndex));
+    uploadFiles.forEach((f) => fd.append('files', f));
+
+    const res = await fetch('/api/uploads', { method: 'POST', body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || 'Upload failed');
+    }
+    const data = await res.json();
+
+    // refresh projects & uploads
+    await reloadProjects();
+    if (selectedProjectId) {
+      const r2 = await fetch(`/api/uploads?projectId=${selectedProjectId}`);
+      if (r2.ok) setProjectUploads(await r2.json());
+    }
+
+    setShowUploadModal(false);
+    setShowUploadSuccess(true);
+    setTimeout(() => setShowUploadSuccess(false), 1600);
+  } catch (err: any) {
+    console.error('Upload failed', err);
+    alert('Upload gagal: ' + (err?.message || String(err)));
+  } finally {
+    setLoadingIndex(null); // selesai loading
+  }
+}
 
   async function deleteProjectById(projectId: number) {
     if (!window.confirm('Hapus project ini?')) return;
@@ -601,7 +609,6 @@ const [errors, setErrors] = useState({
   material: "",
 });
 
-const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
 const options = [
   "Innering",
@@ -1292,7 +1299,13 @@ const handleSaveProject = () => {
 
             <div className="upload-actions">
               <button className="btn secondary" onClick={() => setShowUploadModal(false)}>Cancel</button>
-              <button className="btn" onClick={doUploadFiles} disabled={uploadFiles.length === 0}>Upload</button>
+<button
+  className="btn"
+  onClick={doUploadFiles}
+  disabled={uploadFiles.length === 0 || loadingIndex !== null} // disable saat loading
+>
+  {loadingIndex !== null ? "Uploading…" : "Upload"}
+</button>
             </div>
           </div>
         </div>
