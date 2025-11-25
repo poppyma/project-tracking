@@ -601,6 +601,8 @@ const [errors, setErrors] = useState({
   material: "",
 });
 
+const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
+
 const options = [
   "Innering",
   "Outer Ring",
@@ -867,38 +869,59 @@ const handleSaveProject = () => {
               </tr>
               <tr>
                 <th></th>
-                {Array.from({ length: STATUS_COUNT }).map((_, i) => (
-                  <th key={i} style={{ fontWeight: 600 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-                      <button
-                        className="upload-btn"
-                        onClick={(e) => { e.stopPropagation(); if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; } openUpload(selectedProjectId, undefined, undefined, i); }}
-                        aria-label={`Upload column ${i}`}
-                      >⬆ Upload</button>
 
-                      <button
-                        className="attach-btn"
-                        onClick={(e) => { e.stopPropagation(); if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; } openAttachments(i); }}
-                        aria-label={`Attachments column ${i}`}
-                      >
-                        📎 {projectUploads.filter((u) => Number(u && (u as any).status_index) === i).length}
-                      </button>
-                      <button
-                        className="remark-btn"
-                        onClick={(e) => { e.stopPropagation(); if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; } setRemarkModal({ open: true, statusIndex: i, text: '' }); }}
-                        aria-label={`Remark column ${i}`}
-                      >
-                        📝 Remark
-                      </button>
-                      {remarksMap && remarksMap[i] && remarksMap[i].length > 0 && (
-                        <div onClick={(e) => { e.stopPropagation(); openRemarks(i); }} style={{ marginTop: 6, maxWidth: 160, textAlign: 'center', cursor: 'pointer' }}>
-                          <div style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{remarksMap[i][0].text}</div>
-                          <div style={{ fontSize: 10, color: 'var(--muted)' }}>{new Date(remarksMap[i][0].created_at).toLocaleString()}</div>
-                        </div>
-                      )}
-                    </div>
-                  </th>
-                ))}
+                const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
+
+{Array.from({ length: STATUS_COUNT }).map((_, i) => (
+  <th key={i} style={{ fontWeight: 600 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+      <button
+        className="upload-btn"
+        onClick={async (e) => {
+          e.stopPropagation();
+          if (!selectedProjectId) {
+            alert('Pilih project terlebih dahulu');
+            return;
+          }
+          setLoadingIndex(i); // mulai loading
+          try {
+            await openUpload(selectedProjectId, undefined, undefined, i); // pastikan openUpload mengembalikan Promise
+          } finally {
+            setLoadingIndex(null); // selesai loading
+          }
+        }}
+        aria-label={`Upload column ${i}`}
+        disabled={loadingIndex === i} // disable tombol saat loading
+      >
+        {loadingIndex === i ? "Uploading…" : "⬆ Upload"}
+      </button>
+
+      <button
+        className="attach-btn"
+        onClick={(e) => { e.stopPropagation(); if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; } openAttachments(i); }}
+        aria-label={`Attachments column ${i}`}
+      >
+        📎 {projectUploads.filter((u) => Number(u && (u as any).status_index) === i).length}
+      </button>
+
+      <button
+        className="remark-btn"
+        onClick={(e) => { e.stopPropagation(); if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; } setRemarkModal({ open: true, statusIndex: i, text: '' }); }}
+        aria-label={`Remark column ${i}`}
+      >
+        📝 Remark
+      </button>
+
+      {remarksMap && remarksMap[i] && remarksMap[i].length > 0 && (
+        <div onClick={(e) => { e.stopPropagation(); openRemarks(i); }} style={{ marginTop: 6, maxWidth: 160, textAlign: 'center', cursor: 'pointer' }}>
+          <div style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{remarksMap[i][0].text}</div>
+          <div style={{ fontSize: 10, color: 'var(--muted)' }}>{new Date(remarksMap[i][0].created_at).toLocaleString()}</div>
+        </div>
+      )}
+    </div>
+  </th>
+))}
+
                 <th></th>
               </tr>
             </thead>
