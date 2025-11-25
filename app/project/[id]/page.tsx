@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { v4 as uuidv4 } from "uuid";
 
 const STATUS_WEIGHTS = [10,20,10,10,20,10,10,5,5];
 const STATUS_LABELS = ['Sourching','Quotation','PO Sample','Sample Received','Trial Proses & Report','MOC Release','PPAP & PSW','PO Maspro','Item Receive'];
@@ -160,30 +161,33 @@ export default function ProjectDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {project.materials.map((m) => (
-              <tr key={m.id} className="border-b hover:bg-gray-50 transition">
-                <td className="px-4 py-3 font-semibold">{m.name}</td>
-                <td className="px-4 py-3">{m.component || "-"}</td>
-                <td className="px-4 py-3">{m.category || "-"}</td>
-                <td className="px-4 py-3">{m.bom_qty ?? "-"}</td>
-                <td className="px-4 py-3">{m.UoM || "-"}</td>
-                <td className="px-4 py-3">{m.supplier || "-"}</td>
-                <td className="px-4 py-3 text-center font-semibold text-blue-700">{m.percent ?? 0}%</td>
-              </tr>
-            ))}
-          </tbody>
+  {project.materials
+    .slice() // clone array biar tidak mutate state
+    .sort((a, b) => {
+      // jika id number, urut ascending
+      return Number(a.id) - Number(b.id);
+      
+      // jika id string (uuid), bisa pakai timestamp atau urutkan sesuai array index saat simpan
+      // return 0; // default: tidak diubah
+    })
+    .map((m) => (
+      <tr key={m.id} className="border-b hover:bg-gray-50 transition">
+        <td className="px-4 py-3 font-semibold">{m.name}</td>
+        <td className="px-4 py-3">{m.component || "-"}</td>
+        <td className="px-4 py-3">{m.category || "-"}</td>
+        <td className="px-4 py-3">{m.bom_qty ?? "-"}</td>
+        <td className="px-4 py-3">{m.UoM || "-"}</td>
+        <td className="px-4 py-3">{m.supplier || "-"}</td>
+        <td className="px-4 py-3 text-center font-semibold text-blue-700">{m.percent ?? 0}%</td>
+      </tr>
+    ))}
+</tbody>
+
         </table>
       </div>
     </div>
   </div>
-
 </div>
-
-
-
-
 </div>
-
-
   );
 }
