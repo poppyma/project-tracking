@@ -209,6 +209,15 @@ const handleChange = (
     return checks.reduce((acc, c, i) => acc + (c ? STATUS_WEIGHTS[i] : 0), 0);
   }
 
+  function downloadFile(url: string, filename: string) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   function normalizeStatusArray(src: any): boolean[] {
     if (!Array.isArray(src)) return Array(STATUS_COUNT).fill(false);
     const arr = src.map((v: any) => Boolean(v));
@@ -961,14 +970,12 @@ const handleSaveProject = () => {
                               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                 {(m as any).attachments.map((a: any) => (
                                   <a
-                                    key={a.id}
                                     href={a.path}
-                                    download={a.filename} // <- ini bikin file langsung download
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{ fontSize: 12, color: 'var(--blue)' }}
                                   >
-                                    📎 {a.filename}
+                                    🔗 {a.filename}
                                   </a>
 
                                 ))}
@@ -1351,8 +1358,15 @@ const handleSaveProject = () => {
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <a className="btn secondary" href={a.path} target="_blank" rel="noreferrer">Open</a>
-                        <a className="btn" href={a.path} download>Download</a>
+                        <a className="btn secondary" href={a.path} target="_blank" rel="noreferrer">
+                          Open
+                        </a>
+                        <button
+                          className="btn"
+                          onClick={() => downloadFile(a.path, a.filename)}
+                        >
+                          Download
+                        </button>
                       </div>
                     </div>
                   ))}
