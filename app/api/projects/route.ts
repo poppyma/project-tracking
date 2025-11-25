@@ -11,6 +11,11 @@ export async function GET() {
           json_build_object(
             'id', m.id,
             'name', m.name,
+            'component', m.component,
+            'category', m.category,
+            'bom_qty', m.bom_qty,
+            'UoM', m."UoM",
+            'supplier', m.supplier,
             'status', m.status,
             'percent', COALESCE(m.percent,0),
             'attachments', COALESCE((SELECT json_agg(json_build_object('id', u.id, 'filename', u.filename, 'path', u.path, 'size', u.size, 'mime', u.mime, 'created_at', u.created_at)) FROM uploads u WHERE u.material_id = m.id), '[]')
@@ -67,8 +72,8 @@ export async function POST(req: Request) {
       materialName,
       m.component ?? "",
       m.category ?? "",
-      m.bom_qty ?? 0,
-      m.UoM ?? "",
+      m.qty ?? 0,
+      m.uom ?? "",
       m.supplier ?? "",
       defaultStatus,
       0
