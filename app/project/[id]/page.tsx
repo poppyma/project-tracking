@@ -119,51 +119,54 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Materials Table */}
-<div className="mt-6">
-  <table className="w-full border-collapse rounded-xl overflow-hidden shadow-md">
-    <thead>
-      <tr className="bg-blue-600 text-white text-left text-lg">
-        <th className="px-4 py-3">Name</th>
-        <th className="px-4 py-3">Component</th>
-        <th className="px-4 py-3">Category</th>
-        <th className="px-4 py-3">BOM Qty</th>
-        <th className="px-4 py-3">UoM</th>
-        <th className="px-4 py-3">Supplier</th>
-        <th className="px-4 py-3 text-center">Status</th>
-        <th className="px-4 py-3 text-center">Progress</th>
-      </tr>
-    </thead>
-    <tbody>
-      {project.materials.map((m, index) => (
-        <tr
-          key={m.id}
-          className={`text-lg ${
-            index % 2 === 0 ? "bg-white" : "bg-gray-50"
-          } hover:bg-gray-100 transition-colors`}
-        >
-          <td className="px-4 py-3 font-semibold">{m.name}</td>
-          <td className="px-4 py-3">{m.component}</td>
-          <td className="px-4 py-3">{m.category}</td>
-          <td className="px-4 py-3">{m.bom_qty}</td>
-          <td className="px-4 py-3">{m.UoM}</td>
-          <td className="px-4 py-3">{m.supplier}</td>
+<div className="mt-10">
+  <div className="text-xl font-bold mb-4 text-blue-700">Material Details</div>
 
-          {/* Status → tampilkan jumlah status yg sudah true */}
-          <td className="px-4 py-3 text-center">
-            {Array.isArray(m.status)
-              ? `${m.status.filter(Boolean).length}/${m.status.length}`
-              : "0/9"}
-          </td>
-
-          {/* Percent */}
-          <td className="px-4 py-3 text-center font-semibold">
-            {m.percent ?? 0}%
-          </td>
+  <div className="overflow-x-auto rounded-xl shadow">
+    <table className="min-w-full bg-white border border-gray-200 rounded-xl">
+      <thead>
+        <tr className="bg-blue-600 text-white text-left">
+          <th className="px-4 py-3">Name</th>
+          <th className="px-4 py-3">Component</th>
+          <th className="px-4 py-3">Category</th>
+          <th className="px-4 py-3">BOM Qty</th>
+          <th className="px-4 py-3">UoM</th>
+          <th className="px-4 py-3">Supplier</th>
+          <th className="px-4 py-3 text-center">Percent</th>
         </tr>
-      ))}
-    </tbody>
-  </table>
+      </thead>
+
+      <tbody>
+        {project.materials.map((m) => (
+          <tr key={m.id} className="border-b hover:bg-gray-50 transition">
+            <td className="px-4 py-3 font-semibold">{m.name}</td>
+            <td className="px-4 py-3">
+              {m.component && m.component !== "" ? m.component : "-"}
+            </td>
+            <td className="px-4 py-3">
+              {m.category && m.category !== "" ? m.category : "-"}
+            </td>
+            <td className="px-4 py-3">
+              {m.bom_qty !== null && m.bom_qty !== undefined ? m.bom_qty : "-"}
+            </td>
+            <td className="px-4 py-3">
+              {m.UoM && m.UoM !== "" ? m.UoM : "-"}
+            </td>
+            <td className="px-4 py-3">
+              {m.supplier && m.supplier !== "" ? m.supplier : "-"}
+            </td>
+            <td className="px-4 py-3 text-center font-semibold text-blue-700">
+              {m.percent ?? 0}%
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
 </div>
+
+
+
 
     </div>
   </div>
