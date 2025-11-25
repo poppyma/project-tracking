@@ -78,7 +78,8 @@ export default function ProjectDetailPage() {
 <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_2fr] gap-8">
 
   {/* Left Card: Project Details */}
-  <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+  <div className="bg-white rounded-2xl shadow-xl p-8 space-y-4">
+    {/* Project Name */}
     <div>
       <div className="text-gray-500 font-semibold text-lg sm:text-base md:text-lg lg:text-xl">
         Project Name:
@@ -88,39 +89,46 @@ export default function ProjectDetailPage() {
       </div>
     </div>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <div className="text-gray-500 text-sm sm:text-base md:text-sm lg:text-base">
-          Customer:
-        </div>
-        <div className="text-lg sm:text-xl md:text-lg lg:text-xl break-words">{project.customer}</div>
+    {/* Customer */}
+    <div>
+      <div className="text-gray-500 text-sm sm:text-base md:text-sm lg:text-base">
+        Customer:
       </div>
-      <div>
-        <div className="text-gray-500 text-sm sm:text-base md:text-sm lg:text-base">
-          Application:
-        </div>
-        <div className="text-lg sm:text-xl md:text-lg lg:text-xl break-words">{project.application}</div>
+      <div className="text-lg sm:text-xl md:text-lg lg:text-xl break-words">{project.customer}</div>
+    </div>
+
+    {/* Application */}
+    <div>
+      <div className="text-gray-500 text-sm sm:text-base md:text-sm lg:text-base">
+        Application:
       </div>
-      <div>
-        <div className="text-gray-500 text-sm sm:text-base md:text-sm lg:text-base">
-          Product Line:
-        </div>
-        <div className="text-lg sm:text-xl md:text-lg lg:text-xl break-words">
-          {project.product_line ?? project.productLine}
-        </div>
+      <div className="text-lg sm:text-xl md:text-lg lg:text-xl break-words">{project.application}</div>
+    </div>
+
+    {/* Product Line */}
+    <div>
+      <div className="text-gray-500 text-sm sm:text-base md:text-sm lg:text-base">
+        Product Line:
       </div>
-      <div>
-        <div className="text-gray-500 text-sm sm:text-base md:text-sm lg:text-base">
-          Annual Volume:
-        </div>
-        <div className="text-lg sm:text-xl md:text-lg lg:text-xl break-words">{project.anual_volume}</div>
+      <div className="text-lg sm:text-xl md:text-lg lg:text-xl break-words">
+        {project.product_line ?? project.productLine}
       </div>
-      <div className="sm:col-span-2">
-        <div className="text-gray-500 text-sm sm:text-base md:text-sm lg:text-base">
-          Est SOP Plan:
-        </div>
-        <div className="text-lg sm:text-xl md:text-lg lg:text-xl break-words">{project.est_sop}</div>
+    </div>
+
+    {/* Annual Volume */}
+    <div>
+      <div className="text-gray-500 text-sm sm:text-base md:text-sm lg:text-base">
+        Annual Volume:
       </div>
+      <div className="text-lg sm:text-xl md:text-lg lg:text-xl break-words">{project.anual_volume}</div>
+    </div>
+
+    {/* Est SOP Plan */}
+    <div>
+      <div className="text-gray-500 text-sm sm:text-base md:text-sm lg:text-base">
+        Est SOP Plan:
+      </div>
+      <div className="text-lg sm:text-xl md:text-lg lg:text-xl break-words">{project.est_sop}</div>
     </div>
   </div>
 
@@ -171,7 +179,6 @@ export default function ProjectDetailPage() {
 
 </div>
 
- 
 
 
 
