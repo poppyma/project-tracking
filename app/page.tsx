@@ -870,7 +870,6 @@ const handleSaveProject = () => {
               <tr>
                 <th></th>
 
-                const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
 {Array.from({ length: STATUS_COUNT }).map((_, i) => (
   <th key={i} style={{ fontWeight: 600 }}>
