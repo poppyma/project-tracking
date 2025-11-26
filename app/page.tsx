@@ -76,7 +76,21 @@ async function reloadProjects() {
       anualVolume: r.anual_volume ?? r.anualVolume ?? '',
       estSop: r.est_sop ?? r.estSop ?? '',
       percent: r.percent ?? 0,
-      materials: (r.materials || []).map((m: any) => ({ id: m.id, name: m.name, percent: m.percent, status: m.status, attachments: m.attachments })) as any,
+      materials: (r.materials || [])
+  .sort((a: any, b: any) => a.id - b.id)  // <--- tambahkan ini
+  .map((m: any) => ({
+    id: m.id,
+    name: m.name,
+    percent: m.percent,
+    status: m.status,
+    attachments: m.attachments,
+    component: m.component,
+    category: m.category,
+    bom_qty: m.bom_qty,
+    UoM: m.UoM,
+    supplier: m.supplier
+  })) as any,
+
     }));
 
     const initialStatuses: Record<number, boolean[][]> = {};
