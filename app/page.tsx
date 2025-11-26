@@ -64,64 +64,31 @@ function resetForm() {
 
 async function reloadProjects() {
   try {
-    const res = await fetch("/api/projects");
+    const res = await fetch('/api/projects');
     if (!res.ok) return;
-
     const data = await res.json();
+    const list: Project[] = data.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      customer: r.customer,
+      application: r.application,
+      productLine: r.product_line ?? r.productLine ?? '',
+      anualVolume: r.anual_volume ?? r.anualVolume ?? '',
+      estSop: r.est_sop ?? r.estSop ?? '',
+      percent: r.percent ?? 0,
+      materials: (r.materials || []).map((m: any) => ({ id: m.id, name: m.name, percent: m.percent, status: m.status, attachments: m.attachments })) as any,
+    }));
 
-    // ============================================
-    // 1️⃣ Sort materials sejak awal
-    // ============================================
-    const list: Project[] = data.map((r: any) => {
-      const sortedMaterials = [...(r.materials || [])].sort(
-        (a: any, b: any) => a.id - b.id
-      );
-
-      return {
-        id: r.id,
-        name: r.name,
-        customer: r.customer,
-        application: r.application,
-        productLine: r.product_line ?? r.productLine ?? "",
-        anualVolume: r.anual_volume ?? r.anualVolume ?? "",
-        estSop: r.est_sop ?? r.estSop ?? "",
-        percent: r.percent ?? 0,
-
-        // materials harus di-sort di sini
-        materials: sortedMaterials.map((m: any) => ({
-          id: m.id,
-          name: m.name,
-          percent: m.percent,
-          status: m.status,
-          component: m.component,
-          category: m.category,
-          bom_qty: m.bom_qty,
-          UoM: m.UoM,
-          supplier: m.supplier,
-          attachments: m.attachments,
-        })),
-      };
-    });
-
-    // ============================================
-    // 2️⃣ Status materials JUGA mengikuti urutan sort
-    // ============================================
     const initialStatuses: Record<number, boolean[][]> = {};
-
     list.forEach((proj) => {
-      // status harus urut sesuai sorted materials
-      initialStatuses[proj.id] = proj.materials.map((m: any) =>
-        normalizeStatusArray(m.status)
-      );
+      initialStatuses[proj.id] = (proj.materials || []).map((m: any) => normalizeStatusArray((m as any).status));
     });
 
     setProjects(list);
     setStatuses(initialStatuses);
-
-    // restore project selection
     try {
-      if (typeof window !== "undefined") {
-        const stored = window.localStorage.getItem("selectedProjectId");
+      if (typeof window !== 'undefined') {
+        const stored = window.localStorage.getItem('selectedProjectId');
         if (stored) {
           const sid = Number(stored);
           const found = list.find((p) => p.id === sid);
@@ -131,13 +98,12 @@ async function reloadProjects() {
         }
       }
     } catch (err) {
-      console.error("Failed to restore selected project", err);
+      console.error('Failed to restore selected project', err);
     }
   } catch (err) {
-    console.error("Failed to load projects", err);
+    console.error('Failed to load projects', err);
   }
 }
-
 
 useEffect(() => { reloadProjects(); }, []);
 
