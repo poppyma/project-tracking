@@ -76,21 +76,7 @@ async function reloadProjects() {
       anualVolume: r.anual_volume ?? r.anualVolume ?? '',
       estSop: r.est_sop ?? r.estSop ?? '',
       percent: r.percent ?? 0,
-      materials: (r.materials || [])
-      .sort((a: any, b: any) => a.id - b.id)  // <--- tambahkan ini
-      .map((m: any) => ({
-        id: m.id,
-        name: m.name,
-        percent: m.percent,
-        status: m.status,
-        attachments: m.attachments,
-        component: m.component,
-        category: m.category,
-        bom_qty: m.bom_qty,
-        UoM: m.UoM,
-        supplier: m.supplier
-      })) as any,
-
+      materials: (r.materials || []).map((m: any) => ({ id: m.id, name: m.name, percent: m.percent, status: m.status, attachments: m.attachments })) as any,
     }));
 
     const initialStatuses: Record<number, boolean[][]> = {};
@@ -722,14 +708,7 @@ const handleSaveProject = () => {
               </tr>
             ) : (
               currentProjects.map((proj) => {
-                const sortedMaterials = [...proj.materials].sort((a, b) => a.id - b.id);
-                const projStatuses = statuses[proj.id] 
-                  ?? sortedMaterials.map((m) =>
-                      Array.isArray((m as any).status)
-                        ? (m as any).status.map((v: any) => Boolean(v))
-                        : Array(STATUS_COUNT).fill(false)
-                    );
-
+                const projStatuses = statuses[proj.id] ?? proj.materials.map((m) => (Array.isArray((m as any).status) ? (m as any).status.map((v:any)=>Boolean(v)) : Array(STATUS_COUNT).fill(false)));
                 let projPercent = 0;
                 if (proj.materials.length > 0) {
                   const total = proj.materials.reduce((acc, m, mi) => {
@@ -936,11 +915,9 @@ const handleSaveProject = () => {
                     );
                   }
 
-
-                  const sortedMaterials = [...proj.materials].sort((a, b) => a.id - b.id);
                   const projectStatuses = statuses[proj.id] ?? proj.materials.map(() => Array(STATUS_COUNT).fill(false));
 
-                  return sortedMaterials.map((m, mi) => {
+                  return proj.materials.map((m, mi) => {
                     const checks = projectStatuses[mi] || Array(STATUS_COUNT).fill(false);
                     const percent = computeMaterialPercentFromChecks(checks);
                     return (
