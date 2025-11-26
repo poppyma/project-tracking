@@ -56,114 +56,111 @@ const handleChange = (
 };
 
 
-  function resetForm() {
-    setForm({ name: "", customer: "", application: "", productLine: "", anualVolume: "", estSop: "", material: ""});
-    setMaterials([]);
-    setMaterialInput("");
-  }
+function resetForm() {
+  setForm({ name: "", customer: "", application: "", productLine: "", anualVolume: "", estSop: "", material: ""});
+  setMaterials([]);
+  setMaterialInput("");
+}
 
-  async function reloadProjects() {
+async function reloadProjects() {
+  try {
+    const res = await fetch('/api/projects');
+    if (!res.ok) return;
+    const data = await res.json();
+    const list: Project[] = data.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      customer: r.customer,
+      application: r.application,
+      productLine: r.product_line ?? r.productLine ?? '',
+      anualVolume: r.anual_volume ?? r.anualVolume ?? '',
+      estSop: r.est_sop ?? r.estSop ?? '',
+      percent: r.percent ?? 0,
+      materials: (r.materials || []).map((m: any) => ({ id: m.id, name: m.name, percent: m.percent, status: m.status, attachments: m.attachments })) as any,
+    }));
+
+    const initialStatuses: Record<number, boolean[][]> = {};
+    list.forEach((proj) => {
+      initialStatuses[proj.id] = (proj.materials || []).map((m: any) => normalizeStatusArray((m as any).status));
+    });
+
+    setProjects(list);
+    setStatuses(initialStatuses);
     try {
-      const res = await fetch('/api/projects');
-      if (!res.ok) return;
-      const data = await res.json();
-      const list: Project[] = data.map((r: any) => ({
-        id: r.id,
-        name: r.name,
-        customer: r.customer,
-        application: r.application,
-        productLine: r.product_line ?? r.productLine ?? '',
-        anualVolume: r.anual_volume ?? r.anualVolume ?? '',
-        estSop: r.est_sop ?? r.estSop ?? '',
-        percent: r.percent ?? 0,
-        materials: (r.materials || []).map((m: any) => ({ id: m.id, name: m.name, percent: m.percent, status: m.status, attachments: m.attachments })) as any,
-      }));
-
-      const initialStatuses: Record<number, boolean[][]> = {};
-      list.forEach((proj) => {
-        initialStatuses[proj.id] = (proj.materials || []).map((m: any) => normalizeStatusArray((m as any).status));
-      });
-
-      setProjects(list);
-      setStatuses(initialStatuses);
-      try {
-        if (typeof window !== 'undefined') {
-          const stored = window.localStorage.getItem('selectedProjectId');
-          if (stored) {
-            const sid = Number(stored);
-            const found = list.find((p) => p.id === sid);
-            if (found) {
-              selectProject(sid);
-            }
+      if (typeof window !== 'undefined') {
+        const stored = window.localStorage.getItem('selectedProjectId');
+        if (stored) {
+          const sid = Number(stored);
+          const found = list.find((p) => p.id === sid);
+          if (found) {
+            selectProject(sid);
           }
         }
-      } catch (err) {
-        console.error('Failed to restore selected project', err);
       }
     } catch (err) {
-      console.error('Failed to load projects', err);
+      console.error('Failed to restore selected project', err);
     }
+  } catch (err) {
+    console.error('Failed to load projects', err);
   }
+}
 
-  useEffect(() => { reloadProjects(); }, []);
+useEffect(() => { reloadProjects(); }, []);
 
-  async function handleSave() {
-    try {
-      const payload = {
-        name: form.name,
-        customer: form.customer,
-        application: form.application,
-        productLine: form.productLine,
-        anualVolume: form.anualVolume,
-        estSop: form.estSop,
-        materials,
-      };
+async function handleSave() {
+  try {
+    const payload = {
+      name: form.name,
+      customer: form.customer,
+      application: form.application,
+      productLine: form.productLine,
+      anualVolume: form.anualVolume,
+      estSop: form.estSop,
+      materials,
+    };
 
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const res = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-      if (!res.ok) throw new Error('Failed to save project');
+    if (!res.ok) throw new Error('Failed to save project');
 
-      const created = await res.json();
+    const created = await res.json();
 
-      // normalize fields coming from server
-      const proj: Project = {
-        id: created.id,
-        name: created.name,
-        customer: created.customer,
-        application: created.application,
-        productLine: created.product_line ?? created.productLine ?? '',
-        anualVolume: created.anual_volume ?? created.anualVolume ?? '',
-        estSop: created.est_sop ?? created.estSop ?? '',
-        percent: created.percent ?? 0,
-        materials: created.materials ?? [],
-      };
+    const proj: Project = {
+      id: created.id,
+      name: created.name,
+      customer: created.customer,
+      application: created.application,
+      productLine: created.product_line ?? created.productLine ?? '',
+      anualVolume: created.anual_volume ?? created.anualVolume ?? '',
+      estSop: created.est_sop ?? created.estSop ?? '',
+      percent: created.percent ?? 0,
+      materials: created.materials ?? [],
+    };
 
-      // ensure statuses map contains this new project
-      const newStatusesEntry = (created.materials || []).map((m: any) => normalizeStatusArray((m as any).status));
+    const newStatusesEntry = (created.materials || []).map((m: any) => normalizeStatusArray((m as any).status));
 
-      setProjects((p) => [proj, ...p]);
-      setStatuses((s) => ({ ...s, [proj.id]: newStatusesEntry }));
-      setShowModal(false);
-      resetForm();
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2200);
-    } catch (err) {
-      console.error(err);
-      alert('Gagal menyimpan data. Cek console untuk detail.');
-    }
+    setProjects((p) => [proj, ...p]);
+    setStatuses((s) => ({ ...s, [proj.id]: newStatusesEntry }));
+    setShowModal(false);
+    resetForm();
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2200);
+  } catch (err) {
+    console.error(err);
+    alert('Gagal menyimpan data. Cek console untuk detail.');
   }
+}
 
-  function addMaterial() {
+function addMaterial() {
   if (!materialInput.trim()) {
     setErrors(prev => ({ ...prev, material: "Material is required" }));
     return;
   }
 
-  // sukses tambah → hapus error
   setMaterials(prev => [
     ...prev,
     {
@@ -186,10 +183,9 @@ const handleChange = (
   const [remarksMap, setRemarksMap] = useState<Record<number, any[]>>({});
   const [remarksModal, setRemarksModal] = useState<{ open: boolean; statusIndex?: number; items?: any[]; editingId?: number; editingText?: string }>({ open: false });
 
-  // statuses[projectId] = array of materials -> array of booleans for each status column
   const [statuses, setStatuses] = useState<Record<number, boolean[][]>>({});
 
-  const STATUS_COUNT = 9; // number of checkbox columns between Material and Status(%)/end
+  const STATUS_COUNT = 9; 
   const STATUS_WEIGHTS = [10,20,10,10,20,10,10,5,5];
 
   function computeMaterialPercentFromChecks(checks: boolean[]) {
@@ -215,258 +211,251 @@ async function downloadFile(url: string, filename: string) {
   }
 }
 
-  function normalizeStatusArray(src: any): boolean[] {
-    if (!Array.isArray(src)) return Array(STATUS_COUNT).fill(false);
-    const arr = src.map((v: any) => Boolean(v));
-    if (arr.length < STATUS_COUNT) return arr.concat(Array(STATUS_COUNT - arr.length).fill(false));
-    return arr.slice(0, STATUS_COUNT);
-  }
+function normalizeStatusArray(src: any): boolean[] {
+  if (!Array.isArray(src)) return Array(STATUS_COUNT).fill(false);
+  const arr = src.map((v: any) => Boolean(v));
+  if (arr.length < STATUS_COUNT) return arr.concat(Array(STATUS_COUNT - arr.length).fill(false));
+  return arr.slice(0, STATUS_COUNT);
+}
 
-  // hover preview for material status (shows list with weights)
-  const [hover, setHover] = useState<{ open: boolean; x?: number; y?: number; items?: Array<{label:string, weight:number, checked:boolean}> }>({ open: false });
+const [hover, setHover] = useState<{ open: boolean; x?: number; y?: number; items?: Array<{label:string, weight:number, checked:boolean}> }>({ open: false });
 
-  function showHover(projectId: number, materialIndex: number, e: React.MouseEvent) {
-    const proj = projects.find((p) => p.id === projectId);
-    if (!proj) return;
-    const matStatuses = (statuses[projectId] && statuses[projectId][materialIndex]) || (proj.materials[materialIndex] && (proj.materials[materialIndex].status || Array(STATUS_COUNT).fill(false))) || Array(STATUS_COUNT).fill(false);
-    const labels = ['Sourching','Quotation','PO Sample','Sample Received','Trial Proses & Report','MOC Release','PPAP & PSW','PO Maspro','Item Receive'];
-    const items = labels.map((lbl, i) => ({ label: lbl, weight: STATUS_WEIGHTS[i], checked: Boolean(matStatuses[i]) }));
-    // clamp popup inside viewport so it doesn't get cut off near edges
-    const popupWidth = 280;
-    const popupHeight = Math.min(280, items.length * 28 + 64);
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    let x = rect.left + rect.width / 2 - popupWidth / 2; // rata tengah dengan angka %
-    let y = rect.top - popupHeight - 8; // muncul tepat di atas teks persen
-    if (x + popupWidth > window.innerWidth) x = Math.max(8, window.innerWidth - popupWidth - 12);
-    if (y + popupHeight > window.innerHeight) y = Math.max(8, window.innerHeight - popupHeight - 12);
-    setHover({ open: true, x, y, items });
-  }
+function showHover(projectId: number, materialIndex: number, e: React.MouseEvent) {
+  const proj = projects.find((p) => p.id === projectId);
+  if (!proj) return;
+  const matStatuses = (statuses[projectId] && statuses[projectId][materialIndex]) || (proj.materials[materialIndex] && (proj.materials[materialIndex].status || Array(STATUS_COUNT).fill(false))) || Array(STATUS_COUNT).fill(false);
+  const labels = ['Sourching','Quotation','PO Sample','Sample Received','Trial Proses & Report','MOC Release','PPAP & PSW','PO Maspro','Item Receive'];
+  const items = labels.map((lbl, i) => ({ label: lbl, weight: STATUS_WEIGHTS[i], checked: Boolean(matStatuses[i]) }));
+  // clamp popup inside viewport so it doesn't get cut off near edges
+  const popupWidth = 280;
+  const popupHeight = Math.min(280, items.length * 28 + 64);
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  let x = rect.left + rect.width / 2 - popupWidth / 2; // rata tengah dengan angka %
+  let y = rect.top - popupHeight - 8; // muncul tepat di atas teks persen
+  if (x + popupWidth > window.innerWidth) x = Math.max(8, window.innerWidth - popupWidth - 12);
+  if (y + popupHeight > window.innerHeight) y = Math.max(8, window.innerHeight - popupHeight - 12);
+  setHover({ open: true, x, y, items });
+}
 
-  function hideHover() {
-    setTimeout(() => {
-      setHover(prev => prev.open ? { open: false } : prev);
-    }, 120); // delay 120ms biar tidak flicker
-  }
-  
-  function ensureStatuses(proj: Project) {
-    if (!proj) return;
-    if (statuses[proj.id]) return;
-    // initialize statuses from material.status if available, otherwise default false arrays
-    const arr = proj.materials.map((m) => normalizeStatusArray((m as any).status));
-    setStatuses((s) => ({ ...s, [proj.id]: arr }));
-  }
+function hideHover() {
+  setTimeout(() => {
+    setHover(prev => prev.open ? { open: false } : prev);
+  }, 120); // delay 120ms biar tidak flicker
+}
 
-  function selectProject(id: number) {
-    setSelectedProjectId(id);
-    const proj = projects.find((p) => p.id === id);
-    if (proj) ensureStatuses(proj);
-    // fetch project-level uploads
-    (async () => {
-      try {
-        const res = await fetch(`/api/uploads?projectId=${id}`);
-        if (!res.ok) return setProjectUploads([]);
-        const data = await res.json();
-        setProjectUploads(data || []);
-      } catch (err) {
-        console.error('Failed to load project uploads', err);
-        setProjectUploads([]);
-      }
-    })();
-    // fetch remarks for this project
-    (async () => {
-      try {
-        const r = await fetch(`/api/remarks?projectId=${id}`);
-        if (!r.ok) return setRemarksMap({});
-        const data = await r.json();
-        const grouped: Record<number, any[]> = {};
-        (data || []).forEach((it: any) => {
-          const si = Number(it.status_index);
-          grouped[si] = grouped[si] || [];
-          grouped[si].push(it);
-        });
-        setRemarksMap(grouped);
-      } catch (err) {
-        console.error('Failed to load remarks', err);
-        setRemarksMap({});
-      }
-    })();
-    // persist selection to localStorage so it survives a page reload
-    try { if (typeof window !== 'undefined') window.localStorage.setItem('selectedProjectId', String(id)); } catch (err) { /* ignore */ }
-  }
+function ensureStatuses(proj: Project) {
+  if (!proj) return;
+  if (statuses[proj.id]) return;
+  // initialize statuses from material.status if available, otherwise default false arrays
+  const arr = proj.materials.map((m) => normalizeStatusArray((m as any).status));
+  setStatuses((s) => ({ ...s, [proj.id]: arr }));
+}
 
-  async function openRemarks(statusIndex: number) {
-    if (!selectedProjectId) return;
+function selectProject(id: number) {
+  setSelectedProjectId(id);
+  const proj = projects.find((p) => p.id === id);
+  if (proj) ensureStatuses(proj);
+  // fetch project-level uploads
+  (async () => {
     try {
-      const res = await fetch(`/api/remarks?projectId=${selectedProjectId}&statusIndex=${statusIndex}`);
-      const data = res.ok ? await res.json() : [];
-      setRemarksModal({ open: true, statusIndex, items: data || [], editingId: undefined, editingText: '' });
+      const res = await fetch(`/api/uploads?projectId=${id}`);
+      if (!res.ok) return setProjectUploads([]);
+      const data = await res.json();
+      setProjectUploads(data || []);
     } catch (err) {
-      console.error('Failed to open remarks', err);
-      setRemarksModal({ open: true, statusIndex, items: [], editingId: undefined, editingText: '' });
+      console.error('Failed to load project uploads', err);
+      setProjectUploads([]);
     }
-  }
-
-  async function deleteRemark(id: number) {
-    if (!window.confirm('Hapus remark ini?')) return;
+  })();
+  // fetch remarks for this project
+  (async () => {
     try {
-      const res = await fetch('/api/remarks', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Gagal menghapus');
-      if (remarksModal.statusIndex != null) await openRemarks(remarksModal.statusIndex);
-      if (selectedProjectId) {
-        const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
-        if (r.ok) {
-          const list = await r.json();
-          const grouped: Record<number, any[]> = {};
-          (list || []).forEach((it: any) => { const idx = Number(it.status_index); grouped[idx] = grouped[idx] || []; grouped[idx].push(it); });
-          setRemarksMap(grouped);
-        }
-      }
-    } catch (err: any) {
-      console.error(err);
-      alert(err?.message || 'Gagal menghapus remark');
-    }
-  }
-
-  async function startEditRemark(id: number, text: string) {
-    setRemarksModal((s) => ({ ...s, editingId: id, editingText: text }));
-  }
-
-  async function saveEditRemark() {
-    try {
-      const id = remarksModal.editingId;
-      const text = (remarksModal.editingText || '').trim();
-      if (!id) return; if (!text) { alert('Masukkan teks remark'); return; }
-      const res = await fetch('/api/remarks', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, text }) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Gagal menyimpan perubahan');
-      if (remarksModal.statusIndex != null) await openRemarks(remarksModal.statusIndex);
-      if (selectedProjectId) {
-        const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
-        if (r.ok) {
-          const list = await r.json();
-          const grouped: Record<number, any[]> = {};
-          (list || []).forEach((it: any) => { const idx = Number(it.status_index); grouped[idx] = grouped[idx] || []; grouped[idx].push(it); });
-          setRemarksMap(grouped);
-        }
-      }
-    } catch (err: any) {
-      console.error(err);
-      alert(err?.message || 'Gagal menyimpan remark');
-    }
-  }
-
-  // confirmation state for marking a status complete
-  const [confirm, setConfirm] = useState<{ open: boolean; projectId?: number; materialIndex?: number; statusIndex?: number; materialId?: number }>({ open: false });
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  
-  // Upload modal state for per-cell uploads in the detail grid
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadTarget, setUploadTarget] = useState<{ projectId?: number; materialId?: number; materialIndex?: number; statusIndex?: number } | null>(null);
-  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
-  const [showUploadSuccess, setShowUploadSuccess] = useState(false);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof Project; direction: "asc" | "desc" } | null>(null);
-  const getSortIcon = (key: keyof Project) => {
-  if (!sortConfig || sortConfig.key !== key) return "⇅"; // default
-  return sortConfig.direction === "asc" ? "▲" : "▼";       // up or down
-  };
-
-
-  function toggleStatus(projectId: number, materialIndex: number, statusIndex: number) {
-    // open confirmation modal; when confirmed we'll persist
-    const proj = projects.find((p) => p.id === projectId);
-    const mat = proj?.materials?.[materialIndex];
-    if (!mat) return;
-    const currentChecks = (statuses[projectId] && statuses[projectId][materialIndex]) || (mat.status && Array.isArray(mat.status) ? mat.status.map((v:any)=>Boolean(v)) : Array(STATUS_COUNT).fill(false));
-    if (currentChecks[statusIndex]) {
-      return;
-    }
-    setConfirm({ open: true, projectId, materialIndex, statusIndex, materialId: mat.id });
-  }
-
-  async function confirmYes() {
-    if (!confirm.open || confirm.materialId == null || confirm.statusIndex == null || confirm.projectId == null) return;
-    setLoadingProgress(5);
-    try {
-      const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: true }) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Failed to update');
-
-      // update local statuses (keeps in-sync with server)
-      const serverMat = data.material; // { id, name, status, percent }
-      setStatuses((s) => {
-        const copy = { ...s };
-        const matArr = copy[confirm.projectId!] ? copy[confirm.projectId!].map((r) => [...r]) : [];
-        if (!matArr[confirm.materialIndex!]) matArr[confirm.materialIndex!] = Array(STATUS_COUNT).fill(false);
-        // prefer server-provided status array when available
-        if (serverMat && Array.isArray(serverMat.status)) {
-          matArr[confirm.materialIndex!] = serverMat.status.map((v: any) => Boolean(v));
-        } else {
-          matArr[confirm.materialIndex!][confirm.statusIndex!] = true;
-        }
-        copy[confirm.projectId!] = matArr;
-        return copy;
+      const r = await fetch(`/api/remarks?projectId=${id}`);
+      if (!r.ok) return setRemarksMap({});
+      const data = await r.json();
+      const grouped: Record<number, any[]> = {};
+      (data || []).forEach((it: any) => {
+        const si = Number(it.status_index);
+        grouped[si] = grouped[si] || [];
+        grouped[si].push(it);
       });
-
-      // update project and material percent shown in list
-      setProjects((p) => p.map((pr) => {
-        if (pr.id !== data.projectId) return pr;
-        const updatedMaterials = pr.materials.map((m, idx) => {
-          if (!serverMat) return m;
-          if (m.id === serverMat.id) {
-            return { ...m, percent: serverMat.percent, status: serverMat.status } as Material;
-          }
-          return m;
-        });
-        return { ...pr, percent: data.projectPercent, materials: updatedMaterials } as Project;
-      }));
-
-      setLoadingProgress(100);
-      setTimeout(() => { setConfirm({ open: false }); setLoadingProgress(0); }, 250);
+      setRemarksMap(grouped);
     } catch (err) {
-      console.error(err);
-      alert('Gagal memperbarui status');
-      setConfirm({ open: false });
-      setLoadingProgress(0);
+      console.error('Failed to load remarks', err);
+      setRemarksMap({});
     }
+  })();
+  // persist selection to localStorage so it survives a page reload
+  try { if (typeof window !== 'undefined') window.localStorage.setItem('selectedProjectId', String(id)); } catch (err) { /* ignore */ }
+}
+
+async function openRemarks(statusIndex: number) {
+  if (!selectedProjectId) return;
+  try {
+    const res = await fetch(`/api/remarks?projectId=${selectedProjectId}&statusIndex=${statusIndex}`);
+    const data = res.ok ? await res.json() : [];
+    setRemarksModal({ open: true, statusIndex, items: data || [], editingId: undefined, editingText: '' });
+  } catch (err) {
+    console.error('Failed to open remarks', err);
+    setRemarksModal({ open: true, statusIndex, items: [], editingId: undefined, editingText: '' });
   }
+}
 
-  function confirmNo() { setConfirm({ open: false }); }
-
-  
-  // Upload handlers
-  function openUpload(projectId: number, materialId?: number, materialIndex?: number, statusIndex?: number) {
-    setUploadTarget({ projectId, materialId, materialIndex, statusIndex });
-    setUploadFiles([]);
-    setShowUploadModal(true);
-  }
-
-  function onUploadFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const list = e.target.files;
-    if (!list) return;
-    setUploadFiles((f) => [...f, ...Array.from(list)]);
-  }
-
-  function onUploadDrop(e: React.DragEvent) {
-    e.preventDefault();
-    const list = e.dataTransfer.files;
-    if (!list) return;
-    setUploadFiles((f) => [...f, ...Array.from(list)]);
-  }
-
-  function onUploadDragOver(e: React.DragEvent) { e.preventDefault(); }
-
-  function removeUploadFile(idx: number) { setUploadFiles((f) => f.filter((_, i) => i !== idx)); }
-
-  function sortBy(key: string) {
-    let direction: "asc" | "desc" = "asc";
-
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
+async function deleteRemark(id: number) {
+  if (!window.confirm('Hapus remark ini?')) return;
+  try {
+    const res = await fetch('/api/remarks', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Gagal menghapus');
+    if (remarksModal.statusIndex != null) await openRemarks(remarksModal.statusIndex);
+    if (selectedProjectId) {
+      const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
+      if (r.ok) {
+        const list = await r.json();
+        const grouped: Record<number, any[]> = {};
+        (list || []).forEach((it: any) => { const idx = Number(it.status_index); grouped[idx] = grouped[idx] || []; grouped[idx].push(it); });
+        setRemarksMap(grouped);
+      }
     }
-
-    setSortConfig({ key: key as keyof Project, direction });
+  } catch (err: any) {
+    console.error(err);
+    alert(err?.message || 'Gagal menghapus remark');
   }
+}
+
+async function startEditRemark(id: number, text: string) {
+  setRemarksModal((s) => ({ ...s, editingId: id, editingText: text }));
+}
+
+async function saveEditRemark() {
+  try {
+    const id = remarksModal.editingId;
+    const text = (remarksModal.editingText || '').trim();
+    if (!id) return; if (!text) { alert('Masukkan teks remark'); return; }
+    const res = await fetch('/api/remarks', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, text }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Gagal menyimpan perubahan');
+    if (remarksModal.statusIndex != null) await openRemarks(remarksModal.statusIndex);
+    if (selectedProjectId) {
+      const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
+      if (r.ok) {
+        const list = await r.json();
+        const grouped: Record<number, any[]> = {};
+        (list || []).forEach((it: any) => { const idx = Number(it.status_index); grouped[idx] = grouped[idx] || []; grouped[idx].push(it); });
+        setRemarksMap(grouped);
+      }
+    }
+  } catch (err: any) {
+    console.error(err);
+    alert(err?.message || 'Gagal menyimpan remark');
+  }
+}
+
+// confirmation state for marking a status complete
+const [confirm, setConfirm] = useState<{ open: boolean; projectId?: number; materialIndex?: number; statusIndex?: number; materialId?: number }>({ open: false });
+const [loadingProgress, setLoadingProgress] = useState(0);
+
+// Upload modal state for per-cell uploads in the detail grid
+const [showUploadModal, setShowUploadModal] = useState(false);
+const [uploadTarget, setUploadTarget] = useState<{ projectId?: number; materialId?: number; materialIndex?: number; statusIndex?: number } | null>(null);
+const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+const [showUploadSuccess, setShowUploadSuccess] = useState(false);
+const [sortConfig, setSortConfig] = useState<{ key: keyof Project; direction: "asc" | "desc" } | null>(null);
+const getSortIcon = (key: keyof Project) => {
+if (!sortConfig || sortConfig.key !== key) return "⇅"; 
+return sortConfig.direction === "asc" ? "▲" : "▼";      
+};
+
+
+function toggleStatus(projectId: number, materialIndex: number, statusIndex: number) {
+  const proj = projects.find((p) => p.id === projectId);
+  const mat = proj?.materials?.[materialIndex];
+  if (!mat) return;
+  const currentChecks = (statuses[projectId] && statuses[projectId][materialIndex]) || (mat.status && Array.isArray(mat.status) ? mat.status.map((v:any)=>Boolean(v)) : Array(STATUS_COUNT).fill(false));
+  if (currentChecks[statusIndex]) {
+    return;
+  }
+  setConfirm({ open: true, projectId, materialIndex, statusIndex, materialId: mat.id });
+}
+
+async function confirmYes() {
+  if (!confirm.open || confirm.materialId == null || confirm.statusIndex == null || confirm.projectId == null) return;
+  setLoadingProgress(5);
+  try {
+    const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: true }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Failed to update');
+
+    const serverMat = data.material; 
+    setStatuses((s) => {
+      const copy = { ...s };
+      const matArr = copy[confirm.projectId!] ? copy[confirm.projectId!].map((r) => [...r]) : [];
+      if (!matArr[confirm.materialIndex!]) matArr[confirm.materialIndex!] = Array(STATUS_COUNT).fill(false);
+      if (serverMat && Array.isArray(serverMat.status)) {
+        matArr[confirm.materialIndex!] = serverMat.status.map((v: any) => Boolean(v));
+      } else {
+        matArr[confirm.materialIndex!][confirm.statusIndex!] = true;
+      }
+      copy[confirm.projectId!] = matArr;
+      return copy;
+    });
+
+    setProjects((p) => p.map((pr) => {
+      if (pr.id !== data.projectId) return pr;
+      const updatedMaterials = pr.materials.map((m, idx) => {
+        if (!serverMat) return m;
+        if (m.id === serverMat.id) {
+          return { ...m, percent: serverMat.percent, status: serverMat.status } as Material;
+        }
+        return m;
+      });
+      return { ...pr, percent: data.projectPercent, materials: updatedMaterials } as Project;
+    }));
+
+    setLoadingProgress(100);
+    setTimeout(() => { setConfirm({ open: false }); setLoadingProgress(0); }, 250);
+  } catch (err) {
+    console.error(err);
+    alert('Gagal memperbarui status');
+    setConfirm({ open: false });
+    setLoadingProgress(0);
+  }
+}
+
+function confirmNo() { setConfirm({ open: false }); }
+
+function openUpload(projectId: number, materialId?: number, materialIndex?: number, statusIndex?: number) {
+  setUploadTarget({ projectId, materialId, materialIndex, statusIndex });
+  setUploadFiles([]);
+  setShowUploadModal(true);
+}
+
+function onUploadFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const list = e.target.files;
+  if (!list) return;
+  setUploadFiles((f) => [...f, ...Array.from(list)]);
+}
+
+function onUploadDrop(e: React.DragEvent) {
+  e.preventDefault();
+  const list = e.dataTransfer.files;
+  if (!list) return;
+  setUploadFiles((f) => [...f, ...Array.from(list)]);
+}
+
+function onUploadDragOver(e: React.DragEvent) { e.preventDefault(); }
+
+function removeUploadFile(idx: number) { setUploadFiles((f) => f.filter((_, i) => i !== idx)); }
+
+function sortBy(key: string) {
+  let direction: "asc" | "desc" = "asc";
+
+  if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+    direction = "desc";
+  }
+
+  setSortConfig({ key: key as keyof Project, direction });
+}
 
   async function doUploadFiles() {
   if (!uploadTarget || !uploadTarget.projectId) {
