@@ -6,49 +6,52 @@ export async function GET() {
     await initTables();
 
     const res = await query(`
-      SELECT 
-        p.id, p.name, p.customer, p.application, p.product_line, 
-        p.anual_volume, p.est_sop, p.created_at, 
+      SELECT
+        p.id,
+        p.name,
+        p.customer,
+        p.application,
+        p.product_line,
+        p.anual_volume,
+        p.est_sop,
+        p.created_at,
         COALESCE(p.percent,0) AS percent,
         (
-          SELECT json_agg(
-            json_build_object(
-              'id', m.id,
-              'name', m.name,
-              'component', m.component,
-              'category', m.category,
-              'bom_qty', m.bom_qty,
-              'uom', m."UoM",
-              'supplier', m.supplier,
-              'status', m.status,
-              'percent', COALESCE(m.percent,0),
-              'attachments', COALESCE(
-                (
-                  SELECT json_agg(
-                    json_build_object(
-                      'id', u.id,
-                      'filename', u.filename,
-                      'path', u.path,
-                      'size', u.size,
-                      'mime', u.mime,
-                      'created_at', u.created_at
-                    ) ORDER BY u.id
+          SELECT json_agg(material_row ORDER BY material_row.id)
+          FROM (
+            SELECT
+              m.id,
+              m.name,
+              m.status,
+              COALESCE(m.percent,0) AS percent,
+              m.component,
+              m.category,
+              m.bom_qty,
+              m."UoM",
+              m.supplier,
+              (
+                SELECT json_agg(
+                  json_build_object(
+                    'id', u.id,
+                    'filename', u.filename,
+                    'path', u.path,
+                    'size', u.size,
+                    'mime', u.mime,
+                    'created_at', u.created_at
                   )
-                  FROM uploads u
-                  WHERE u.material_id = m.id
-                ),
-                '[]'
-              )
-            )
-            ORDER BY m.id     
-          )
-          FROM materials m
-          WHERE m.project_id = p.id
+                )
+                FROM uploads u
+                WHERE u.material_id = m.id
+              ) AS attachments
+            FROM materials m
+            WHERE m.project_id = p.id
+            ORDER BY m.id ASC
+          ) AS material_row
         ) AS materials
-
       FROM projects p
       ORDER BY p.created_at DESC
     `);
+
 
     return NextResponse.json(res.rows);
 
