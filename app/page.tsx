@@ -464,7 +464,6 @@ function sortBy(key: string) {
   }
 
   try {
-    // mulai loading untuk kolom tertentu
     setLoadingIndex(uploadTarget.statusIndex ?? null);
 
     const fd = new FormData();
@@ -480,7 +479,6 @@ function sortBy(key: string) {
     }
     const data = await res.json();
 
-    // refresh projects & uploads
     await reloadProjects();
     if (selectedProjectId) {
       const r2 = await fetch(`/api/uploads?projectId=${selectedProjectId}`);
@@ -494,7 +492,7 @@ function sortBy(key: string) {
     console.error('Upload failed', err);
     alert('Upload gagal: ' + (err?.message || String(err)));
   } finally {
-    setLoadingIndex(null); // selesai loading
+    setLoadingIndex(null); 
   }
 }
 
@@ -504,7 +502,6 @@ function sortBy(key: string) {
       const res = await fetch('/api/projects', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: projectId }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Gagal menghapus project');
-      // refresh list
       await reloadProjects();
       if (selectedProjectId === projectId) {
         setSelectedProjectId(null);
@@ -516,34 +513,29 @@ function sortBy(key: string) {
     }
   }
 
-  // open attachments modal for a given statusIndex (header-level)
 async function openAttachments(statusIndex: number) {
   if (!selectedProjectId) return;
 
   try {
-    // fetch project-level uploads for this status
     const res = await fetch(`/api/uploads?projectId=${selectedProjectId}&statusIndex=${statusIndex}`);
     const projectFiles = res.ok ? await res.json() : [];
 
-    // collect material-level attachments from loaded project materials
     const proj = projects.find((p) => p.id === selectedProjectId);
     const materialFiles: any[] = [];
 
     if (proj) {
       (proj.materials || []).forEach((m: any) => {
         (m.attachments || []).forEach((a: any) => {
-          // pastikan ada publicUrl, fallback ke path kalau belum
           materialFiles.push({
             ...a,
             materialId: m.id,
             materialName: m.name,
-            path: a.path || '', // pastikan ada URL
+            path: a.path || '', 
           });
         });
       });
     }
 
-    // combine projectFiles + materialFiles
     const items = [
       ...(projectFiles.map((f: any) => ({ ...f, materialName: null })) || []),
       ...materialFiles,
@@ -555,9 +547,6 @@ async function openAttachments(statusIndex: number) {
     setAttachmentsModal({ open: true, statusIndex, items: [] });
   }
 }
-
-
-  // prepare filtered projects for search
   const q = searchQuery.trim().toLowerCase();
   let filteredProjects = q.length === 0 ? projects : projects.filter((proj) => {
     return (
@@ -579,14 +568,14 @@ async function openAttachments(statusIndex: number) {
     setCurrentPage(1);
   }, [searchQuery, sortConfig]);
 
-    const [form, setForm] = useState({
+const [form, setForm] = useState({
   name: "",
   customer: "",
   application: "",
   productLine: "",
-    anualVolume: "",
-        estSop: "",
-        material: "",
+  anualVolume: "",
+  estSop: "",
+  material: "",
 });
 
 const [errors, setErrors] = useState({
@@ -621,15 +610,11 @@ const handleSaveProject = () => {
 
   setErrors(newErrors);
 
-  // Stop kalau masih ada error
   const isValid = Object.values(newErrors).every(x => x === "");
   if (!isValid) return;
 
-  // lanjut simpan seperti biasa
-  handleSave();  // fungsi API kamu
+  handleSave();  
 };
-
-    // Apply sorting
   if (sortConfig) {
     filteredProjects.sort((a, b) => {
       const key = sortConfig.key;
@@ -637,7 +622,6 @@ const handleSaveProject = () => {
       let A: any = a[key];
       let B: any = b[key];
 
-      // khusus status gunakan angka
       if (key === "percent") {
         A = a.percent ?? 0;
         B = b.percent ?? 0;
@@ -724,7 +708,6 @@ const handleSaveProject = () => {
               </tr>
             ) : (
               currentProjects.map((proj) => {
-                // compute project percent using STATUS_WEIGHTS and known statuses (fall back to material.status if present)
                 const projStatuses = statuses[proj.id] ?? proj.materials.map((m) => (Array.isArray((m as any).status) ? (m as any).status.map((v:any)=>Boolean(v)) : Array(STATUS_COUNT).fill(false)));
                 let projPercent = 0;
                 if (proj.materials.length > 0) {
@@ -792,51 +775,47 @@ const handleSaveProject = () => {
         <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
       </svg>
     </button>
-
   </div>
-</td>
+  </td>
+  </tr>
+  );
+})
+)}
+</tbody>
+</table>
 
+  <div className="pagination">
+    <button
+      className="btn secondary"
+      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+      disabled={currentPage === 1}
+    >
+      Previous
+    </button>
 
-                </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+    <div className="page-pill">{currentPage} / {totalPages}</div>
 
-        <div className="pagination">
-  <button
-    className="btn secondary"
-    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-    disabled={currentPage === 1}
-  >
-    Previous
-  </button>
-
-  <div className="page-pill">{currentPage} / {totalPages}</div>
-
-  <button
-    className="btn secondary"
-    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-    disabled={currentPage === totalPages}
-  >
-    Next
-  </button>
+    <button
+      className="btn secondary"
+      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+      disabled={currentPage === totalPages}
+    >
+      Next
+    </button>
+  </div>
 </div>
 
-      </div>
-
-      <div className="card spaced" style={{ marginTop: 28 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 8, // jarak antara teks kiri dan kanan
-            fontSize: 20,
-            fontWeight: 700,
-            marginBottom: 20,
-          }}
-        >
+  <div className="card spaced" style={{ marginTop: 28 }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 8, // jarak antara teks kiri dan kanan
+        fontSize: 20,
+        fontWeight: 700,
+        marginBottom: 20,
+      }}
+    >
     <div>
     <span>Detail Status Project </span>
 
@@ -848,25 +827,24 @@ const handleSaveProject = () => {
   </div>
 </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table className="status-grid" style={{ minWidth: 1000 }}>
-            <thead>
-              <tr>
-                <th>Material</th>
-                <th>Sourching</th>
-                <th>Quotation</th>
-                <th>PO Sample</th>
-                <th>Sample Received</th>
-                <th>Trial Proses & Report</th>
-                <th>MOC Release</th>
-                <th>PPAP & PSW</th>
-                <th>PO Maspro</th>
-                <th>Item Receive</th>
-                <th>Status (%)</th>
-              </tr>
-              <tr>
-                <th></th>
-
+    <div style={{ overflowX: 'auto' }}>
+      <table className="status-grid" style={{ minWidth: 1000 }}>
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Sourching</th>
+            <th>Quotation</th>
+            <th>PO Sample</th>
+            <th>Sample Received</th>
+            <th>Trial Proses & Report</th>
+            <th>MOC Release</th>
+            <th>PPAP & PSW</th>
+            <th>PO Maspro</th>
+            <th>Item Receive</th>
+            <th>Status (%)</th>
+          </tr>
+          <tr>
+            <th></th>
 
 {Array.from({ length: STATUS_COUNT }).map((_, i) => (
   <th key={i} style={{ fontWeight: 600 }}>
@@ -879,15 +857,15 @@ const handleSaveProject = () => {
             alert('Pilih project terlebih dahulu');
             return;
           }
-          setLoadingIndex(i); // mulai loading
+          setLoadingIndex(i); 
           try {
-            await openUpload(selectedProjectId, undefined, undefined, i); // pastikan openUpload mengembalikan Promise
+            await openUpload(selectedProjectId, undefined, undefined, i); 
           } finally {
-            setLoadingIndex(null); // selesai loading
+            setLoadingIndex(null); 
           }
         }}
         aria-label={`Upload column ${i}`}
-        disabled={loadingIndex === i} // disable tombol saat loading
+        disabled={loadingIndex === i} 
       >
         {loadingIndex === i ? "Uploading…" : "⬆ Upload"}
       </button>
@@ -975,7 +953,6 @@ const handleSaveProject = () => {
                                 {c ? '✓' : ''}
                               </button>
 
-                              {/* per-material remark removed - use header-level remark for column */}
                             </div>
                           </td>
                         ))}
@@ -1058,23 +1035,6 @@ const handleSaveProject = () => {
                 {errors.estSop && <span className="error-text">{errors.estSop}</span>}
               </div>
             </div>
-
-            {/* <div className="form-row">
-            <label className="form-label">Material</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                className={`input ${errors.material ? "input-error" : ""}`}
-                value={materialInput}
-                onChange={(e) => setMaterialInput(e.target.value)}
-              />
-              <button className="icon-btn" onClick={addMaterial}>+</button>
-            </div>
-
-            {errors.material && (
-              <span className="error-text">{errors.material}</span>
-            )} */}
-
-
 
 <div style={{ maxWidth: "100%", overflowX: "auto", marginTop: 10 }}>
   <table
@@ -1194,18 +1154,6 @@ const handleSaveProject = () => {
 
 <button className="add-btn" onClick={addRow}>+ Add Material</button>
 
-
-            {/* {materials.length > 0 && (
-              <div style={{ marginTop: 6 }}>
-                <strong style={{ fontSize: 13, color: 'var(--muted)' }}>Materials</strong>
-                <ul style={{ marginTop: 6 }}>
-                  {materials.map((m, i) => (
-                    <li key={i} style={{ padding: '6px 0' }}>{m}</li>
-                  ))}
-                </ul>
-              </div>
-            )} */}
-
             <div className="modal-actions">
               <button className="btn secondary" onClick={() => { setShowModal(false); resetForm(); }}>Cancel</button>
               <button className="btn" onClick={handleSaveProject}>Save</button>
@@ -1289,13 +1237,13 @@ const handleSaveProject = () => {
 
             <div className="upload-actions">
               <button className="btn secondary" onClick={() => setShowUploadModal(false)}>Cancel</button>
-<button
-  className="btn"
-  onClick={doUploadFiles}
-  disabled={uploadFiles.length === 0 || loadingIndex !== null} // disable saat loading
->
-  {loadingIndex !== null ? "Uploading…" : "Upload"}
-</button>
+              <button
+                className="btn"
+                onClick={doUploadFiles}
+                disabled={uploadFiles.length === 0 || loadingIndex !== null} // disable saat loading
+              >
+                {loadingIndex !== null ? "Uploading…" : "Upload"}
+              </button>
             </div>
           </div>
         </div>
