@@ -10,7 +10,6 @@ export async function GET() {
         p.id, p.name, p.customer, p.application, p.product_line, 
         p.anual_volume, p.est_sop, p.created_at, 
         COALESCE(p.percent,0) AS percent,
-
         (
           SELECT json_agg(
             json_build_object(
@@ -41,7 +40,7 @@ export async function GET() {
                 '[]'
               )
             )
-            ORDER BY m.id     -- FIX ACak
+            ORDER BY m.id     
           )
           FROM materials m
           WHERE m.project_id = p.id
@@ -52,6 +51,7 @@ export async function GET() {
     `);
 
     return NextResponse.json(res.rows);
+
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -161,29 +161,29 @@ export async function PATCH(req: Request) {
     // hitung project percent
     const mats = await query(`SELECT COALESCE(percent,0) as percent FROM materials WHERE project_id=$1`, [cur.rows[0].project_id]);
 
-  let projectPercent = 0;
-  const count = mats?.rowCount ?? 0;
+    let projectPercent = 0;
+    const count = mats?.rowCount ?? 0;
 
-  if (count > 0) {
-    const total = mats.rows.reduce((a: number, r: any) => a + Number(r.percent || 0), 0);
-    projectPercent = Math.round(total / count);
-  }
+    if (count > 0) {
+      const total = mats.rows.reduce((a: number, r: any) => a + Number(r.percent || 0), 0);
+      projectPercent = Math.round(total / count);
+    }
 
 
-    await query(`UPDATE projects SET percent=$1 WHERE id=$2`, [projectPercent, cur.rows[0].project_id]);
+      await query(`UPDATE projects SET percent=$1 WHERE id=$2`, [projectPercent, cur.rows[0].project_id]);
 
-    const updatedMat = await query(
-      `SELECT id, name, status, percent FROM materials WHERE id=$1`,
-      [materialId]
-    );
+      const updatedMat = await query(
+        `SELECT id, name, status, percent FROM materials WHERE id=$1`,
+        [materialId]
+      );
 
-    return NextResponse.json({
-      materialId,
-      material: updatedMat.rows[0],
-      materialPercent,
-      projectPercent,
-      projectId: cur.rows[0].project_id
-    });
+      return NextResponse.json({
+        materialId,
+        material: updatedMat.rows[0],
+        materialPercent,
+        projectPercent,
+        projectId: cur.rows[0].project_id
+      });
 
   } catch (err: any) {
     console.error(err);

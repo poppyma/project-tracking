@@ -12,7 +12,6 @@
   export async function POST(req: Request) {
     try {
       await initTables();
-      //await ensureUploadDir();
 
       const form = await req.formData();
       const projectId = form.get('projectId') ? Number(form.get('projectId')) : null;
@@ -41,7 +40,7 @@
           return NextResponse.json({ error: uploadError.message }, { status: 500 });
         }
 
-        // get public URL (sinkron)
+        // get public URL 
         const { data } = supabase.storage.from('uploads').getPublicUrl(`uploads/${safeName}`);
         const publicUrl = data.publicUrl;
 
@@ -54,7 +53,6 @@
 
         saved.push(res.rows[0]);
       }
-
 
       return NextResponse.json({ uploaded: saved }, { status: 201 });
     } catch (err: any) {

@@ -198,7 +198,6 @@ body {
   pointer-events: none;
 }
 
-
 .modal {
   width: 860px;
   max-width: calc(100% - 48px);
