@@ -24,7 +24,6 @@ export async function query(text: string, params?: any[]) {
 }
 
 export async function initTables() {
-  // Create projects and materials tables if they don't exist
   await query(`
     CREATE TABLE IF NOT EXISTS projects (
       id SERIAL PRIMARY KEY,
@@ -47,14 +46,10 @@ export async function initTables() {
     );
   `);
 
-  // ensure status column exists to store per-material checkbox states
   await query(`ALTER TABLE materials ADD COLUMN IF NOT EXISTS status jsonb DEFAULT '[]'::jsonb`);
-  // ensure percent column exists on materials to store computed percent
   await query(`ALTER TABLE materials ADD COLUMN IF NOT EXISTS percent INTEGER DEFAULT 0`);
-  // ensure percent column exists on projects (already added above via create)
   await query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS percent INTEGER DEFAULT 0`);
 
-  // uploads table for storing uploaded file metadata
   await query(`
     CREATE TABLE IF NOT EXISTS uploads (
       id SERIAL PRIMARY KEY,
@@ -68,10 +63,8 @@ export async function initTables() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
     );
   `);
-  // ensure status_index column exists for uploads (nullable int)
   await query(`ALTER TABLE uploads ADD COLUMN IF NOT EXISTS status_index INTEGER`);
 
-  // remarks table to store per-project, per-column remarks with timestamps
   await query(`
     CREATE TABLE IF NOT EXISTS remarks (
       id SERIAL PRIMARY KEY,
