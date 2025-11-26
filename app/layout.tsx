@@ -41,7 +41,7 @@ export default function RootLayout({
       alt="Monitoring Icon"
       className="w-[36px] h-[36px] object-contain flex-shrink-0"
     />
-    <span className="text-[17px] font-semibold whitespace-nowrap">Tracking</span>
+    <span className="text-[17px] font-semibold whitespace-nowrap">Trackings</span>
   </a>
 
   <a className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/20 text-white font-medium cursor-pointer">
