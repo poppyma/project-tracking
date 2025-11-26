@@ -26,17 +26,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
-  // const [form, setForm] = useState({
-  //   name: "",
-  //   customer: "",
-  //   application: "",
-  //   productLine: "",
-  //   anualVolume: "",
-  //   estSop: "",
-  // });
-
   const [materialInput, setMaterialInput] = useState("");
-  //const [materials, setMaterials] = useState<string[]>([]);
   const [materials, setMaterials] = useState([
   { material: "", component: "", category: "", qty: "", uom: "", supplier: "" },
 ]);
@@ -64,7 +54,6 @@ const handleChange = (
   updated[index][field] = value;
   setMaterials(updated);
 };
-
 
 
   function resetForm() {
@@ -97,7 +86,6 @@ const handleChange = (
 
       setProjects(list);
       setStatuses(initialStatuses);
-      // restore selected project from localStorage if present
       try {
         if (typeof window !== 'undefined') {
           const stored = window.localStorage.getItem('selectedProjectId');
@@ -105,7 +93,6 @@ const handleChange = (
             const sid = Number(stored);
             const found = list.find((p) => p.id === sid);
             if (found) {
-              // use selectProject to ensure uploads/remarks/statuses are fetched
               selectProject(sid);
             }
           }
@@ -325,9 +312,7 @@ async function downloadFile(url: string, filename: string) {
       const res = await fetch('/api/remarks', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Gagal menghapus');
-      // refresh modal list
       if (remarksModal.statusIndex != null) await openRemarks(remarksModal.statusIndex);
-      // refresh header quick list
       if (selectedProjectId) {
         const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
         if (r.ok) {
@@ -355,7 +340,6 @@ async function downloadFile(url: string, filename: string) {
       const res = await fetch('/api/remarks', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, text }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Gagal menyimpan perubahan');
-      // refresh
       if (remarksModal.statusIndex != null) await openRemarks(remarksModal.statusIndex);
       if (selectedProjectId) {
         const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
@@ -393,10 +377,8 @@ async function downloadFile(url: string, filename: string) {
     const proj = projects.find((p) => p.id === projectId);
     const mat = proj?.materials?.[materialIndex];
     if (!mat) return;
-    // determine current checked state (prefer in-memory statuses map)
     const currentChecks = (statuses[projectId] && statuses[projectId][materialIndex]) || (mat.status && Array.isArray(mat.status) ? mat.status.map((v:any)=>Boolean(v)) : Array(STATUS_COUNT).fill(false));
     if (currentChecks[statusIndex]) {
-      // already confirmed/completed — do nothing (locked)
       return;
     }
     setConfirm({ open: true, projectId, materialIndex, statusIndex, materialId: mat.id });
