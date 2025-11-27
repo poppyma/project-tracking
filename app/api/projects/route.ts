@@ -44,10 +44,8 @@ export async function GET() {
                 WHERE u.material_id = m.id
               )
             )
-            ORDER BY m.id ASC                 -- ★ urut material di sini
-          )
-        , '[]') AS materials
-
+            ORDER BY m.id ASC                 
+          )FILTER (WHERE m.id IS NOT NULL), '[]') AS materials
       FROM projects p
       LEFT JOIN materials m ON m.project_id = p.id
       GROUP BY p.id
