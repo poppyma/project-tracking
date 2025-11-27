@@ -38,7 +38,11 @@ export default function ProjectDetailPage() {
         if (!res.ok) throw new Error('Failed');
         const list = await res.json();
         const p = list.find((x: any) => Number(x.id) === id);
-        if (p) setProject(p);
+        //if (p) setProject(p);
+        if (p) {
+          p.materials = [...(p.materials || [])].sort((a, b) => Number(a.id) - Number(b.id));
+          setProject(p);
+        }
       } catch (err) {
         console.error(err);
       } finally { setLoading(false); }
