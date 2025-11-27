@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,23 +35,23 @@ export default function RootLayout({
               <img src="/skf-logo.svg" alt="SKF" className="logo" />
             </div>
             <nav className="flex flex-col gap-6">
-              <a className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/10 text-white font-medium cursor-pointer">
+              <Link href="/" className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/10 text-white font-medium cursor-pointer">
                 <img
                   src="/monitoring-icon.png"
                   alt="Monitoring Icon"
                   className="w-[36px] h-[36px] object-contain flex-shrink-0"
                 />
                 <span className="text-[17px] font-semibold whitespace-nowrap">Tracking</span>
-              </a>
+              </Link>
 
-              <a className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/20 text-white font-medium cursor-pointer">
+              <Link href="/bom-cost" className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/20 text-white font-medium cursor-pointer">
                 <img
                   src="/calculation.png"
                   alt="Calculation Icon"
                   className="w-[36px] h-[36px] object-contain flex-shrink-0"
                 />
                 <span className="text-[17px] font-semibold whitespace-nowrap">BOM Cost</span>
-              </a>
+              </Link>
             </nav>
           </div>
         </aside>
