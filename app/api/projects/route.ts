@@ -30,27 +30,37 @@ export async function GET() {
               'status', m.status,
               'percent', COALESCE(m.percent,0),
               'attachments', (
-                SELECT json_agg(
-                  json_build_object(
-                    'id', u.id,
-                    'filename', u.filename,
-                    'path', u.path,
-                    'size', u.size,
-                    'mime', u.mime,
-                    'created_at', u.created_at
-                  )
-                )
-                FROM uploads u 
-                WHERE u.material_id = m.id
-              )
-            )
-            ORDER BY m.id ASC                 
-          )FILTER (WHERE m.id IS NOT NULL), '[]') AS materials
-      FROM projects p
-      LEFT JOIN materials m ON m.project_id = p.id
-      GROUP BY p.id
-      ORDER BY p.created_at DESC
-    `);
+                (
+  SELECT json_agg(materials_row ORDER BY materials_row->>'id')
+  FROM (
+    SELECT json_build_object(
+      'id', m.id,
+      'name', m.name,
+      'component', m.component,
+      'category', m.category,
+      'bom_qty', m.bom_qty,
+      'UoM', m."UoM",
+      'supplier', m.supplier,
+      'status', m.status,
+      'percent', COALESCE(m.percent,0),
+      'attachments', (
+        SELECT json_agg(json_build_object(
+          'id', u.id,
+          'filename', u.filename,
+          'path', u.path,
+          'size', u.size,
+          'mime', u.mime,
+          'created_at', u.created_at
+        ))
+        FROM uploads u
+        WHERE u.material_id = m.id
+      )
+    ) AS materials_row
+    FROM materials m
+    WHERE m.project_id = p.id
+    ORDER BY m.id ASC              -- <--- ORDER BY YANG VALID
+  ) t
+) AS materials
 
     return NextResponse.json(res.rows);
 
