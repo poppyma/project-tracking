@@ -136,65 +136,117 @@ export async function PATCH(req: Request) {
   try {
     await initTables();
     const body = await req.json();
-    const { materialId, statusIndex, value } = body;
 
-    const cur = await query(`SELECT id, project_id, status FROM materials WHERE id = $1`, [materialId]);
-    if (cur.rowCount === 0) return NextResponse.json({ error: 'Material not found' }, { status: 404 });
+    // ======== MODE 1: PATCH STATUS MATERIAL ========
+    if (body.materialId && body.statusIndex !== undefined) {
+      const { materialId, statusIndex, value } = body;
 
-    const STATUS_WEIGHTS = [10,20,10,10,20,10,10,5,5];
-    const STATUS_COUNT = STATUS_WEIGHTS.length;
-
-    let statusArr = Array(STATUS_COUNT).fill(false);
-
-    if (Array.isArray(cur.rows[0].status)) {
-      const raw = cur.rows[0].status.map((v: any) => Boolean(v));
-      statusArr = raw.concat(Array(STATUS_COUNT - raw.length).fill(false)).slice(0, STATUS_COUNT);
-    }
-
-    statusArr[statusIndex] = Boolean(value);
-
-    const materialPercent = statusArr.reduce(
-      (sum, v, i) => sum + (v ? STATUS_WEIGHTS[i] : 0),
-      0
-    );
-
-    await query(
-      `UPDATE materials SET status=$1, percent=$2 WHERE id=$3`,
-      [JSON.stringify(statusArr), materialPercent, materialId]
-    );
-
-    // hitung project percent
-    const mats = await query(`SELECT COALESCE(percent,0) as percent FROM materials WHERE project_id=$1`, [cur.rows[0].project_id]);
-
-    let projectPercent = 0;
-    const count = mats?.rowCount ?? 0;
-
-    if (count > 0) {
-      const total = mats.rows.reduce((a: number, r: any) => a + Number(r.percent || 0), 0);
-      projectPercent = Math.round(total / count);
-    }
-
-
-      await query(`UPDATE projects SET percent=$1 WHERE id=$2`, [projectPercent, cur.rows[0].project_id]);
-
-      const updatedMat = await query(
-        `SELECT id, name, status, percent FROM materials WHERE id=$1`,
+      const cur = await query(
+        `SELECT id, project_id, status FROM materials WHERE id=$1`,
         [materialId]
       );
 
-      return NextResponse.json({
-        materialId,
-        material: updatedMat.rows[0],
-        materialPercent,
-        projectPercent,
-        projectId: cur.rows[0].project_id
-      });
+      if (cur.rowCount === 0) {
+        return NextResponse.json({ error: "Material not found" }, { status: 404 });
+      }
+
+      const STATUS_WEIGHTS = [10,20,10,10,20,10,10,5,5];
+      const STATUS_COUNT = STATUS_WEIGHTS.length;
+
+      let statusArr = Array(STATUS_COUNT).fill(false);
+
+      if (Array.isArray(cur.rows[0].status)) {
+        const raw = cur.rows[0].status.map((v: any) => Boolean(v));
+        statusArr = raw.concat(Array(STATUS_COUNT - raw.length).fill(false)).slice(0, STATUS_COUNT);
+      }
+
+      statusArr[statusIndex] = Boolean(value);
+
+      const materialPercent = statusArr.reduce(
+        (s, v, i) => s + (v ? STATUS_WEIGHTS[i] : 0),
+        0
+      );
+
+      await query(
+        `UPDATE materials SET status=$1, percent=$2 WHERE id=$3`,
+        [JSON.stringify(statusArr), materialPercent, materialId]
+      );
+
+      // Hitung ulang project percent
+      const mats = await query(
+        `SELECT COALESCE(percent,0) as percent FROM materials WHERE project_id=$1`,
+        [cur.rows[0].project_id]
+      );
+
+      const matRows = mats?.rows ?? [];
+      const count = mats?.rowCount ?? matRows.length;
+
+      let projectPercent = 0;
+
+      if (count > 0) {
+        const total = matRows.reduce((x: number, r: any) => x + Number(r.percent || 0), 0);
+        projectPercent = Math.round(total / count);
+      }
+
+      await query(
+        `UPDATE projects SET percent=$1 WHERE id=$2`,
+        [projectPercent, cur.rows[0].project_id]
+      );
+
+      return NextResponse.json({ success: true });
+    }
+
+    // ======== MODE 2: PATCH UPDATE PROJECT ========
+    const projectId = Number(new URL(req.url).searchParams.get("id"));
+
+    if (!projectId) {
+      return NextResponse.json({ error: "Project ID missing" }, { status: 400 });
+    }
+
+    const { name, customer, application, productLine, anualVolume, estSop, materials } = body;
+
+    // Update project info
+    await query(
+      `UPDATE projects
+       SET name=$1, customer=$2, application=$3, product_line=$4,
+           anual_volume=$5, est_sop=$6
+       WHERE id=$7`,
+      [name, customer, application, productLine, anualVolume, estSop, projectId]
+    );
+
+    // Hapus semua materials lama
+    await query(`DELETE FROM materials WHERE project_id=$1`, [projectId]);
+
+    // Insert materials baru
+    if (Array.isArray(materials)) {
+      const inserts = materials.map((m: any) =>
+        query(
+          `INSERT INTO materials (project_id, name, component, category, bom_qty, "UoM", supplier)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [
+            projectId,
+            m.material,
+            m.component,
+            m.category,
+            m.qty,
+            m.uom,
+            m.supplier,
+          ]
+        )
+      );
+      await Promise.all(inserts);
+    }
+
+    return NextResponse.json({ success: true });
 
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+
+
 
 export async function DELETE(req: Request) {
   try {
