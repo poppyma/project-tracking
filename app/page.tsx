@@ -241,6 +241,7 @@ async function saveEditProject() {
   await reloadProjects();
   setShowEditModal(false);
   setEditProject(null);
+  alert("Project berhasil diedit!");
 }
 
 
