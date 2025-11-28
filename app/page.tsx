@@ -1299,48 +1299,6 @@ const handleSaveProject = () => {
   </table>
 </div>
 
-{showEditModal && (
-  <div className="modal-overlay">
-    <div className="modal">
-      <h2 className="modal-title">Edit Project</h2>
-
-      {/* FORM */}
-      <input
-        className="input"
-        value={form.name}
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-      />
-
-      {/* MATERIALS TABLE */}
-      {materials.map((m, i) => (
-        <div key={i} className="grid grid-cols-6 gap-2">
-          <input value={m.material} onChange={(e)=>updateMaterial(i,"material",e.target.value)}/>
-          <input value={m.component} onChange={(e)=>updateMaterial(i,"component",e.target.value)}/>
-          <input value={m.category} onChange={(e)=>updateMaterial(i,"category",e.target.value)}/>
-          <input value={m.qty} onChange={(e)=>updateMaterial(i,"qty",e.target.value)}/>
-          <input value={m.uom} onChange={(e)=>updateMaterial(i,"uom",e.target.value)}/>
-          <input value={m.supplier} onChange={(e)=>updateMaterial(i,"supplier",e.target.value)}/>
-        </div>
-      ))}
-
-      <button className="btn" onClick={saveEditProject}>
-        Save Changes
-      </button>
-
-      <button
-        className="btn-cancel"
-        onClick={() => {
-          setShowEditModal(false);
-          setEditProject(null);
-        }}
-      >
-        Cancel
-      </button>
-    </div>
-  </div>
-)}
-
-
 <button className="add-btn" onClick={addRow}>+ Add Material</button>
 
             <div className="modal-actions">
