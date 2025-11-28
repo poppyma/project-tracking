@@ -801,7 +801,7 @@ const handleSaveProject = () => {
 
     {/* Tombol Delete */}
     <button
-      className="icon-delete flex items-center justify-center w-10 h-10 rounded-lg bg-[#e63946]"
+      className="icon-delete flex items-center justify-center w-10 h-10 rounded-lg bg-[#e63946] mr-1"
       title="Delete project"
       onClick={(e) => {
         e.stopPropagation();
