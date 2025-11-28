@@ -690,7 +690,6 @@ const [form, setForm] = useState({
   productLine: "",
   anualVolume: "",
   estSop: "",
-  material: "",
 });
 
 const [errors, setErrors] = useState({
@@ -761,7 +760,34 @@ const handleSaveProject = () => {
 
       <div className="card spaced">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button className="btn" onClick={() => setShowModal(true)}>Add Project</button>
+          <button
+  className="btn"
+  onClick={() => {
+    // RESET FORM supaya tidak bawa data edit sebelumnya
+    setForm({
+      name: "",
+      customer: "",
+      application: "",
+      productLine: "",
+      anualVolume: "",
+      estSop: "",
+    });
+
+    // RESET MATERIALS
+    setMaterials([
+      { material: "", component: "", qty: "", uom: "", supplier: "" }
+    ]);
+
+    // pastikan mode edit mati
+    setEditProject(null);
+
+    // buka modal add
+    setShowModal(true);
+  }}
+>
+  Add Project
+</button>
+
           <div style={{ width: '56%' }}>
             <div className="search-row" style={{ position: "relative" }}>
               <input
@@ -1467,14 +1493,28 @@ const handleSaveProject = () => {
       {/* ACTION BUTTONS */}
       <div className="mt-8 flex justify-end gap-4">
         <button
-          className="btn-cancel"
-          onClick={() => {
-            setShowEditModal(false);
-            setEditProject(null);
-          }}
-        >
-          Cancel
-        </button>
+  onClick={() => {
+    setShowEditModal(false);
+    setEditProject(null);
+
+    // reset form biar tidak kebawa ke Add nanti
+    setForm({
+      name: "",
+      customer: "",
+      application: "",
+      productLine: "",
+      anualVolume: "",
+      estSop: "",
+    });
+
+    setMaterials([
+      { material: "", component: "", qty: "", uom: "", supplier: "" }
+    ]);
+  }}
+>
+  Cancel
+</button>
+
 
         <button className="btn" onClick={saveEditProject}>
           Save
