@@ -74,7 +74,7 @@ const handleChange = (
 
 
 function resetForm() {
-  setForm({ name: "", customer: "", application: "", productLine: "", anualVolume: "", estSop: "", material: ""});
+  setForm({ name: "", customer: "", application: "", productLine: "", anualVolume: "", estSop: ""});
   setMaterials([]);
   setMaterialInput("");
 }
