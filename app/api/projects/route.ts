@@ -7,49 +7,61 @@ export async function GET() {
 
     const res = await query(`
       SELECT 
-        p.id, p.name, p.customer, p.application, p.product_line,
-        p.anual_volume, p.est_sop, p.created_at,
-        COALESCE(p.percent, 0) AS percent,
+        p.id, 
+        p.name, 
+        p.customer, 
+        p.application, 
+        p.product_line, 
+        p.anual_volume, 
+        p.est_sop, 
+        p.created_at,
+        COALESCE(p.percent,0) AS percent,
 
-        (
-          SELECT json_agg(mat ORDER BY mat.id)
-          FROM (
-            SELECT
-              m.id,
-              m.name,
-              m.component,
-              m.category,
-              m.bom_qty,
-              m."UoM",
-              m.supplier,
-              m.status,
-              COALESCE(m.percent, 0) AS percent,
-              (
-                SELECT json_agg(att ORDER BY att.id)
-                FROM (
-                  SELECT 
-                    u.id, u.filename, u.path, u.size, u.mime, u.created_at
-                  FROM uploads u
-                  WHERE u.material_id = m.id
-                  ORDER BY u.id
-                ) att
-              ) AS attachments
-            FROM materials m
-            WHERE m.project_id = p.id
-            ORDER BY m.id
-          ) mat
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', m.id,
+              'name', m.name,
+              'component', m.component,
+              'category', m.category,
+              'bom_qty', m.bom_qty,
+              'UoM', m."UoM",
+              'supplier', m.supplier,
+              'status', m.status,
+              'percent', COALESCE(m.percent,0),
+              'attachments', (
+                SELECT json_agg(
+                  json_build_object(
+                    'id', u.id,
+                    'filename', u.filename,
+                    'path', u.path,
+                    'size', u.size,
+                    'mime', u.mime,
+                    'created_at', u.created_at
+                  )
+                )
+                FROM uploads u 
+                WHERE u.material_id = m.id
+              )
+            )
+            ORDER BY m.id ASC   -- ⭐ WAJIB, inilah yang membuat urutan benar
+          ) FILTER (WHERE m.id IS NOT NULL), '[]'
         ) AS materials
 
       FROM projects p
+      LEFT JOIN materials m ON m.project_id = p.id
+      GROUP BY p.id
       ORDER BY p.created_at DESC
     `);
 
     return NextResponse.json(res.rows);
+
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
 
 export async function POST(req: Request) {
   try {
