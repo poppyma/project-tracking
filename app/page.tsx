@@ -44,6 +44,8 @@ const deleteRow = (index: number) => {
 };
 
 const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
+const [editProject, setEditProject] = useState<Project | null>(null);
+const [showEditModal, setShowEditModal] = useState(false);
 
 const handleChange = (
   index: number,
@@ -121,6 +123,22 @@ async function reloadProjects() {
 }
 
 useEffect(() => { reloadProjects(); }, []);
+
+async function saveEditedProject() {
+  if (!editProject) return;
+
+  const res = await fetch('/api/projects', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(editProject),
+  });
+
+  if (res.ok) {
+    setShowEditModal(false);
+    reloadProjects();  // Refresh data
+  }
+}
+
 
 async function handleSave() {
   try {
@@ -779,7 +797,8 @@ const handleSaveProject = () => {
       title="Edit project"
       onClick={(e) => {
         e.stopPropagation();
-        router.push(`/project/edit/${proj.id}`);
+        setEditProject(proj);     // ⬅️ kirim data project ke modal
+        setShowEditModal(true);   // ⬅️ tampilkan modal edit
       }}
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -798,6 +817,7 @@ const handleSaveProject = () => {
         />
       </svg>
     </button>
+
 
     {/* Tombol Delete */}
     <button
@@ -1238,6 +1258,55 @@ const handleSaveProject = () => {
           </div>
         </div>
       )}
+
+
+      {showEditModal && editProject && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded-xl w-[480px] space-y-4">
+
+      <h2 className="text-xl font-bold mb-4 text-blue-700">Edit Project</h2>
+
+      {/* Inputan Name */}
+      <input
+        type="text"
+        className="input"
+        value={editProject.name}
+        onChange={(e) =>
+          setEditProject({ ...editProject, name: e.target.value })
+        }
+      />
+
+      {/* Inputan Customer */}
+      <input
+        type="text"
+        className="input"
+        value={editProject.customer}
+        onChange={(e) =>
+          setEditProject({ ...editProject, customer: e.target.value })
+        }
+      />
+
+      {/* Inputan Application, Product Line, Dst */}
+      {/* Lanjutkan dengan field lain sesuai kebutuhan */}
+
+      <div className="flex justify-end gap-3 pt-3">
+        <button
+          className="px-4 py-2 bg-gray-300 rounded-lg"
+          onClick={() => setShowEditModal(false)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+          onClick={saveEditedProject}
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Upload modal for per-cell uploads in the detail grid */}
       {showUploadModal && (
