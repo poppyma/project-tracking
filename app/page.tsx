@@ -283,7 +283,6 @@ function addMaterial() {
       productLine: editProject.productLine || "",
       anualVolume: editProject.anualVolume || "",
       estSop: editProject.estSop || "",
-      material: "",
     });
 
     setMaterials(
