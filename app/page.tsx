@@ -8,7 +8,6 @@ type Material = {
   name: string;
 
   component: string;
-  category: string;
   bom_qty: number;
   UoM: string;
   supplier: string;
@@ -255,7 +254,6 @@ function addMaterial() {
     {
       material: materialInput.trim(),
       component: "",
-      category: "",
       qty: "",
       uom: "",
       supplier: ""
@@ -289,7 +287,6 @@ function addMaterial() {
       (editProject.materials || []).map((m) => ({
         material: m.name,
         component: m.component || "",
-        category: m.category || "",
         qty: String(m.bom_qty ?? ""),
         uom: m.UoM || "",
         supplier: m.supplier || "",

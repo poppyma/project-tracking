@@ -220,11 +220,10 @@ export async function PATCH(req: Request) {
       const inserts = materials.map((m: any) =>
         query(
           `INSERT INTO materials (project_id, name, component, bom_qty, "UoM", supplier)
-           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+           VALUES ($1,$2,$3,$4,$5,$6)`,
           [
             projectId,
             m.material,
-            m.component,
             m.qty,
             m.uom,
             m.supplier,
