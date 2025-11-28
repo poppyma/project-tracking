@@ -773,6 +773,32 @@ const handleSaveProject = () => {
       </svg>
     </button>
 
+    {/* Tombol Edit */}
+    <button
+      className="icon-edit flex items-center justify-center w-10 h-10 rounded-lg bg-[#f4a261]"
+      title="Edit project"
+      onClick={(e) => {
+        e.stopPropagation();
+        router.push(`/project/edit/${proj.id}`);  // arahkan ke halaman edit
+      }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 20h9"
+          stroke="#fff"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M16.5 3.5L20.5 7.5L9 19L4 20L5 15L16.5 3.5Z"
+          stroke="#fff"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+
     {/* Tombol Delete */}
     <button
       className="icon-delete flex items-center justify-center w-10 h-10 rounded-lg bg-[#e63946]"
@@ -790,6 +816,9 @@ const handleSaveProject = () => {
         <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
       </svg>
     </button>
+
+
+
   </div>
   </td>
   </tr>
