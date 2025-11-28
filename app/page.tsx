@@ -3,7 +3,21 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 
-type Material = { id: number; name: string; percent?: number; status?: boolean[] };
+type Material = {
+  id: number;
+  name: string;
+
+  component: string;
+  category: string;
+  bom_qty: number;
+  UoM: string;
+  supplier: string;
+
+  percent: number;
+  status: boolean[];
+  attachments: any[];
+};
+
 type Attachment = { id: number; filename: string; path: string; size?: number; mime?: string; created_at?: string };
 type MaterialExt = Material & { attachments?: Attachment[] };
 
@@ -38,6 +52,7 @@ const addRow = () => {
     { material: "", component: "", category: "", qty: "", uom: "", supplier: "" },
   ]);
 };
+
 
 const deleteRow = (index: number) => {
   setMaterials(materials.filter((_, i) => i !== index));
@@ -139,6 +154,17 @@ async function saveEditedProject() {
   }
 }
 
+function updateMaterial(index: number, field: string, value: string) {
+  setMaterials((prev) => {
+    const list = [...prev];
+    list[index] = {
+      ...list[index],
+      [field]: value
+    };
+    return list;
+  });
+}
+
 
 async function handleSave() {
   try {
@@ -188,6 +214,36 @@ async function handleSave() {
   }
 }
 
+async function saveEditProject() {
+  if (!editProject) return;
+
+  const payload = {
+    name: form.name,
+    customer: form.customer,
+    application: form.application,
+    productLine: form.productLine,
+    anualVolume: form.anualVolume,
+    estSop: form.estSop,
+    materials,
+  };
+
+  const res = await fetch(`/api/projects?id=${editProject.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    alert("Gagal update project");
+    return;
+  }
+
+  await reloadProjects();
+  setShowEditModal(false);
+  setEditProject(null);
+}
+
+
 function addMaterial() {
   if (!materialInput.trim()) {
     setErrors(prev => ({ ...prev, material: "Material is required" }));
@@ -217,6 +273,31 @@ function addMaterial() {
   const [remarksModal, setRemarksModal] = useState<{ open: boolean; statusIndex?: number; items?: any[]; editingId?: number; editingText?: string }>({ open: false });
 
   const [statuses, setStatuses] = useState<Record<number, boolean[][]>>({});
+
+  useEffect(() => {
+  if (editProject) {
+    setForm({
+      name: editProject.name || "",
+      customer: editProject.customer || "",
+      application: editProject.application || "",
+      productLine: editProject.productLine || "",
+      anualVolume: editProject.anualVolume || "",
+      estSop: editProject.estSop || "",
+      material: "",
+    });
+
+    setMaterials(
+      (editProject.materials || []).map((m) => ({
+        material: m.name,
+        component: m.component || "",
+        category: m.category || "",
+        qty: String(m.bom_qty ?? ""),
+        uom: m.UoM || "",
+        supplier: m.supplier || "",
+      }))
+    );
+  }
+}, [editProject]);
 
   const STATUS_COUNT = 9; 
   const STATUS_WEIGHTS = [10,20,10,10,20,10,10,5,5];
@@ -601,6 +682,7 @@ async function openAttachments(statusIndex: number) {
     setCurrentPage(1);
   }, [searchQuery, sortConfig]);
 
+  
 const [form, setForm] = useState({
   name: "",
   customer: "",
@@ -1216,6 +1298,48 @@ const handleSaveProject = () => {
     </tbody>
   </table>
 </div>
+
+{showEditModal && (
+  <div className="modal-overlay">
+    <div className="modal">
+      <h2 className="modal-title">Edit Project</h2>
+
+      {/* FORM */}
+      <input
+        className="input"
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+      />
+
+      {/* MATERIALS TABLE */}
+      {materials.map((m, i) => (
+        <div key={i} className="grid grid-cols-6 gap-2">
+          <input value={m.material} onChange={(e)=>updateMaterial(i,"material",e.target.value)}/>
+          <input value={m.component} onChange={(e)=>updateMaterial(i,"component",e.target.value)}/>
+          <input value={m.category} onChange={(e)=>updateMaterial(i,"category",e.target.value)}/>
+          <input value={m.qty} onChange={(e)=>updateMaterial(i,"qty",e.target.value)}/>
+          <input value={m.uom} onChange={(e)=>updateMaterial(i,"uom",e.target.value)}/>
+          <input value={m.supplier} onChange={(e)=>updateMaterial(i,"supplier",e.target.value)}/>
+        </div>
+      ))}
+
+      <button className="btn" onClick={saveEditProject}>
+        Save Changes
+      </button>
+
+      <button
+        className="btn-cancel"
+        onClick={() => {
+          setShowEditModal(false);
+          setEditProject(null);
+        }}
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
+
 
 <button className="add-btn" onClick={addRow}>+ Add Material</button>
 
