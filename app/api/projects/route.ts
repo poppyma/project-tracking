@@ -17,18 +17,19 @@ export async function GET() {
         p.created_at,
         COALESCE(p.percent,0) AS percent,
 
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', m.id,
-              'name', m.name,
-              'component', m.component,
-              'bom_qty', m.bom_qty,
-              'UoM', m."UoM",
-              'supplier', m.supplier,
-              'status', m.status,
-              'percent', COALESCE(m.percent,0),
-              'attachments', (
+        (
+          SELECT json_agg(x ORDER BY x.id)
+          FROM (
+            SELECT 
+              m.id,
+              m.name,
+              m.component,
+              m.bom_qty,
+              m."UoM",
+              m.supplier,
+              m.status,
+              COALESCE(m.percent,0) AS percent,
+              (
                 SELECT json_agg(
                   json_build_object(
                     'id', u.id,
@@ -37,19 +38,18 @@ export async function GET() {
                     'size', u.size,
                     'mime', u.mime,
                     'created_at', u.created_at
-                  )
+                  ) ORDER BY u.id
                 )
-                FROM uploads u 
+                FROM uploads u
                 WHERE u.material_id = m.id
-              )
-            )
-            ORDER BY m.id ASC   -- ⭐ WAJIB, inilah yang membuat urutan benar
-          ) FILTER (WHERE m.id IS NOT NULL), '[]'
+              ) AS attachments
+            FROM materials m
+            WHERE m.project_id = p.id
+            ORDER BY m.id ASC
+          ) x
         ) AS materials
 
       FROM projects p
-      LEFT JOIN materials m ON m.project_id = p.id
-      GROUP BY p.id
       ORDER BY p.created_at DESC
     `);
 
@@ -60,7 +60,6 @@ export async function GET() {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-
 
 export async function POST(req: Request) {
   try {
