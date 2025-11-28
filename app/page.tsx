@@ -42,14 +42,14 @@ export default function Home() {
 
   const [materialInput, setMaterialInput] = useState("");
   const [materials, setMaterials] = useState([
-  { material: "", component: "", category: "", qty: "", uom: "", supplier: "" },
+  { material: "", component: "", qty: "", uom: "", supplier: "" },
 ]);
 
 
 const addRow = () => {
   setMaterials([
     ...materials,
-    { material: "", component: "", category: "", qty: "", uom: "", supplier: "" },
+    { material: "", component: "", qty: "", uom: "", supplier: "" },
   ]);
 };
 
@@ -103,7 +103,6 @@ async function reloadProjects() {
     status: m.status,
     attachments: m.attachments,
     component: m.component,
-    category: m.category,
     bom_qty: m.bom_qty,
     UoM: m.UoM,
     supplier: m.supplier
@@ -1198,7 +1197,6 @@ const handleSaveProject = () => {
       <tr style={{ background: "#f2f2f2" }}>
         <th style={{ width: "18%", border: "1px solid #ccc", padding: "6px" }}>Material</th>
         <th style={{ width: "18%", border: "1px solid #ccc", padding: "6px" }}>Component</th>
-        <th style={{ width: "14%", border: "1px solid #ccc", padding: "6px" }}>Category</th>
         <th style={{ width: "14%", border: "1px solid #ccc", padding: "6px" }}>
           BOM Qty
           <div style={{ fontSize: "8px", color: "red", fontWeight: "normal" }}>
@@ -1237,20 +1235,7 @@ const handleSaveProject = () => {
             />
           </td>
 
-          {/* Category dropdown */}
-          <td style={{ border: "1px solid #ccc" }}>
-            <select
-              style={{ width: "100%", border: "none", padding: "4px" }}
-              value={row.category}
-              onChange={(e) => handleChange(index, "category", e.target.value)}
-            >
-              <option value="">Select</option>
-              {options.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </td>
-
+      
           {/* Qty */}
           <td style={{ border: "1px solid #ccc" }}>
             <input
@@ -1435,7 +1420,6 @@ const handleSaveProject = () => {
           <tr className="bg-gray-100 text-left">
             <th className="p-2 border">Material</th>
             <th className="p-2 border">Component</th>
-            <th className="p-2 border">Category</th>
             <th className="p-2 border">Qty</th>
             <th className="p-2 border">UoM</th>
             <th className="p-2 border">Supplier</th>
@@ -1455,12 +1439,6 @@ const handleSaveProject = () => {
                 <input className="input w-full"
                   value={m.component}
                   onChange={(e)=>updateMaterial(i,"component",e.target.value)}
-                />
-              </td>
-              <td className="border p-1">
-                <input className="input w-full"
-                  value={m.category}
-                  onChange={(e)=>updateMaterial(i,"category",e.target.value)}
                 />
               </td>
               <td className="border p-1">

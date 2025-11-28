@@ -12,7 +12,6 @@ type Material = {
   project_id: number;
   name: string;
   component?: string;
-  category?: string;
   bom_qty?: number;
   UoM?: string;
   supplier?: string;
@@ -146,7 +145,6 @@ export default function ProjectDetailPage() {
             <tr className="bg-blue-600 text-white text-left">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Component</th>
-              <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">BOM Qty</th>
               <th className="px-4 py-3">UoM</th>
               <th className="px-4 py-3">Supplier</th>
@@ -164,7 +162,6 @@ export default function ProjectDetailPage() {
                 <tr key={m.id} className="border-b hover:bg-gray-50 transition">
                   <td className="px-4 py-3 font-semibold">{m.name}</td>
                   <td className="px-4 py-3">{m.component || "-"}</td>
-                  <td className="px-4 py-3">{m.category || "-"}</td>
                   <td className="px-4 py-3">{m.bom_qty ?? "-"}</td>
                   <td className="px-4 py-3">{m.UoM || "-"}</td>
                   <td className="px-4 py-3">{m.supplier || "-"}</td>

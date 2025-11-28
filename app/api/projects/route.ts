@@ -23,7 +23,6 @@ export async function GET() {
               'id', m.id,
               'name', m.name,
               'component', m.component,
-              'category', m.category,
               'bom_qty', m.bom_qty,
               'UoM', m."UoM",
               'supplier', m.supplier,
@@ -92,14 +91,13 @@ export async function POST(req: Request) {
 
         return query(
           `INSERT INTO materials 
-           (project_id, name, component, category, bom_qty, "UoM", supplier, status, percent)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-           RETURNING id, name, component, category, bom_qty, "UoM", supplier, status, percent`,
+           (project_id, name, component, bom_qty, "UoM", supplier, status, percent)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+           RETURNING id, name, component, bom_qty, "UoM", supplier, status, percent`,
           [
             projectId,
             materialName,
             m.component ?? "",
-            m.category ?? "",
             qty,
             m.uom ?? "",
             m.supplier ?? "",
@@ -221,13 +219,12 @@ export async function PATCH(req: Request) {
     if (Array.isArray(materials)) {
       const inserts = materials.map((m: any) =>
         query(
-          `INSERT INTO materials (project_id, name, component, category, bom_qty, "UoM", supplier)
+          `INSERT INTO materials (project_id, name, component, bom_qty, "UoM", supplier)
            VALUES ($1,$2,$3,$4,$5,$6,$7)`,
           [
             projectId,
             m.material,
             m.component,
-            m.category,
             m.qty,
             m.uom,
             m.supplier,
