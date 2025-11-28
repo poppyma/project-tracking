@@ -1341,12 +1341,14 @@ const handleSaveProject = () => {
         </div>
       )}
 
-      {showEditModal && (
+    {showEditModal && (
   <div className="modal-overlay">
+
     <div className="modal">
 
-      <div className="modal-header">
-        <h2 className="modal-title text-xl font-semibold text-blue-600">Edit Project</h2>
+      {/* HEADER */}
+      <div className="modal-header flex justify-between items-center mb-5">
+        <h2 className="text-2xl font-semibold text-blue-600">Edit Project</h2>
 
         <button
           className="modal-close"
@@ -1360,57 +1362,63 @@ const handleSaveProject = () => {
       </div>
 
       {/* PROJECT FORM */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-6">
 
-        <div>
-          <label className="form-label">Project Name</label>
+        {/* Project Name */}
+        <div className="space-y-2">
+          <label className="font-semibold block">Project Name</label>
           <input
-            className="input"
+            className="input w-full border rounded px-3 py-2"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
 
-        <div>
-          <label className="form-label">Customer</label>
+        {/* Customer */}
+        <div className="space-y-2">
+          <label className="font-semibold block">Customer</label>
           <input
-            className="input"
+            className="input w-full border rounded px-3 py-2"
             value={form.customer}
             onChange={(e) => setForm({ ...form, customer: e.target.value })}
           />
         </div>
 
-        <div>
-          <label className="form-label">Application</label>
+        {/* Application */}
+        <div className="space-y-2">
+          <label className="font-semibold block">Application</label>
           <input
-            className="input"
+            className="input w-full border rounded px-3 py-2"
             value={form.application}
             onChange={(e) => setForm({ ...form, application: e.target.value })}
           />
         </div>
 
-        <div>
-          <label className="form-label">Product Line</label>
+        {/* Product Line */}
+        <div className="space-y-2">
+          <label className="font-semibold block">Product Line</label>
           <input
-            className="input"
+            className="input w-full border rounded px-3 py-2"
             value={form.productLine}
             onChange={(e) => setForm({ ...form, productLine: e.target.value })}
           />
         </div>
 
-        <div>
-          <label className="form-label">Annual Volume</label>
+        {/* Annual Volume */}
+        <div className="space-y-2">
+          <label className="font-semibold block">Annual Volume</label>
           <input
-            className="input"
+            className="input w-full border rounded px-3 py-2"
             value={form.anualVolume}
             onChange={(e) => setForm({ ...form, anualVolume: e.target.value })}
           />
         </div>
 
-        <div>
-          <label className="form-label">EST SOP</label>
+        {/* EST SOP */}
+        <div className="space-y-2">
+          <label className="font-semibold block">EST SOP</label>
           <input
-            className="input"
+            className="input w-full border rounded px-3 py-2"
             value={form.estSop}
             onChange={(e) => setForm({ ...form, estSop: e.target.value })}
           />
@@ -1419,46 +1427,58 @@ const handleSaveProject = () => {
       </div>
 
       {/* MATERIAL TABLE */}
-      <h3 className="mt-6 font-semibold">Materials</h3>
+      <h3 className="mt-8 mb-2 font-semibold text-lg">Materials</h3>
 
-      <table className="table-input w-full mt-2">
+      <table className="w-full border-collapse table-input">
         <thead>
-          <tr>
-            <th>Material</th>
-            <th>Component</th>
-            <th>Category</th>
-            <th>Qty</th>
-            <th>UoM</th>
-            <th>Supplier</th>
+          <tr className="bg-gray-100 text-left">
+            <th className="p-2 border">Material</th>
+            <th className="p-2 border">Component</th>
+            <th className="p-2 border">Category</th>
+            <th className="p-2 border">Qty</th>
+            <th className="p-2 border">UoM</th>
+            <th className="p-2 border">Supplier</th>
           </tr>
         </thead>
 
         <tbody>
           {materials.map((m, i) => (
             <tr key={i}>
-              <td>
-                <input className="input" value={m.material}
-                  onChange={(e)=>updateMaterial(i,"material",e.target.value)} />
+              <td className="border p-1">
+                <input className="input w-full" 
+                  value={m.material}
+                  onChange={(e)=>updateMaterial(i,"material",e.target.value)}
+                />
               </td>
-              <td>
-                <input className="input" value={m.component}
-                  onChange={(e)=>updateMaterial(i,"component",e.target.value)} />
+              <td className="border p-1">
+                <input className="input w-full"
+                  value={m.component}
+                  onChange={(e)=>updateMaterial(i,"component",e.target.value)}
+                />
               </td>
-              <td>
-                <input className="input" value={m.category}
-                  onChange={(e)=>updateMaterial(i,"category",e.target.value)} />
+              <td className="border p-1">
+                <input className="input w-full"
+                  value={m.category}
+                  onChange={(e)=>updateMaterial(i,"category",e.target.value)}
+                />
               </td>
-              <td>
-                <input className="input" value={m.qty}
-                  onChange={(e)=>updateMaterial(i,"qty",e.target.value)} />
+              <td className="border p-1">
+                <input className="input w-full"
+                  value={m.qty}
+                  onChange={(e)=>updateMaterial(i,"qty",e.target.value)}
+                />
               </td>
-              <td>
-                <input className="input" value={m.uom}
-                  onChange={(e)=>updateMaterial(i,"uom",e.target.value)} />
+              <td className="border p-1">
+                <input className="input w-full"
+                  value={m.uom}
+                  onChange={(e)=>updateMaterial(i,"uom",e.target.value)}
+                />
               </td>
-              <td>
-                <input className="input" value={m.supplier}
-                  onChange={(e)=>updateMaterial(i,"supplier",e.target.value)} />
+              <td className="border p-1">
+                <input className="input w-full"
+                  value={m.supplier}
+                  onChange={(e)=>updateMaterial(i,"supplier",e.target.value)}
+                />
               </td>
             </tr>
           ))}
@@ -1466,7 +1486,7 @@ const handleSaveProject = () => {
       </table>
 
       {/* ACTION BUTTONS */}
-      <div className="modal-actions mt-6 flex justify-end gap-4">
+      <div className="mt-8 flex justify-end gap-4">
         <button
           className="btn-cancel"
           onClick={() => {
@@ -1485,6 +1505,7 @@ const handleSaveProject = () => {
     </div>
   </div>
 )}
+
 
       {/* Upload modal for per-cell uploads in the detail grid */}
       {showUploadModal && (
