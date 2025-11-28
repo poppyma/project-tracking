@@ -746,7 +746,7 @@ const handleSaveProject = () => {
 
     {/* Tombol View */}
     <button
-      className="icon-view flex items-center justify-center w-10 h-10 rounded-lg bg-[#0071c5]"
+      className="icon-view flex items-center justify-center w-10 h-10 rounded-lg bg-[#0071c5] mr-2"
       title="View project"
       onClick={(e) => {
         e.stopPropagation();
@@ -775,11 +775,11 @@ const handleSaveProject = () => {
 
     {/* Tombol Edit */}
     <button
-      className="icon-edit flex items-center justify-center w-10 h-10 rounded-lg bg-[#f4a261]"
+      className="icon-edit flex items-center justify-center w-10 h-10 rounded-lg bg-[#f4a261] mr-2"
       title="Edit project"
       onClick={(e) => {
         e.stopPropagation();
-        router.push(`/project/edit/${proj.id}`);  // arahkan ke halaman edit
+        router.push(`/project/edit/${proj.id}`);
       }}
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -816,6 +816,7 @@ const handleSaveProject = () => {
         <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
       </svg>
     </button>
+
 
 
 
