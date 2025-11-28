@@ -1341,51 +1341,147 @@ const handleSaveProject = () => {
         </div>
       )}
 
+      {showEditModal && (
+  <div className="modal-overlay">
+    <div className="modal">
 
-      {showEditModal && editProject && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded-xl w-[480px] space-y-4">
+      <div className="modal-header">
+        <h2 className="modal-title text-xl font-semibold text-blue-600">Edit Project</h2>
 
-      <h2 className="text-xl font-bold mb-4 text-blue-700">Edit Project</h2>
-
-      {/* Inputan Name */}
-      <input
-        type="text"
-        className="input"
-        value={editProject.name}
-        onChange={(e) =>
-          setEditProject({ ...editProject, name: e.target.value })
-        }
-      />
-
-      {/* Inputan Customer */}
-      <input
-        type="text"
-        className="input"
-        value={editProject.customer}
-        onChange={(e) =>
-          setEditProject({ ...editProject, customer: e.target.value })
-        }
-      />
-
-      {/* Inputan Application, Product Line, Dst */}
-      {/* Lanjutkan dengan field lain sesuai kebutuhan */}
-
-      <div className="flex justify-end gap-3 pt-3">
         <button
-          className="px-4 py-2 bg-gray-300 rounded-lg"
-          onClick={() => setShowEditModal(false)}
+          className="modal-close"
+          onClick={() => {
+            setShowEditModal(false);
+            setEditProject(null);
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* PROJECT FORM */}
+      <div className="grid grid-cols-2 gap-4">
+
+        <div>
+          <label className="form-label">Project Name</label>
+          <input
+            className="input"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="form-label">Customer</label>
+          <input
+            className="input"
+            value={form.customer}
+            onChange={(e) => setForm({ ...form, customer: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="form-label">Application</label>
+          <input
+            className="input"
+            value={form.application}
+            onChange={(e) => setForm({ ...form, application: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="form-label">Product Line</label>
+          <input
+            className="input"
+            value={form.productLine}
+            onChange={(e) => setForm({ ...form, productLine: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="form-label">Annual Volume</label>
+          <input
+            className="input"
+            value={form.anualVolume}
+            onChange={(e) => setForm({ ...form, anualVolume: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="form-label">EST SOP</label>
+          <input
+            className="input"
+            value={form.estSop}
+            onChange={(e) => setForm({ ...form, estSop: e.target.value })}
+          />
+        </div>
+
+      </div>
+
+      {/* MATERIAL TABLE */}
+      <h3 className="mt-6 font-semibold">Materials</h3>
+
+      <table className="table-input w-full mt-2">
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Component</th>
+            <th>Category</th>
+            <th>Qty</th>
+            <th>UoM</th>
+            <th>Supplier</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {materials.map((m, i) => (
+            <tr key={i}>
+              <td>
+                <input className="input" value={m.material}
+                  onChange={(e)=>updateMaterial(i,"material",e.target.value)} />
+              </td>
+              <td>
+                <input className="input" value={m.component}
+                  onChange={(e)=>updateMaterial(i,"component",e.target.value)} />
+              </td>
+              <td>
+                <input className="input" value={m.category}
+                  onChange={(e)=>updateMaterial(i,"category",e.target.value)} />
+              </td>
+              <td>
+                <input className="input" value={m.qty}
+                  onChange={(e)=>updateMaterial(i,"qty",e.target.value)} />
+              </td>
+              <td>
+                <input className="input" value={m.uom}
+                  onChange={(e)=>updateMaterial(i,"uom",e.target.value)} />
+              </td>
+              <td>
+                <input className="input" value={m.supplier}
+                  onChange={(e)=>updateMaterial(i,"supplier",e.target.value)} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* ACTION BUTTONS */}
+      <div className="modal-actions mt-6 flex justify-end gap-4">
+        <button
+          className="btn-cancel"
+          onClick={() => {
+            setShowEditModal(false);
+            setEditProject(null);
+          }}
         >
           Cancel
         </button>
 
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-          onClick={saveEditedProject}
-        >
+        <button className="btn" onClick={saveEditProject}>
           Save
         </button>
       </div>
+
     </div>
   </div>
 )}
