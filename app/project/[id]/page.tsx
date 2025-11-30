@@ -156,6 +156,7 @@ export default function ProjectDetailPage() {
           <tbody>
             {project.materials
               .slice() 
+              .sort((a, b) => a.order_index - b.order_index)   // <--- WAJIB: sort by order_index
               .map((m) => (
                 <tr key={m.id} className="border-b hover:bg-gray-50 transition">
                   <td className="px-4 py-3 font-semibold">{m.name}</td>

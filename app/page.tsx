@@ -93,21 +93,17 @@ async function reloadProjects() {
       anualVolume: r.anual_volume ?? r.anualVolume ?? '',
       estSop: r.est_sop ?? r.estSop ?? '',
       percent: r.percent ?? 0,
-      materials: (r.materials || [])
-  .slice() // duplikasi array supaya aman
-  .sort((a: any, b: any) => Number(a.id) - Number(b.id))  // <--- sorting WAJIB
-  .map((m: any) => ({
-    id: m.id,
-    name: m.name,
-    percent: m.percent,
-    status: m.status,
-    attachments: m.attachments,
-    component: m.component,
-    bom_qty: m.bom_qty,
-    UoM: m.UoM,
-    supplier: m.supplier
-  })) as any,
-
+      materials: (r.materials || []) .map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        percent: m.percent,
+        status: m.status,
+        attachments: m.attachments,
+        component: m.component,
+        bom_qty: m.bom_qty,
+        UoM: m.UoM,
+        supplier: m.supplier
+      })) as any,
     }));
 
     const initialStatuses: Record<number, boolean[][]> = {};
