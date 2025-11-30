@@ -195,7 +195,16 @@ export async function PATCH(req: Request) {
         [projectPercent, cur.rows[0].project_id]
       );
 
-      return NextResponse.json({ success: true });
+      return NextResponse.json({
+        success: true,
+        material: {
+          id: materialId,
+          status: statusArr,
+          percent: materialPercent
+        },
+        projectId: cur.rows[0].project_id,
+        projectPercent
+      });
     }
 
     // ======== MODE 2: PATCH UPDATE PROJECT ========
