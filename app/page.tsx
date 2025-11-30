@@ -529,7 +529,6 @@ async function confirmYes() {
       };
     }));
 
-
     setLoadingProgress(100);
     setTimeout(() => { setConfirm({ open: false }); setLoadingProgress(0); }, 250);
   } catch (err) {
