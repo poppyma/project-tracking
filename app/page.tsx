@@ -617,6 +617,8 @@ function sortBy(key: string) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Gagal menghapus project');
       await reloadProjects();
+
+      alert("Project berhasil dihapus!");
       if (selectedProjectId === projectId) {
         setSelectedProjectId(null);
         try { if (typeof window !== 'undefined') window.localStorage.removeItem('selectedProjectId'); } catch (err) { /* ignore */ }
