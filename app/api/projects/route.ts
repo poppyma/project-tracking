@@ -17,49 +17,52 @@ export async function GET() {
         p.created_at,
         COALESCE(p.percent,0) AS percent,
 
-        (
-          SELECT json_agg(x ORDER BY x.id)
-          FROM (
-            SELECT 
-              m.id,
-              m.name,
-              m.component,
-              m.bom_qty,
-              m."UoM",
-              m.supplier,
-              m.status,
-              COALESCE(m.percent,0) AS percent,
-              (
-                SELECT json_agg(
-                  json_build_object(
-                    'id', u.id,
-                    'filename', u.filename,
-                    'path', u.path,
-                    'size', u.size,
-                    'mime', u.mime,
-                    'created_at', u.created_at
-                  ) ORDER BY u.id
-                )
-                FROM uploads u
-                WHERE u.material_id = m.id
-              ) AS attachments
-            FROM materials m
-            WHERE m.project_id = p.id
-            ORDER BY m.id ASC
-          ) x
-        ) AS materials
+        COALESCE(
+          json_agg(material_row ORDER BY material_row.id) 
+        , '[]') AS materials
 
       FROM projects p
+      LEFT JOIN LATERAL (
+        SELECT 
+          m.id,
+          m.name,
+          m.component,
+          m.category,
+          m.bom_qty,
+          m."UoM",
+          m.supplier,
+          m.status,
+          COALESCE(m.percent,0) AS percent,
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', u.id,
+                'filename', u.filename,
+                'path', u.path,
+                'size', u.size,
+                'mime', u.mime,
+                'created_at', u.created_at
+              )
+            )
+            FROM uploads u 
+            WHERE u.material_id = m.id
+          ) AS attachments
+        FROM materials m
+        WHERE m.project_id = p.id
+        ORDER BY m.id ASC
+      ) AS material_row ON TRUE
+
+      GROUP BY p.id
       ORDER BY p.created_at DESC
     `);
 
     return NextResponse.json(res.rows);
-
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
 
 export async function POST(req: Request) {
   try {
