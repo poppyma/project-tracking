@@ -221,10 +221,13 @@ export async function PATCH(req: Request) {
 
     // Insert materials baru
     if (Array.isArray(materials)) {
+      const STATUS_COUNT = 9;
+      const defaultStatus = JSON.stringify(Array(STATUS_COUNT).fill(false));
+
       const inserts = materials.map((m: any, i:number) =>
         query(
-          `INSERT INTO materials (project_id, name, component, bom_qty, "UoM", supplier, order_index)
-           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          `INSERT INTO materials (project_id, name, component, bom_qty, "UoM", supplier, status, percent, order_index)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [
             projectId,
             m.material,
@@ -232,6 +235,8 @@ export async function PATCH(req: Request) {
             m.qty,
             m.uom,
             m.supplier,
+            defaultStatus,
+            0,
             i
           ]
         )
