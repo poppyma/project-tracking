@@ -18,50 +18,51 @@ export async function GET() {
         COALESCE(p.percent,0) AS percent,
 
         COALESCE(
-          json_agg(material_row ORDER BY material_row.id) 
-        , '[]') AS materials
-
-      FROM projects p
-      LEFT JOIN LATERAL (
-        SELECT 
-          m.id,
-          m.name,
-          m.component,
-          m.category,
-          m.bom_qty,
-          m."UoM",
-          m.supplier,
-          m.status,
-          COALESCE(m.percent,0) AS percent,
-          (
-            SELECT json_agg(
-              json_build_object(
-                'id', u.id,
-                'filename', u.filename,
-                'path', u.path,
-                'size', u.size,
-                'mime', u.mime,
-                'created_at', u.created_at
+          json_agg(
+            json_build_object(
+              'id', m.id,
+              'name', m.name,
+              'component', m.component,
+              'category', m.category,
+              'bom_qty', m.bom_qty,
+              'UoM', m."UoM",
+              'supplier', m.supplier,
+              'status', m.status,
+              'percent', COALESCE(m.percent,0),
+              'order_index', m.order_index,
+              'attachments', (
+                SELECT json_agg(
+                  json_build_object(
+                    'id', u.id,
+                    'filename', u.filename,
+                    'path', u.path,
+                    'size', u.size,
+                    'mime', u.mime,
+                    'created_at', u.created_at
+                  )
+                )
+                FROM uploads u 
+                WHERE u.material_id = m.id
               )
             )
-            FROM uploads u 
-            WHERE u.material_id = m.id
-          ) AS attachments
-        FROM materials m
-        WHERE m.project_id = p.id
-        ORDER BY m.id ASC
-      ) AS material_row ON TRUE
+            ORDER BY m.order_index ASC     -- <--- URUT SESUAI INPUT USER!
+          ) FILTER (WHERE m.id IS NOT NULL), '[]'
+        ) AS materials
 
+      FROM projects p
+      LEFT JOIN materials m ON m.project_id = p.id
       GROUP BY p.id
       ORDER BY p.created_at DESC
     `);
 
     return NextResponse.json(res.rows);
+
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
 
 
 export async function POST(req: Request) {
@@ -86,16 +87,16 @@ export async function POST(req: Request) {
       const STATUS_COUNT = 9;
       const defaultStatus = JSON.stringify(Array(STATUS_COUNT).fill(false));
 
-      const promises = materials.map((m: any) => {
+      const promises = materials.map((m: any, index: number) => {
         const materialName = m.name ?? m.material ?? "";
 
         const qty = Number(m.qty) || 0; // FIX qty error
 
         return query(
           `INSERT INTO materials 
-           (project_id, name, component, bom_qty, "UoM", supplier, status, percent)
+           (project_id, name, component, bom_qty, "UoM", supplier, status, percent, order_index)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-           RETURNING id, name, component, bom_qty, "UoM", supplier, status, percent`,
+           RETURNING id, name, component, bom_qty, "UoM", supplier, status, percent, order_index`,
           [
             projectId,
             materialName,
@@ -104,7 +105,8 @@ export async function POST(req: Request) {
             m.uom ?? "",
             m.supplier ?? "",
             defaultStatus,
-            0
+            0,
+            index
           ]
         );
       });

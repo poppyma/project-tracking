@@ -15,6 +15,7 @@ type Material = {
   percent: number;
   status: boolean[];
   attachments: any[];
+  order_index: number;
 };
 
 type Attachment = { id: number; filename: string; path: string; size?: number; mime?: string; created_at?: string };
@@ -525,7 +526,7 @@ async function confirmYes() {
         ...pr,
         percent: data.projectPercent,
         // ⬅️ FIX: materials harus selalu disort ulang setelah update
-        materials: [...updatedMaterials].sort((a, b) => Number(a.id) - Number(b.id))
+        materials: [...updatedMaterials].sort((a, b) => a.order_index - b.order_index)
       };
     }));
 

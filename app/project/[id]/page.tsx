@@ -39,7 +39,8 @@ export default function ProjectDetailPage() {
         const p = list.find((x: any) => Number(x.id) === id);
         //if (p) setProject(p);
         if (p) {
-          p.materials = [...(p.materials || [])].sort((a, b) => Number(a.id) - Number(b.id));
+          p.materials = [...(p.materials || [])].sort((a, b) => a.order_index - b.order_index);
+
           setProject(p);
         }
       } catch (err) {
