@@ -61,6 +61,7 @@ const deleteRow = (index: number) => {
 const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 const [editProject, setEditProject] = useState<Project | null>(null);
 const [showEditModal, setShowEditModal] = useState(false);
+const [project, setProject] = useState<Project | null>(null);
 
 const handleChange = (
   index: number,
@@ -525,6 +526,24 @@ async function confirmYes() {
         materials: [...updatedMaterials].sort((a, b) => a.order_index - b.order_index)
       };
     }));
+
+    // 🔥 Update project detail page juga
+    setProject((prev) => {
+      if (!prev || prev.id !== data.projectId) return prev;
+
+      const updatedMaterials = prev.materials.map((m) => {
+        if (m.id === serverMat.id) {
+          return { ...m, percent: serverMat.percent, status: serverMat.status };
+        }
+        return m;
+      });
+
+      return {
+        ...prev,
+        percent: data.projectPercent,
+        materials: [...updatedMaterials].sort((a, b) => a.order_index - b.order_index),
+      };
+    });
 
     setLoadingProgress(100);
     setTimeout(() => { setConfirm({ open: false }); setLoadingProgress(0); }, 250);
