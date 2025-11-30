@@ -512,15 +512,23 @@ async function confirmYes() {
 
     setProjects((p) => p.map((pr) => {
       if (pr.id !== data.projectId) return pr;
-      const updatedMaterials = pr.materials.map((m, idx) => {
+
+      const updatedMaterials = pr.materials.map((m) => {
         if (!serverMat) return m;
         if (m.id === serverMat.id) {
-          return { ...m, percent: serverMat.percent, status: serverMat.status } as Material;
+          return { ...m, percent: serverMat.percent, status: serverMat.status };
         }
         return m;
       });
-      return { ...pr, percent: data.projectPercent, materials: updatedMaterials } as Project;
+
+      return {
+        ...pr,
+        percent: data.projectPercent,
+        // ⬅️ FIX: materials harus selalu disort ulang setelah update
+        materials: [...updatedMaterials].sort((a, b) => Number(a.id) - Number(b.id))
+      };
     }));
+
 
     setLoadingProgress(100);
     setTimeout(() => { setConfirm({ open: false }); setLoadingProgress(0); }, 250);
