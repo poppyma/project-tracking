@@ -95,7 +95,7 @@ export async function POST(req: Request) {
         return query(
           `INSERT INTO materials 
            (project_id, name, component, bom_qty, "UoM", supplier, status, percent, order_index)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
            RETURNING id, name, component, bom_qty, "UoM", supplier, status, percent, order_index`,
           [
             projectId,
@@ -221,7 +221,7 @@ export async function PATCH(req: Request) {
 
     // Insert materials baru
     if (Array.isArray(materials)) {
-      const inserts = materials.map((m: any) =>
+      const inserts = materials.map((m: any, i:number) =>
         query(
           `INSERT INTO materials (project_id, name, component, bom_qty, "UoM", supplier, order_index)
            VALUES ($1,$2,$3,$4,$5,$6,$7)`,
@@ -232,6 +232,7 @@ export async function PATCH(req: Request) {
             m.qty,
             m.uom,
             m.supplier,
+            i
           ]
         )
       );
