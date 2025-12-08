@@ -79,81 +79,116 @@ function exportPDF() {
   try {
     const doc = new jsPDF("p", "mm", "a4");
 
-    // ========= HEADER =========
-    doc.setFillColor(0, 102, 204); // biru
-    doc.rect(0, 0, 210, 30, "F");
+    // ===================
+    // 1. LOGO
+    // ===================
+    const logo = new Image();
+    logo.src = "/skf-logo.svg"; // TARUH LOGO DI /public/logo.png
 
-    doc.setFontSize(18);
-    doc.setTextColor(255, 255, 255);
-    doc.text("Project List Report", 105, 18, { align: "center" });
+    logo.onload = () => {
+      // Logo di kiri atas
+      doc.addImage(logo, "PNG", 10, 8, 25, 25);
 
-    // ========= SUBTITLE =========
-    doc.setFontSize(11);
-    doc.setTextColor(0, 0, 0);
-    const now = new Date();
-    const dateStr = now.toLocaleString("en-US", { hour12: false });
-    doc.text(`Generated: ${dateStr}`, 14, 40);
+      // ===================
+      // 2. HEADER ELEGAN
+      // ===================
+      // Background header
+      doc.setFillColor(0, 90, 170);
+      doc.rect(0, 0, 210, 35, "F");
 
-    // ========= TABEL =========
-    autoTable(doc, {
-      startY: 48,
-      headStyles: {
-        fillColor: [0, 102, 204],
-        textColor: 255,
-        halign: "center",
-        valign: "middle",
-        fontSize: 11,
-        fontStyle: "bold",
-      },
-      bodyStyles: {
-        fontSize: 10,
-        cellPadding: 4,
-      },
-      alternateRowStyles: {
-        fillColor: [240, 240, 240],
-      },
-      styles: {
-        lineColor: [200, 200, 200],
-        lineWidth: 0.3,
-      },
-      head: [["Name", "Customer", "Application", "Percent"]],
-      body: filteredProjects.map((p) => [
-        p.name || "-",
-        p.customer || "-",
-        p.application || "-",
-        (p.percent ?? 0) + "%",
-      ]),
-    });
+      // Judul
+      doc.setFontSize(20);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text("Project List Report", 110, 20, { align: "center" });
 
-    // ========= FOOTER =========
-    const pageCount = doc.getNumberOfPages();
-    doc.setFontSize(10);
-    doc.setTextColor(120, 120, 120);
+      // ===================
+      // 3. SUBTITLE (tanggal)
+      // ===================
+      doc.setFontSize(11);
+      doc.setTextColor(50, 50, 50);
+      doc.setFont("helvetica", "normal");
 
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.text(
-        `Page ${i} of ${pageCount}`,
-        200 - 20,
-        290,
-        { align: "right" }
-      );
-    }
+      const now = new Date();
+      const dateStr = now.toLocaleString("en-US", { hour12: false });
+      doc.text(`Generated: ${dateStr}`, 14, 45);
 
-    // ========= PREVIEW PDF =========
-    const pdfBlob = doc.output("blob");
-    const pdfURL = URL.createObjectURL(pdfBlob);
-    const win = window.open(pdfURL);
+      // ===================
+      // 4. TABEL UTAMA
+      // ===================
+      autoTable(doc, {
+        startY: 52,
+        styles: {
+          fontSize: 10,
+          lineColor: [180, 180, 180],
+          lineWidth: 0.3,
+          cellPadding: 4,
+        },
+        headStyles: {
+          fillColor: [0, 90, 170],
+          textColor: 255,
+          fontStyle: "bold",
+          halign: "center",
+          valign: "middle",
+          fontSize: 11,
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        columnStyles: {
+          0: { cellWidth: 55 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 50 },
+          3: { cellWidth: 25, halign: "center" },
+        },
+        head: [["Name", "Customer", "Application", "Percent"]],
+        body: filteredProjects.map((p) => [
+          p.name || "-",
+          p.customer || "-",
+          p.application || "-",
+          (p.percent ?? 0) + "%",
+        ]),
+      });
 
-    if (!win) {
-      alert("Popup diblokir! Izinkan popup untuk melihat PDF.");
-    }
+      // ===================
+      // 5. FOOTER (per halaman)
+      // ===================
+      const pageCount = doc.getNumberOfPages();
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
 
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+
+        doc.text(
+          `Page ${i} of ${pageCount}`,
+          200 - 20,
+          290,
+          { align: "right" }
+        );
+
+        doc.text(
+          "© 2025 Your Company — Confidential",
+          14,
+          290
+        );
+      }
+
+      // ===================
+      // 6. PREVIEW PDF
+      // ===================
+      const pdfBlob = doc.output("blob");
+      const pdfURL = URL.createObjectURL(pdfBlob);
+
+      const win = window.open(pdfURL);
+      if (!win) alert("Popup diblokir! Harap izinkan popup.");
+    };
   } catch (err) {
-    console.error("Failed to export PDF:", err);
+    console.error("PDF Error:", err);
     alert("Gagal membuat PDF");
   }
 }
+
 
 
 function resetForm() {
