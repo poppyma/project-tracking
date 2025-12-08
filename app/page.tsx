@@ -161,42 +161,42 @@ function exportPDF() {
 
 
 function exportExcel() {
-  const ws = XLSX.utils.aoa_to_sheet([
-    ["Project Name", "Customer", "Application", "Product Line", "Anual Volume", "Est SOP Plan", "Status"],
-    ...filteredProjects.map((p) => [
-      p.name,
-      p.customer,
-      p.application,
-      p.productLine,
-      p.anualVolume,
-      p.estSop,
-      p.percent + "%",
-    ])
-  ]);
+  try {
+    const wsData = [
+      ["Project Name", "Customer", "Application", "Product Line", "Anual Volume", "Est SOP Plan", "Status"], 
+      ...filteredProjects.map((p) => [
+        p.name || "-",
+        p.customer || "-",
+        p.application || "-",
+        p.productLine || "-",
+        p.anualVolume || "-",
+        p.estSop || "-",
+        (p.percent ?? 0) + "%",
+      ]),
+    ];
 
-  // =========================
-  // 🔥 BOLD HEADER
-  // =========================
-  const headerCells = ["A1","B1","C1","D1","E1","F1","G1"];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-  headerCells.forEach(cell => {
-    if (!ws[cell]) return;
-    ws[cell].s = {
-      font: { bold: true },
-      alignment: { horizontal: "center" }
-    };
-  });
+    // Auto width
+    const colWidths = [
+      { wch: 30 },
+      { wch: 25 },
+      { wch: 25 },
+      { wch: 10 },
+    ];
+    ws["!cols"] = colWidths;
 
-  // Buat workbook
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Projects");
+    // Buat workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Projects");
 
-  // BUFFER → Blob → Preview
-  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  const blob = new Blob([wbout], { type: "application/octet-stream" });
-  const url = URL.createObjectURL(blob);
+    // Download file
+    XLSX.writeFile(wb, "Project_List.xlsx");
 
-  window.open(url); // preview
+  } catch (err) {
+    console.error("Excel export error:", err);
+    alert("Gagal mengekspor Excel");
+  }
 }
 
 
