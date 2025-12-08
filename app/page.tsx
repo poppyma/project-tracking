@@ -83,11 +83,11 @@ function exportPDF() {
     // 1. LOGO
     // ===================
     const logo = new Image();
-    logo.src = "/skf-logo.svg"; // TARUH LOGO DI /public/logo.png
+    logo.src = "/logo.png"; // TARUH LOGO DI /public/logo.png
 
     logo.onload = () => {
       // Logo di kiri atas
-      doc.addImage(logo, "SVG", 10, 8, 25, 25);
+      doc.addImage(logo, "PNG", 10, 8, 25, 25);
 
       // ===================
       // 2. HEADER ELEGAN
