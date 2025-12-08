@@ -76,120 +76,33 @@ const handleChange = (
 };
 
 function exportPDF() {
-  try {
-    const doc = new jsPDF("p", "mm", "a4");
+  const doc = new jsPDF();
 
-    // ===================
-    // 1. LOGO
-    // ===================
-    const logo = new Image();
-    logo.src = "/public/logo.png"; // TARUH LOGO DI /public/logo.png
+  doc.text("Project List", 14, 15);
 
-    logo.onload = () => {
-      // Logo di kiri atas
-      doc.addImage(logo, "PNG", 10, 8, 25, 25);
+  autoTable(doc, {
+    startY: 25,
+    head: [["Project Name", "Customer", "Application", "Product Line", "Anual Volume", "Est SOP Plan", "Status"]],
+    body: filteredProjects.map((p) => [
+      p.name,
+      p.customer,
+      p.application,
+      p.productLine,
+      p.anualVolume,
+      p.estSop,
+      p.percent + "%"
+    ]),
+  });
 
-      // ===================
-      // 2. HEADER ELEGAN
-      // ===================
-      // Background header
-      doc.setFillColor(0, 90, 170);
-      doc.rect(0, 0, 210, 35, "F");
+  // → Buat blob PDF
+  const pdfBlob = doc.output("blob");
 
-      // Judul
-      doc.setFontSize(20);
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.text("Project List Report", 110, 20, { align: "center" });
+  // → Buat URL dari blob
+  const pdfURL = URL.createObjectURL(pdfBlob);
 
-      // ===================
-      // 3. SUBTITLE (tanggal)
-      // ===================
-      doc.setFontSize(11);
-      doc.setTextColor(50, 50, 50);
-      doc.setFont("helvetica", "normal");
-
-      const now = new Date();
-      const dateStr = now.toLocaleString("en-US", { hour12: false });
-      doc.text(`Generated: ${dateStr}`, 14, 45);
-
-      // ===================
-      // 4. TABEL UTAMA
-      // ===================
-      autoTable(doc, {
-        startY: 52,
-        styles: {
-          fontSize: 10,
-          lineColor: [180, 180, 180],
-          lineWidth: 0.3,
-          cellPadding: 4,
-        },
-        headStyles: {
-          fillColor: [0, 90, 170],
-          textColor: 255,
-          fontStyle: "bold",
-          halign: "center",
-          valign: "middle",
-          fontSize: 11,
-        },
-        alternateRowStyles: {
-          fillColor: [245, 245, 245],
-        },
-        columnStyles: {
-          0: { cellWidth: 55 },
-          1: { cellWidth: 40 },
-          2: { cellWidth: 50 },
-          3: { cellWidth: 25, halign: "center" },
-        },
-        head: [["Name", "Customer", "Application", "Percent"]],
-        body: filteredProjects.map((p) => [
-          p.name || "-",
-          p.customer || "-",
-          p.application || "-",
-          (p.percent ?? 0) + "%",
-        ]),
-      });
-
-      // ===================
-      // 5. FOOTER (per halaman)
-      // ===================
-      const pageCount = doc.getNumberOfPages();
-      doc.setFontSize(9);
-      doc.setTextColor(120, 120, 120);
-
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-
-        doc.text(
-          `Page ${i} of ${pageCount}`,
-          200 - 20,
-          290,
-          { align: "right" }
-        );
-
-        doc.text(
-          "© 2025 Your Company — Confidential",
-          14,
-          290
-        );
-      }
-
-      // ===================
-      // 6. PREVIEW PDF
-      // ===================
-      const pdfBlob = doc.output("blob");
-      const pdfURL = URL.createObjectURL(pdfBlob);
-
-      const win = window.open(pdfURL);
-      if (!win) alert("Popup diblokir! Harap izinkan popup.");
-    };
-  } catch (err) {
-    console.error("PDF Error:", err);
-    alert("Gagal membuat PDF");
-  }
+  // → Buka di tab baru untuk preview
+  window.open(pdfURL);
 }
-
-
 
 function resetForm() {
   setForm({ name: "", customer: "", application: "", productLine: "", anualVolume: "", estSop: ""});
