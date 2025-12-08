@@ -87,7 +87,7 @@ function exportPDF() {
 
     logo.onload = () => {
       // Logo di kiri atas
-      doc.addImage(logo, "PNG", 10, 8, 25, 25);
+      doc.addImage(logo, "SVG", 10, 8, 25, 25);
 
       // ===================
       // 2. HEADER ELEGAN
