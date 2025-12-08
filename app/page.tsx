@@ -83,7 +83,7 @@ function exportPDF() {
     // 1. LOGO
     // ===================
     const logo = new Image();
-    logo.src = "/logo.png"; // TARUH LOGO DI /public/logo.png
+    logo.src = "/public/logo.png"; // TARUH LOGO DI /public/logo.png
 
     logo.onload = () => {
       // Logo di kiri atas
