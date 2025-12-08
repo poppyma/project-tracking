@@ -82,11 +82,14 @@ function exportPDF() {
 
   autoTable(doc, {
     startY: 25,
-    head: [["Name", "Customer", "Application", "Percent"]],
+    head: [["Project Name", "Customer", "Application", "Product Line", "Anual Volume", "Est SOP Plan", "Status"]],
     body: filteredProjects.map((p) => [
       p.name,
       p.customer,
       p.application,
+      p.productLine,
+      p.anualVolume,
+      p.estSop,
       p.percent + "%"
     ]),
   });
