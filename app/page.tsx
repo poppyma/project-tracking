@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type Material = {
   id: number;
@@ -73,6 +75,29 @@ const handleChange = (
   setMaterials(updated);
 };
 
+function exportPDF() {
+  const doc = new jsPDF();
+
+  // Title
+  doc.setFontSize(16);
+  doc.text("Project List Report", 14, 16);
+
+  // Convert data projects (React state) menjadi tabel
+  autoTable(doc, {
+    startY: 25,
+    head: [["Name", "Customer", "Product Line", "Percent"]],
+    body: projects.map((p) => [
+      p.name,
+      p.customer,
+      p.productLine,
+      (p.percent ?? 0) + "%"
+    ]),
+    theme: "grid",
+  });
+
+  // Download PDF
+  doc.save("project-list.pdf");
+}
 
 function resetForm() {
   setForm({ name: "", customer: "", application: "", productLine: "", anualVolume: "", estSop: ""});
@@ -810,6 +835,13 @@ const handleSaveProject = () => {
 </button>
 
           <div style={{ width: '56%' }}>
+            <button
+              onClick={exportPDF}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg shadow"
+            >
+              Export PDF
+            </button>
+
             <div className="search-row" style={{ position: "relative" }}>
               <input
                 className="search-input"
