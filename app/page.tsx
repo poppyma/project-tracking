@@ -85,11 +85,14 @@ function exportPDF() {
   // Convert data projects (React state) menjadi tabel
   autoTable(doc, {
     startY: 25,
-    head: [["Name", "Customer", "Product Line", "Percent"]],
+    head: [["Project Name", "Customer", "Application", "Product Line", "Anual Volume", "Est SOP Plan", "Status"]],
     body: projects.map((p) => [
       p.name,
       p.customer,
+      p.application,
       p.productLine,
+      p.anualVolume,
+      p.estSop,
       (p.percent ?? 0) + "%"
     ]),
     theme: "grid",
