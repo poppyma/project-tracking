@@ -78,28 +78,27 @@ const handleChange = (
 function exportPDF() {
   const doc = new jsPDF();
 
-  // Title
-  doc.setFontSize(16);
-  doc.text("Project List Report", 14, 16);
+  doc.text("Project List", 14, 15);
 
-  // Convert data projects (React state) menjadi tabel
   autoTable(doc, {
     startY: 25,
-    head: [["Project Name", "Customer", "Application", "Product Line", "Anual Volume", "Est SOP Plan", "Status"]],
-    body: projects.map((p) => [
+    head: [["Name", "Customer", "Application", "Percent"]],
+    body: filteredProjects.map((p) => [
       p.name,
       p.customer,
       p.application,
-      p.productLine,
-      p.anualVolume,
-      p.estSop,
-      (p.percent ?? 0) + "%"
+      p.percent + "%"
     ]),
-    theme: "grid",
   });
 
-  // Download PDF
-  doc.save("project-list.pdf");
+  // → Buat blob PDF
+  const pdfBlob = doc.output("blob");
+
+  // → Buat URL dari blob
+  const pdfURL = URL.createObjectURL(pdfBlob);
+
+  // → Buka di tab baru untuk preview
+  window.open(pdfURL);
 }
 
 function resetForm() {
