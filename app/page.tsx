@@ -116,11 +116,14 @@ function exportPDF() {
         lineColor: [200, 200, 200],
         lineWidth: 0.3,
       },
-      head: [["Name", "Customer", "Application", "Percent"]],
+      head: [["Project Name", "Customer", "Application", "Product Line", "Anual Volume", "Est SOP Plan", "Status"]],
       body: filteredProjects.map((p) => [
         p.name || "-",
         p.customer || "-",
         p.application || "-",
+        p.productLine || "-",
+        p.anualVolume || "-",
+        p.estSop || "-",
         (p.percent ?? 0) + "%",
       ]),
     });
