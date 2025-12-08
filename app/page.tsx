@@ -76,33 +76,85 @@ const handleChange = (
 };
 
 function exportPDF() {
-  const doc = new jsPDF();
+  try {
+    const doc = new jsPDF("p", "mm", "a4");
 
-  doc.text("Project List", 14, 15);
+    // ========= HEADER =========
+    doc.setFillColor(0, 102, 204); // biru
+    doc.rect(0, 0, 210, 30, "F");
 
-  autoTable(doc, {
-    startY: 25,
-    head: [["Project Name", "Customer", "Application", "Product Line", "Anual Volume", "Est SOP Plan", "Status"]],
-    body: filteredProjects.map((p) => [
-      p.name,
-      p.customer,
-      p.application,
-      p.productLine,
-      p.anualVolume,
-      p.estSop,
-      p.percent + "%"
-    ]),
-  });
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255);
+    doc.text("Project List Report", 105, 18, { align: "center" });
 
-  // → Buat blob PDF
-  const pdfBlob = doc.output("blob");
+    // ========= SUBTITLE =========
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    const now = new Date();
+    const dateStr = now.toLocaleString("en-US", { hour12: false });
+    doc.text(`Generated: ${dateStr}`, 14, 40);
 
-  // → Buat URL dari blob
-  const pdfURL = URL.createObjectURL(pdfBlob);
+    // ========= TABEL =========
+    autoTable(doc, {
+      startY: 48,
+      headStyles: {
+        fillColor: [0, 102, 204],
+        textColor: 255,
+        halign: "center",
+        valign: "middle",
+        fontSize: 11,
+        fontStyle: "bold",
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 4,
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240],
+      },
+      styles: {
+        lineColor: [200, 200, 200],
+        lineWidth: 0.3,
+      },
+      head: [["Name", "Customer", "Application", "Percent"]],
+      body: filteredProjects.map((p) => [
+        p.name || "-",
+        p.customer || "-",
+        p.application || "-",
+        (p.percent ?? 0) + "%",
+      ]),
+    });
 
-  // → Buka di tab baru untuk preview
-  window.open(pdfURL);
+    // ========= FOOTER =========
+    const pageCount = doc.getNumberOfPages();
+    doc.setFontSize(10);
+    doc.setTextColor(120, 120, 120);
+
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.text(
+        `Page ${i} of ${pageCount}`,
+        200 - 20,
+        290,
+        { align: "right" }
+      );
+    }
+
+    // ========= PREVIEW PDF =========
+    const pdfBlob = doc.output("blob");
+    const pdfURL = URL.createObjectURL(pdfBlob);
+    const win = window.open(pdfURL);
+
+    if (!win) {
+      alert("Popup diblokir! Izinkan popup untuk melihat PDF.");
+    }
+
+  } catch (err) {
+    console.error("Failed to export PDF:", err);
+    alert("Gagal membuat PDF");
+  }
 }
+
 
 function resetForm() {
   setForm({ name: "", customer: "", application: "", productLine: "", anualVolume: "", estSop: ""});
