@@ -807,34 +807,32 @@ const handleSaveProject = () => {
       <div className="card spaced">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <button
-  className="btn"
-  onClick={() => {
-    // RESET FORM supaya tidak bawa data edit sebelumnya
-    setForm({
-      name: "",
-      customer: "",
-      application: "",
-      productLine: "",
-      anualVolume: "",
-      estSop: "",
-    });
+            className="btn"
+            onClick={() => {
+              // RESET FORM supaya tidak bawa data edit sebelumnya
+              setForm({
+                name: "",
+                customer: "",
+                application: "",
+                productLine: "",
+                anualVolume: "",
+                estSop: "",
+              });
 
-    // RESET MATERIALS
-    setMaterials([
-      { material: "", component: "", qty: "", uom: "", supplier: "" }
-    ]);
+              // RESET MATERIALS
+              setMaterials([
+                { material: "", component: "", qty: "", uom: "", supplier: "" }
+              ]);
 
-    // pastikan mode edit mati
-    setEditProject(null);
+              // pastikan mode edit mati
+              setEditProject(null);
 
-    // buka modal add
-    setShowModal(true);
-  }}
->
-  Add Project
-</button>
-
-          <div style={{ width: '56%' }}>
+              // buka modal add
+              setShowModal(true);
+            }}
+          >
+            Add Project
+          </button>
             <button
               onClick={exportPDF}
               className="px-4 py-2 bg-red-600 text-white rounded-lg shadow"
@@ -842,6 +840,9 @@ const handleSaveProject = () => {
               Export PDF
             </button>
 
+
+          <div style={{ width: '56%' }}>
+        
             <div className="search-row" style={{ position: "relative" }}>
               <input
                 className="search-input"
