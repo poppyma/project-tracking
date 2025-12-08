@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 type Material = {
   id: number;
@@ -157,6 +158,45 @@ function exportPDF() {
     alert("Gagal membuat PDF");
   }
 }
+
+
+function exportExcel() {
+  try {
+    // Buat worksheet dari data project
+    const wsData = [
+      ["Name", "Customer", "Application", "Percent"], // header
+      ...filteredProjects.map((p) => [
+        p.name || "-",
+        p.customer || "-",
+        p.application || "-",
+        (p.percent ?? 0) + "%",
+      ]),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Auto width
+    const colWidths = [
+      { wch: 30 },
+      { wch: 25 },
+      { wch: 25 },
+      { wch: 10 },
+    ];
+    ws["!cols"] = colWidths;
+
+    // Buat workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Projects");
+
+    // Download file
+    XLSX.writeFile(wb, "Project_List.xlsx");
+
+  } catch (err) {
+    console.error("Excel export error:", err);
+    alert("Gagal mengekspor Excel");
+  }
+}
+
 
 
 function resetForm() {
@@ -896,9 +936,13 @@ const handleSaveProject = () => {
             >
               Export PDF
             </button>
+            <button
+              onClick={exportExcel}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg shadow ml-2"
+            >
+              Export Excel
+            </button>
           </div>
-
-
 
           <div style={{ width: '56%' }}>
         
