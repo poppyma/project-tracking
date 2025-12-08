@@ -162,13 +162,15 @@ function exportPDF() {
 
 function exportExcel() {
   try {
-    // Buat worksheet dari data project
     const wsData = [
-      ["Name", "Customer", "Application", "Percent"], // header
+      ["Project Name", "Customer", "Application", "Product Line", "Anual Volume", "Est SOP Plan", "Status"], 
       ...filteredProjects.map((p) => [
         p.name || "-",
         p.customer || "-",
         p.application || "-",
+        p.productLine || "-",
+        p.anualVolume || "-",
+        p.estSop || "-",
         (p.percent ?? 0) + "%",
       ]),
     ];
@@ -938,7 +940,7 @@ const handleSaveProject = () => {
             </button>
             <button
               onClick={exportExcel}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg shadow ml-2"
+              className="px-4 py-2 bg-green-600 text-white rounded-lg shadow"
             >
               Export Excel
             </button>
