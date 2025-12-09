@@ -209,19 +209,56 @@ function resetForm() {
 
 async function reloadProjects() {
   try {
-    // HANYA ambil summary project, super cepat
-    const res = await fetch('/api/projects?summary=1');
-
-    if (!res.ok) throw new Error("Failed to load project summary");
-
+    const res = await fetch('/api/projects');
+    if (!res.ok) return;
     const data = await res.json();
-    setProjects(data); 
+    const list: Project[] = data.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      customer: r.customer,
+      application: r.application,
+      productLine: r.product_line ?? r.productLine ?? '',
+      anualVolume: r.anual_volume ?? r.anualVolume ?? '',
+      estSop: r.est_sop ?? r.estSop ?? '',
+      percent: r.percent ?? 0,
+      materials: (r.materials || []) .map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        percent: m.percent,
+        status: m.status,
+        attachments: m.attachments,
+        component: m.component,
+        bom_qty: m.bom_qty,
+        UoM: m.UoM,
+        supplier: m.supplier
+      })) as any,
+    }));
 
+    const initialStatuses: Record<number, boolean[][]> = {};
+    list.forEach((proj) => {
+      initialStatuses[proj.id] = (proj.materials || []).map((m: any) => normalizeStatusArray((m as any).status));
+    });
+
+    setProjects(list);
+    setStatuses(initialStatuses);
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = window.localStorage.getItem('selectedProjectId');
+        if (stored) {
+          const sid = Number(stored);
+          const found = list.find((p) => p.id === sid);
+          if (found) {
+            selectProject(sid);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to restore selected project', err);
+    }
   } catch (err) {
-    console.error("Failed to load projects", err);
+    console.error('Failed to load projects', err);
   }
 }
-
 
 useEffect(() => { reloadProjects(); }, []);
 
@@ -449,40 +486,43 @@ function ensureStatuses(proj: Project) {
   setStatuses((s) => ({ ...s, [proj.id]: arr }));
 }
 
-async function selectProject(id: number) {
+function selectProject(id: number) {
   setSelectedProjectId(id);
-
-  try {
-    // Lazy load detail
-    const res = await fetch(`/api/project/${id}`);
-    if (!res.ok) throw new Error("Failed to load detail");
-
-    const detail = await res.json();
-
-    // Update project detail di state
-    setProject(detail);
-
-    // Inject materials ke project list
-    setProjects(prev =>
-      prev.map(p => p.id === id ? { ...p, percent: detail.percent } : p)
-    );
-
-    // Statuses dan attachments diambil dari detail
-    setStatuses({
-      [id]: detail.materials.map((m: any) => normalizeStatusArray(m.status)),
-    });
-
-    setProjectUploads(detail.projectUploads || []);
-    setRemarksMap(detail.remarksMap || {});
-
-    // Simpan pilihan
-    localStorage.setItem('selectedProjectId', String(id));
-
-  } catch (err) {
-    console.error("Failed to load project detail", err);
-  }
+  const proj = projects.find((p) => p.id === id);
+  if (proj) ensureStatuses(proj);
+  // fetch project-level uploads
+  (async () => {
+    try {
+      const res = await fetch(`/api/uploads?projectId=${id}`);
+      if (!res.ok) return setProjectUploads([]);
+      const data = await res.json();
+      setProjectUploads(data || []);
+    } catch (err) {
+      console.error('Failed to load project uploads', err);
+      setProjectUploads([]);
+    }
+  })();
+  // fetch remarks for this project
+  (async () => {
+    try {
+      const r = await fetch(`/api/remarks?projectId=${id}`);
+      if (!r.ok) return setRemarksMap({});
+      const data = await r.json();
+      const grouped: Record<number, any[]> = {};
+      (data || []).forEach((it: any) => {
+        const si = Number(it.status_index);
+        grouped[si] = grouped[si] || [];
+        grouped[si].push(it);
+      });
+      setRemarksMap(grouped);
+    } catch (err) {
+      console.error('Failed to load remarks', err);
+      setRemarksMap({});
+    }
+  })();
+  // persist selection to localStorage so it survives a page reload
+  try { if (typeof window !== 'undefined') window.localStorage.setItem('selectedProjectId', String(id)); } catch (err) { /* ignore */ }
 }
-
 
 async function openRemarks(statusIndex: number) {
   if (!selectedProjectId) return;
