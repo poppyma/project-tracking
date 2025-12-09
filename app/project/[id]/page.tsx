@@ -34,7 +34,8 @@ export default function ProjectDetailPage() {
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch('/api/projects');
+        //const res = await fetch('/api/projects');
+        const res = await fetch('/api/projects?summary=1');
         if (!res.ok) throw new Error('Failed');
         const list = await res.json();
         const p = list.find((x: any) => Number(x.id) === id);
