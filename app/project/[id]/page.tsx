@@ -35,7 +35,7 @@ export default function ProjectDetailPage() {
       setLoading(true);
       try {
         //const res = await fetch('/api/projects');
-        const res = await fetch('/api/projects?summary=1');
+const res = await fetch('/api/projects?summary=1', { cache: "force-cache" });
         if (!res.ok) throw new Error('Failed');
         const list = await res.json();
         const p = list.find((x: any) => Number(x.id) === id);
