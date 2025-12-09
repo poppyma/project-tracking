@@ -209,8 +209,7 @@ function resetForm() {
 
 async function reloadProjects() {
   try {
-    //const res = await fetch('/api/projects');
-    const res = await fetch('/api/projects?summary=1');
+    const res = await fetch('/api/projects');
     if (!res.ok) return;
     const data = await res.json();
     const list: Project[] = data.map((r: any) => ({
