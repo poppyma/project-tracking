@@ -34,9 +34,9 @@ export default function ProjectDetailPage() {
     async function load() {
       setLoading(true);
       try {
-        //const res = await fetch('/api/projects');
+        const res = await fetch('/api/projects');
         //const res = await fetch('/api/projects?summary=1', { cache: "force-cache" });
-        const res = await fetch('/api/projects?summary=1', { cache: "no-store" });
+        //const res = await fetch('/api/projects?summary=1', { cache: "no-store" });
 
         if (!res.ok) throw new Error('Failed');
         const list = await res.json();
