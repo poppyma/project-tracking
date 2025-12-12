@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { initTables, query } from '../../../lib/db';
 
 export async function GET(req: Request) {
-  try {
+  try {   
     await initTables();
         const { searchParams } = new URL(req.url);
     const summary = searchParams.get("summary");
