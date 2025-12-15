@@ -174,6 +174,11 @@ export default function BomCostPage() {
               <th className="border px-2">Currency</th>
               <th className="border px-2">Term</th>
               <th className="border px-2">Landed Cost</th>
+              <th className="border px-2">TPL</th>
+              <th className="border px-2">BP 2026</th>
+              <th className="border px-2">Landed IDR Price</th>
+              <th className="border px-2">Cost/bearing</th>
+              <th className="border px-2">Tooling cost</th>
             </tr>
           </thead>
           <tbody>
@@ -185,6 +190,11 @@ export default function BomCostPage() {
                 <td className="border px-2">{d.currency}</td>
                 <td className="border px-2">{d.term}</td>
                 <td className="border px-2">{d.landed_cost}</td>
+                <td className="border px-2">{d.tpl}</td>
+                <td className="border px-2">{d.bp_2026}</td>
+                <td className="border px-2">{d.landed_idr_price}</td>
+                <td className="border px-2">{d.cost_bearing}</td>
+                <td className="border px-2">{d.tooling_cost}</td>
               </tr>
             ))}
           </tbody>
