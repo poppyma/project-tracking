@@ -6,48 +6,23 @@ import { initTables, query } from "@/lib/db";
    - ?mode=projects → dropdown project
    - default → list BOM Cost
 ====================================================== */
-export async function GET(req: Request) {
+export async function GET() {
   try {
     await initTables();
 
-    const { searchParams } = new URL(req.url);
-    const mode = searchParams.get("mode");
-    const projectId = searchParams.get("project_id");
+    const res = await query(`
+      SELECT id, name
+      FROM projects
+      ORDER BY created_at DESC
+    `);
 
-    // 🔹 MODE DROPDOWN PROJECT
-    if (mode === "projects") {
-      const res = await query(`
-        SELECT id, name
-        FROM projects
-        ORDER BY created_at DESC
-      `);
-      return NextResponse.json(res.rows);
-    }
-
-    // 🔹 LIST BOM COST
-    let sql = `
-      SELECT 
-        bc.*,
-        p.name AS project_name
-      FROM bom_costs bc
-      JOIN projects p ON p.id = bc.project_id
-    `;
-
-    const params: any[] = [];
-
-    if (projectId) {
-      sql += ` WHERE bc.project_id = $1`;
-      params.push(projectId);
-    }
-
-    sql += ` ORDER BY bc.created_at DESC`;
-
-    const res = await query(sql, params);
     return NextResponse.json(res.rows);
-
   } catch (err: any) {
-    console.error("GET bom-cost error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("GET projects/simple error:", err);
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500 }
+    );
   }
 }
 

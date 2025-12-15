@@ -11,7 +11,6 @@ type BomCost = {
   id: number;
   project_id: number;
   project_name?: string;
-
   candidate_supplier: string;
   price: string;
   currency: string;
@@ -43,39 +42,35 @@ export default function BomCostPage() {
     tooling_cost: "",
   });
 
-  /* =========================
-     LOAD PROJECTS (DROPDOWN)
-  ========================== */
-  useEffect(() => {
-    fetch("/api/projects/simple")
-      .then((res) => res.json())
-      .then(setProjects)
-      .catch(console.error);
-  }, []);
-
-  /* =========================
-     LOAD BOM COST DATA
-  ========================== */
+  // =============================
+  // LOAD DATA
+  // =============================
   async function loadBomCost() {
-    setLoading(true);
     const res = await fetch("/api/bom-cost");
     const json = await res.json();
     setData(json);
     setLoading(false);
   }
 
+  async function loadProjects() {
+    const res = await fetch("/api/projects/simple");
+    const json = await res.json();
+    setProjects(json);
+  }
+
   useEffect(() => {
     loadBomCost();
+    loadProjects();
   }, []);
 
-  /* =========================
-     SUBMIT FORM
-  ========================== */
+  // =============================
+  // SUBMIT
+  // =============================
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
 
     if (!form.project_id) {
-      alert("Project wajib dipilih");
+      alert("Pilih project terlebih dahulu");
       return;
     }
 
@@ -114,18 +109,17 @@ export default function BomCostPage() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">BOM Cost</h1>
 
-      {/* ================= FORM ================= */}
-      <form
-        onSubmit={submitForm}
-        className="grid grid-cols-3 gap-3 mb-6 bg-white p-4 rounded shadow"
-      >
+      {/* FORM */}
+      <form onSubmit={submitForm} className="grid grid-cols-3 gap-3 mb-6">
+
         {/* PROJECT DROPDOWN */}
         <select
-          className="border p-2 rounded col-span-3"
           value={form.project_id}
           onChange={(e) =>
             setForm({ ...form, project_id: e.target.value })
           }
+          className="border px-3 py-2 rounded"
+          required
         >
           <option value="">-- Pilih Project --</option>
           {projects.map((p) => (
@@ -135,131 +129,69 @@ export default function BomCostPage() {
           ))}
         </select>
 
-        <input
-          className="border p-2 rounded"
-          placeholder="Candidate Supplier"
-          value={form.candidate_supplier}
-          onChange={(e) =>
-            setForm({ ...form, candidate_supplier: e.target.value })
-          }
-        />
+        <input placeholder="Candidate Supplier" value={form.candidate_supplier}
+          onChange={e => setForm({ ...form, candidate_supplier: e.target.value })} />
 
-        <input
-          className="border p-2 rounded"
-          placeholder="Price"
-          value={form.price}
-          onChange={(e) => setForm({ ...form, price: e.target.value })}
-        />
+        <input placeholder="Price" value={form.price}
+          onChange={e => setForm({ ...form, price: e.target.value })} />
 
-        <input
-          className="border p-2 rounded"
-          placeholder="Currency"
-          value={form.currency}
-          onChange={(e) => setForm({ ...form, currency: e.target.value })}
-        />
+        <input placeholder="Currency" value={form.currency}
+          onChange={e => setForm({ ...form, currency: e.target.value })} />
 
-        <input
-          className="border p-2 rounded"
-          placeholder="Term"
-          value={form.term}
-          onChange={(e) => setForm({ ...form, term: e.target.value })}
-        />
+        <input placeholder="Term" value={form.term}
+          onChange={e => setForm({ ...form, term: e.target.value })} />
 
-        <input
-          className="border p-2 rounded"
-          placeholder="Landed Cost"
-          value={form.landed_cost}
-          onChange={(e) => setForm({ ...form, landed_cost: e.target.value })}
-        />
+        <input placeholder="Landed Cost" value={form.landed_cost}
+          onChange={e => setForm({ ...form, landed_cost: e.target.value })} />
 
-        <input
-          className="border p-2 rounded"
-          placeholder="TPL"
-          value={form.tpl}
-          onChange={(e) => setForm({ ...form, tpl: e.target.value })}
-        />
+        <input placeholder="TPL" value={form.tpl}
+          onChange={e => setForm({ ...form, tpl: e.target.value })} />
 
-        <input
-          className="border p-2 rounded"
-          placeholder="BP 2026"
-          value={form.bp_2026}
-          onChange={(e) => setForm({ ...form, bp_2026: e.target.value })}
-        />
+        <input placeholder="BP 2026" value={form.bp_2026}
+          onChange={e => setForm({ ...form, bp_2026: e.target.value })} />
 
-        <input
-          className="border p-2 rounded"
-          placeholder="Landed IDR Price"
-          value={form.landed_idr_price}
-          onChange={(e) =>
-            setForm({ ...form, landed_idr_price: e.target.value })
-          }
-        />
+        <input placeholder="Landed IDR Price" value={form.landed_idr_price}
+          onChange={e => setForm({ ...form, landed_idr_price: e.target.value })} />
 
-        <input
-          className="border p-2 rounded"
-          placeholder="Cost Bearing"
-          value={form.cost_bearing}
-          onChange={(e) =>
-            setForm({ ...form, cost_bearing: e.target.value })
-          }
-        />
+        <input placeholder="Cost Bearing" value={form.cost_bearing}
+          onChange={e => setForm({ ...form, cost_bearing: e.target.value })} />
 
-        <input
-          className="border p-2 rounded"
-          placeholder="Tooling Cost"
-          value={form.tooling_cost}
-          onChange={(e) =>
-            setForm({ ...form, tooling_cost: e.target.value })
-          }
-        />
+        <input placeholder="Tooling Cost" value={form.tooling_cost}
+          onChange={e => setForm({ ...form, tooling_cost: e.target.value })} />
 
         <button className="bg-blue-600 text-white px-4 py-2 rounded col-span-3">
           Save BOM Cost
         </button>
       </form>
 
-      {/* ================= TABLE ================= */}
+      {/* TABLE */}
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <div className="overflow-auto bg-white rounded shadow">
-          <table className="w-full border text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border px-2">Project</th>
-                <th className="border px-2">Supplier</th>
-                <th className="border px-2">Price</th>
-                <th className="border px-2">Currency</th>
-                <th className="border px-2">Term</th>
-                <th className="border px-2">Landed Cost</th>
-                <th className="border px-2">TPL</th>
-                <th className="border px-2">BP 2026</th>
-                <th className="border px-2">Landed IDR</th>
-                <th className="border px-2">Cost Bearing</th>
-                <th className="border px-2">Tooling</th>
+        <table className="w-full border text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border px-2">Project</th>
+              <th className="border px-2">Supplier</th>
+              <th className="border px-2">Price</th>
+              <th className="border px-2">Currency</th>
+              <th className="border px-2">Term</th>
+              <th className="border px-2">Landed Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((d) => (
+              <tr key={d.id}>
+                <td className="border px-2">{d.project_name || d.project_id}</td>
+                <td className="border px-2">{d.candidate_supplier}</td>
+                <td className="border px-2">{d.price}</td>
+                <td className="border px-2">{d.currency}</td>
+                <td className="border px-2">{d.term}</td>
+                <td className="border px-2">{d.landed_cost}</td>
               </tr>
-            </thead>
-            <tbody>
-              {data.map((d) => (
-                <tr key={d.id} className="hover:bg-gray-50">
-                  <td className="border px-2 font-semibold">
-                    {d.project_name || d.project_id}
-                  </td>
-                  <td className="border px-2">{d.candidate_supplier}</td>
-                  <td className="border px-2">{d.price}</td>
-                  <td className="border px-2">{d.currency}</td>
-                  <td className="border px-2">{d.term}</td>
-                  <td className="border px-2">{d.landed_cost}</td>
-                  <td className="border px-2">{d.tpl}</td>
-                  <td className="border px-2">{d.bp_2026}</td>
-                  <td className="border px-2">{d.landed_idr_price}</td>
-                  <td className="border px-2">{d.cost_bearing}</td>
-                  <td className="border px-2">{d.tooling_cost}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
