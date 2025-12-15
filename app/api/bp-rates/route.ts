@@ -1,22 +1,43 @@
 import { NextResponse } from "next/server";
 import { initTables, query } from "@/lib/db";
 
+// GET → ambil semua BP
 export async function GET() {
-  await initTables();
-  const res = await query(`SELECT * FROM bp_rates ORDER BY currency`);
-  return NextResponse.json(res.rows);
+  try {
+    await initTables();
+    const res = await query(
+      `SELECT * FROM bp_rates ORDER BY created_at DESC`
+    );
+    return NextResponse.json(res.rows);
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
 
+// POST → tambah BP
 export async function POST(req: Request) {
-  await initTables();
-  const { currency, bp_value } = await req.json();
+  try {
+    await initTables();
+    const { currency, bp_value } = await req.json();
 
-  const res = await query(
-    `INSERT INTO bp_rates (currency, bp_value)
-     VALUES ($1,$2)
-     RETURNING *`,
-    [currency, bp_value]
-  );
+    if (!currency || !bp_value) {
+      return NextResponse.json(
+        { error: "Currency & BP value required" },
+        { status: 400 }
+      );
+    }
 
-  return NextResponse.json(res.rows[0], { status: 201 });
+    const res = await query(
+      `
+      INSERT INTO bp_rates (currency, bp_value)
+      VALUES ($1,$2)
+      RETURNING *
+      `,
+      [currency.toUpperCase(), bp_value]
+    );
+
+    return NextResponse.json(res.rows[0], { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
