@@ -1,13 +1,179 @@
 "use client";
 
-export default function BomCostPage() {
-  return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold">BOM Cost Calculation</h1>
+import { useEffect, useState } from "react";
 
-      <p className="text-gray-600 mt-4">
-        Halaman ini sedang dalam pengembangan. Nantinya akan berisi fitur perhitungan BOM Cost.
-      </p>
+type BomCost = {
+  id: number;
+  project_id: number;
+  project_name?: string;
+
+  candidate_supplier: string;
+  price: string;
+  currency: string;
+  term: string;
+  landed_cost: string;
+  tpl: string;
+  bp_2026: string;
+  landed_idr_price: string;
+  cost_bearing: string;
+  tooling_cost: string;
+};
+
+
+export default function BomCostPage() {
+  const [data, setData] = useState<BomCost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [form, setForm] = useState({
+    project_id: "",
+    candidate_supplier: "",
+    price: "",
+    currency: "",
+    term: "",
+    landed_cost: "",
+    tpl: "",
+    bp_2026: "",
+    landed_idr_price: "",
+    cost_bearing: "",
+    tooling_cost: "",
+  });
+
+  async function loadBomCost() {
+    setLoading(true);
+    const res = await fetch("/api/bom-cost");
+    const json = await res.json();
+    setData(json);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadBomCost();
+  }, []);
+
+  async function submitForm(e: React.FormEvent) {
+    e.preventDefault();
+
+    const res = await fetch("/api/bom-cost", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...form,
+        project_id: Number(form.project_id),
+      }),
+    });
+
+    if (!res.ok) {
+      alert("Gagal menyimpan BOM Cost");
+      return;
+    }
+
+    setForm({
+      project_id: "",
+      candidate_supplier: "",
+      price: "",
+      currency: "",
+      term: "",
+      landed_cost: "",
+      tpl: "",
+      bp_2026: "",
+      landed_idr_price: "",
+      cost_bearing: "",
+      tooling_cost: "",
+    });
+
+    loadBomCost();
+  }
+
+    return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">BOM Cost</h1>
+
+      {/* FORM */}
+      <form onSubmit={submitForm} className="grid grid-cols-3 gap-3 mb-6">
+        <input placeholder="Project ID" value={form.project_id}
+          onChange={e => setForm({ ...form, project_id: e.target.value })} />
+
+        <input placeholder="Candidate Supplier" value={form.candidate_supplier}
+          onChange={e => setForm({ ...form, candidate_supplier: e.target.value })} />
+
+        <input placeholder="Price" value={form.price}
+          onChange={e => setForm({ ...form, price: e.target.value })} />
+
+        <input placeholder="Currency" value={form.currency}
+          onChange={e => setForm({ ...form, currency: e.target.value })} />
+
+        <input placeholder="Term" value={form.term}
+          onChange={e => setForm({ ...form, term: e.target.value })} />
+
+        <input placeholder="Landed Cost" value={form.landed_cost}
+          onChange={e => setForm({ ...form, landed_cost: e.target.value })} />
+
+        <input placeholder="TPL" value={form.tpl}
+          onChange={e => setForm({ ...form, tpl: e.target.value })} />
+
+        <input placeholder="BP 2026" value={form.bp_2026}
+          onChange={e => setForm({ ...form, bp_2026: e.target.value })} />
+
+        <input placeholder="Landed IDR Price" value={form.landed_idr_price}
+          onChange={e => setForm({ ...form, landed_idr_price: e.target.value })} />
+
+        <input placeholder="Cost Bearing" value={form.cost_bearing}
+          onChange={e => setForm({ ...form, cost_bearing: e.target.value })} />
+
+        <input placeholder="Tooling Cost" value={form.tooling_cost}
+          onChange={e => setForm({ ...form, tooling_cost: e.target.value })} />
+
+        <button className="bg-blue-600 text-white px-4 py-2 rounded col-span-3">
+          Save BOM Cost
+        </button>
+      </form>
+
+            {/* TABLE */}
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <div className="overflow-auto">
+          <table className="w-full border text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="border px-2">Project</th>
+                <th className="border px-2">Supplier</th>
+                <th className="border px-2">Price</th>
+                <th className="border px-2">Currency</th>
+                <th className="border px-2">Term</th>
+                <th className="border px-2">Landed Cost</th>
+                <th className="border px-2">TPL</th>
+                <th className="border px-2">BP 2026</th>
+                <th className="border px-2">Landed IDR</th>
+                <th className="border px-2">Cost Bearing</th>
+                <th className="border px-2">Tooling</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((d) => (
+                <tr key={d.id}>
+                  <td className="border px-2">{d.project_name || d.project_id}</td>
+                  <td className="border px-2">{d.candidate_supplier}</td>
+                  <td className="border px-2">{d.price}</td>
+                  <td className="border px-2">{d.currency}</td>
+                  <td className="border px-2">{d.term}</td>
+                  <td className="border px-2">{d.landed_cost}</td>
+                  <td className="border px-2">{d.tpl}</td>
+                  <td className="border px-2">{d.bp_2026}</td>
+                  <td className="border px-2">{d.landed_idr_price}</td>
+                  <td className="border px-2">{d.cost_bearing}</td>
+                  <td className="border px-2">{d.tooling_cost}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
+
+
+
+
+
