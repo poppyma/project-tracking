@@ -10,8 +10,8 @@ type Project = {
 type BomCost = {
   id: number;
   project_id: number;
-  component: string;
   project_name?: string;
+  component: string;
   candidate_supplier: string;
   price: string;
   currency: string;
@@ -218,6 +218,7 @@ export default function BomCostPage() {
               <tr key={d.id}>
                 <td className="border px-2">{d.project_name || d.project_id}</td>
                 <td className="border px-2">{d.component}</td>
+                <td className="border px-2">{d.candidate_supplier}</td>
                 <td className="border px-2">{d.price}</td>
                 <td className="border px-2">{d.currency}</td>
                 <td className="border px-2">{d.term}</td>
