@@ -27,6 +27,11 @@ export async function GET() {
   }
 }
 
+function parseNumber(val: string): number {
+  if (!val) return 0;
+  return Number(val.replace(",", "."));
+}
+
 
 export async function POST(req: Request) {
   try {
@@ -42,17 +47,20 @@ export async function POST(req: Request) {
       landed_cost,
       tpl,
       bp_2026,
-      landed_idr_price,
       cost_bearing,
       tooling_cost,
     } = body;
 
-    if (!project_id) {
-      return NextResponse.json(
-        { error: "Project is required" },
-        { status: 400 }
-      );
-    }
+    // =============================
+    // HITUNG LANDED IDR PRICE
+    // =============================
+    const priceNum = parseNumber(price);
+    const landedCostNum = parseNumber(landed_cost);
+    const tplNum = parseNumber(tpl);
+    const bpNum = parseNumber(bp_2026);
+
+    const landedIdrPrice =
+      priceNum * (1 + landedCostNum) * tplNum * bpNum;
 
     const res = await query(
       `
@@ -81,7 +89,7 @@ export async function POST(req: Request) {
         landed_cost,
         tpl,
         bp_2026,
-        landed_idr_price,
+        landedIdrPrice.toString(), // disimpan TEXT
         cost_bearing,
         tooling_cost,
       ]
@@ -94,6 +102,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
 
 export async function PATCH(req: Request) {
   try {
