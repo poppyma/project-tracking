@@ -47,6 +47,7 @@ export async function POST(req: Request) {
 
     const {
       project_id,
+      component,
       candidate_supplier,
       price,
       currency,
@@ -111,6 +112,7 @@ export async function POST(req: Request) {
       `,
       [
         project_id,
+        component,
         candidate_supplier,
         price,
         currency,
