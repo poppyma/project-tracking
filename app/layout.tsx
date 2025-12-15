@@ -77,6 +77,14 @@ export default function RootLayout({
                 • Data BP
               </Link>
 
+              <Link
+                href="/bom-cost/summary"
+                className="ml-10 text-sm text-white/80 hover:text-white"
+              >
+                • BOM Cost Summary
+              </Link>
+
+
             </div>
           </div>
 
