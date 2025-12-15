@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from "react";
 
+type Project = {
+  id: number;
+  name: string;
+};
+
 type BomCost = {
   id: number;
   project_id: number;
@@ -19,9 +24,9 @@ type BomCost = {
   tooling_cost: string;
 };
 
-
 export default function BomCostPage() {
   const [data, setData] = useState<BomCost[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState({
@@ -38,6 +43,19 @@ export default function BomCostPage() {
     tooling_cost: "",
   });
 
+  /* =========================
+     LOAD PROJECTS (DROPDOWN)
+  ========================== */
+  useEffect(() => {
+    fetch("/api/projects/simple")
+      .then((res) => res.json())
+      .then(setProjects)
+      .catch(console.error);
+  }, []);
+
+  /* =========================
+     LOAD BOM COST DATA
+  ========================== */
   async function loadBomCost() {
     setLoading(true);
     const res = await fetch("/api/bom-cost");
@@ -50,8 +68,16 @@ export default function BomCostPage() {
     loadBomCost();
   }, []);
 
+  /* =========================
+     SUBMIT FORM
+  ========================== */
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!form.project_id) {
+      alert("Project wajib dipilih");
+      return;
+    }
 
     const res = await fetch("/api/bom-cost", {
       method: "POST",
@@ -84,55 +110,119 @@ export default function BomCostPage() {
     loadBomCost();
   }
 
-    return (
+  return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">BOM Cost</h1>
 
-      {/* FORM */}
-      <form onSubmit={submitForm} className="grid grid-cols-3 gap-3 mb-6">
-        <input placeholder="Project ID" value={form.project_id}
-          onChange={e => setForm({ ...form, project_id: e.target.value })} />
+      {/* ================= FORM ================= */}
+      <form
+        onSubmit={submitForm}
+        className="grid grid-cols-3 gap-3 mb-6 bg-white p-4 rounded shadow"
+      >
+        {/* PROJECT DROPDOWN */}
+        <select
+          className="border p-2 rounded col-span-3"
+          value={form.project_id}
+          onChange={(e) =>
+            setForm({ ...form, project_id: e.target.value })
+          }
+        >
+          <option value="">-- Pilih Project --</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
 
-        <input placeholder="Candidate Supplier" value={form.candidate_supplier}
-          onChange={e => setForm({ ...form, candidate_supplier: e.target.value })} />
+        <input
+          className="border p-2 rounded"
+          placeholder="Candidate Supplier"
+          value={form.candidate_supplier}
+          onChange={(e) =>
+            setForm({ ...form, candidate_supplier: e.target.value })
+          }
+        />
 
-        <input placeholder="Price" value={form.price}
-          onChange={e => setForm({ ...form, price: e.target.value })} />
+        <input
+          className="border p-2 rounded"
+          placeholder="Price"
+          value={form.price}
+          onChange={(e) => setForm({ ...form, price: e.target.value })}
+        />
 
-        <input placeholder="Currency" value={form.currency}
-          onChange={e => setForm({ ...form, currency: e.target.value })} />
+        <input
+          className="border p-2 rounded"
+          placeholder="Currency"
+          value={form.currency}
+          onChange={(e) => setForm({ ...form, currency: e.target.value })}
+        />
 
-        <input placeholder="Term" value={form.term}
-          onChange={e => setForm({ ...form, term: e.target.value })} />
+        <input
+          className="border p-2 rounded"
+          placeholder="Term"
+          value={form.term}
+          onChange={(e) => setForm({ ...form, term: e.target.value })}
+        />
 
-        <input placeholder="Landed Cost" value={form.landed_cost}
-          onChange={e => setForm({ ...form, landed_cost: e.target.value })} />
+        <input
+          className="border p-2 rounded"
+          placeholder="Landed Cost"
+          value={form.landed_cost}
+          onChange={(e) => setForm({ ...form, landed_cost: e.target.value })}
+        />
 
-        <input placeholder="TPL" value={form.tpl}
-          onChange={e => setForm({ ...form, tpl: e.target.value })} />
+        <input
+          className="border p-2 rounded"
+          placeholder="TPL"
+          value={form.tpl}
+          onChange={(e) => setForm({ ...form, tpl: e.target.value })}
+        />
 
-        <input placeholder="BP 2026" value={form.bp_2026}
-          onChange={e => setForm({ ...form, bp_2026: e.target.value })} />
+        <input
+          className="border p-2 rounded"
+          placeholder="BP 2026"
+          value={form.bp_2026}
+          onChange={(e) => setForm({ ...form, bp_2026: e.target.value })}
+        />
 
-        <input placeholder="Landed IDR Price" value={form.landed_idr_price}
-          onChange={e => setForm({ ...form, landed_idr_price: e.target.value })} />
+        <input
+          className="border p-2 rounded"
+          placeholder="Landed IDR Price"
+          value={form.landed_idr_price}
+          onChange={(e) =>
+            setForm({ ...form, landed_idr_price: e.target.value })
+          }
+        />
 
-        <input placeholder="Cost Bearing" value={form.cost_bearing}
-          onChange={e => setForm({ ...form, cost_bearing: e.target.value })} />
+        <input
+          className="border p-2 rounded"
+          placeholder="Cost Bearing"
+          value={form.cost_bearing}
+          onChange={(e) =>
+            setForm({ ...form, cost_bearing: e.target.value })
+          }
+        />
 
-        <input placeholder="Tooling Cost" value={form.tooling_cost}
-          onChange={e => setForm({ ...form, tooling_cost: e.target.value })} />
+        <input
+          className="border p-2 rounded"
+          placeholder="Tooling Cost"
+          value={form.tooling_cost}
+          onChange={(e) =>
+            setForm({ ...form, tooling_cost: e.target.value })
+          }
+        />
 
         <button className="bg-blue-600 text-white px-4 py-2 rounded col-span-3">
           Save BOM Cost
         </button>
       </form>
 
-            {/* TABLE */}
+      {/* ================= TABLE ================= */}
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <div className="overflow-auto">
+        <div className="overflow-auto bg-white rounded shadow">
           <table className="w-full border text-sm">
             <thead className="bg-gray-100">
               <tr>
@@ -151,8 +241,10 @@ export default function BomCostPage() {
             </thead>
             <tbody>
               {data.map((d) => (
-                <tr key={d.id}>
-                  <td className="border px-2">{d.project_name || d.project_id}</td>
+                <tr key={d.id} className="hover:bg-gray-50">
+                  <td className="border px-2 font-semibold">
+                    {d.project_name || d.project_id}
+                  </td>
                   <td className="border px-2">{d.candidate_supplier}</td>
                   <td className="border px-2">{d.price}</td>
                   <td className="border px-2">{d.currency}</td>
@@ -172,8 +264,3 @@ export default function BomCostPage() {
     </div>
   );
 }
-
-
-
-
-

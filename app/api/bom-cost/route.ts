@@ -2,21 +2,35 @@ import { NextResponse } from "next/server";
 import { initTables, query } from "@/lib/db";
 
 /* ======================================================
-   GET → Ambil BOM Cost (bisa filter by project_id)
+   GET
+   - ?mode=projects → dropdown project
+   - default → list BOM Cost
 ====================================================== */
 export async function GET(req: Request) {
   try {
     await initTables();
 
     const { searchParams } = new URL(req.url);
+    const mode = searchParams.get("mode");
     const projectId = searchParams.get("project_id");
 
+    // 🔹 MODE DROPDOWN PROJECT
+    if (mode === "projects") {
+      const res = await query(`
+        SELECT id, name
+        FROM projects
+        ORDER BY created_at DESC
+      `);
+      return NextResponse.json(res.rows);
+    }
+
+    // 🔹 LIST BOM COST
     let sql = `
       SELECT 
         bc.*,
         p.name AS project_name
       FROM bom_costs bc
-      LEFT JOIN projects p ON p.id = bc.project_id
+      JOIN projects p ON p.id = bc.project_id
     `;
 
     const params: any[] = [];
@@ -32,17 +46,11 @@ export async function GET(req: Request) {
     return NextResponse.json(res.rows);
 
   } catch (err: any) {
-    console.error("GET bom_costs error:", err);
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
+    console.error("GET bom-cost error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-/* ======================================================
-   POST → Tambah BOM Cost
-====================================================== */
 export async function POST(req: Request) {
   try {
     await initTables();
@@ -61,6 +69,13 @@ export async function POST(req: Request) {
       cost_bearing,
       tooling_cost,
     } = body;
+
+    if (!project_id) {
+      return NextResponse.json(
+        { error: "Project is required" },
+        { status: 400 }
+      );
+    }
 
     const res = await query(
       `
@@ -99,16 +114,10 @@ export async function POST(req: Request) {
 
   } catch (err: any) {
     console.error("POST bom_costs error:", err);
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-/* ======================================================
-   PATCH → Update BOM Cost
-====================================================== */
 export async function PATCH(req: Request) {
   try {
     await initTables();
@@ -129,27 +138,24 @@ export async function PATCH(req: Request) {
     } = body;
 
     if (!id) {
-      return NextResponse.json(
-        { error: "ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "ID required" }, { status: 400 });
     }
 
     await query(
       `
       UPDATE bom_costs SET
-        candidate_supplier = $1,
-        price = $2,
-        currency = $3,
-        term = $4,
-        landed_cost = $5,
-        tpl = $6,
-        bp_2026 = $7,
-        landed_idr_price = $8,
-        cost_bearing = $9,
-        tooling_cost = $10,
-        updated_at = NOW()
-      WHERE id = $11
+        candidate_supplier=$1,
+        price=$2,
+        currency=$3,
+        term=$4,
+        landed_cost=$5,
+        tpl=$6,
+        bp_2026=$7,
+        landed_idr_price=$8,
+        cost_bearing=$9,
+        tooling_cost=$10,
+        updated_at=NOW()
+      WHERE id=$11
       `,
       [
         candidate_supplier,
@@ -170,40 +176,26 @@ export async function PATCH(req: Request) {
 
   } catch (err: any) {
     console.error("PATCH bom_costs error:", err);
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-/* ======================================================
-   DELETE → Hapus BOM Cost
-====================================================== */
+
 export async function DELETE(req: Request) {
   try {
     await initTables();
     const { id } = await req.json();
 
     if (!id) {
-      return NextResponse.json(
-        { error: "ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "ID required" }, { status: 400 });
     }
 
-    await query(
-      `DELETE FROM bom_costs WHERE id = $1`,
-      [id]
-    );
+    await query(`DELETE FROM bom_costs WHERE id=$1`, [id]);
 
     return NextResponse.json({ success: true });
 
   } catch (err: any) {
     console.error("DELETE bom_costs error:", err);
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
