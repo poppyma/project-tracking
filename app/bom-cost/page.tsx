@@ -192,7 +192,9 @@ export default function BomCostPage() {
                 <td className="border px-2">{d.landed_cost}</td>
                 <td className="border px-2">{d.tpl}</td>
                 <td className="border px-2">{d.bp_2026}</td>
-                <td className="border px-2">{d.landed_idr_price}</td>
+                <td className="border px-2 text-right">
+                  {Number(d.landed_idr_price).toLocaleString("id-ID")}
+                </td>
                 <td className="border px-2">{d.cost_bearing}</td>
                 <td className="border px-2">{d.tooling_cost}</td>
               </tr>

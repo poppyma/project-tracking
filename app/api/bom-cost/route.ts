@@ -27,10 +27,18 @@ export async function GET() {
   }
 }
 
-function parseNumber(val: string): number {
-  if (!val) return 0;
-  return Number(val.replace(",", "."));
+function parseNumber(value: string): number {
+  if (!value) return 0;
+
+  return Number(
+    value
+      .replace(/\./g, "")   // hapus pemisah ribuan
+      .replace(",", ".")    // koma jadi desimal
+      .replace("%", "")     // hapus %
+      .trim()
+  ) || 0;
 }
+
 
 
 export async function POST(req: Request) {
@@ -55,12 +63,12 @@ export async function POST(req: Request) {
     // HITUNG LANDED IDR PRICE
     // =============================
     const priceNum = parseNumber(price);
-    const landedCostNum = parseNumber(landed_cost);
-    const tplNum = parseNumber(tpl);
-    const bpNum = parseNumber(bp_2026);
+    const landedCostNum = parseNumber(landed_cost) / 100;
+    const tplNum = parseNumber(tpl) / 100;
+    const bp2026Num = parseNumber(bp_2026);
 
     const landedIdrPrice =
-      priceNum * (1 + landedCostNum) * tplNum * bpNum;
+        priceNum * (1 + landedCostNum) * tplNum * bp2026Num;
 
     const res = await query(
       `
@@ -89,7 +97,7 @@ export async function POST(req: Request) {
         landed_cost,
         tpl,
         bp_2026,
-        landedIdrPrice.toString(), // disimpan TEXT
+        landedIdrPrice.toFixed(2), // disimpan TEXT
         cost_bearing,
         tooling_cost,
       ]
