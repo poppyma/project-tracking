@@ -147,9 +147,6 @@ export default function BomCostPage() {
         <input placeholder="TPL" value={form.tpl}
           onChange={e => setForm({ ...form, tpl: e.target.value })} />
 
-        <input placeholder="BP 2026" value={form.bp_2026}
-          onChange={e => setForm({ ...form, bp_2026: e.target.value })} />
-
         <input placeholder="Cost Bearing" value={form.cost_bearing}
           onChange={e => setForm({ ...form, cost_bearing: e.target.value })} />
 

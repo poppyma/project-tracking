@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 type BP = {
   id: number;
-  currency: string;
+  currency: string;  
   bp_value: string;
 };
 

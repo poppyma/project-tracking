@@ -40,7 +40,6 @@ function parseNumber(value: string): number {
 }
 
 
-
 export async function POST(req: Request) {
   try {
     await initTables();
@@ -54,22 +53,43 @@ export async function POST(req: Request) {
       term,
       landed_cost,
       tpl,
-      bp_2026,
       cost_bearing,
       tooling_cost,
     } = body;
 
     // =============================
-    // HITUNG LANDED IDR PRICE
+    // 1. Ambil BP berdasarkan currency
+    // =============================
+    const bpRes = await query(
+      `SELECT bp_value FROM bp_rates WHERE currency = $1`,
+      [currency.toUpperCase()]
+    );
+
+    if (bpRes.rowCount === 0) {
+      return NextResponse.json(
+        { error: `BP untuk currency ${currency} belum tersedia` },
+        { status: 400 }
+      );
+    }
+
+    const bpValue = parseNumber(bpRes.rows[0].bp_value);
+
+    // =============================
+    // 2. Parse semua angka
     // =============================
     const priceNum = parseNumber(price);
     const landedCostNum = parseNumber(landed_cost) / 100;
     const tplNum = parseNumber(tpl) / 100;
-    const bp2026Num = parseNumber(bp_2026);
 
-    const landedIdrPrice =
-        priceNum * (1 + landedCostNum) * tplNum * bp2026Num;
+    // =============================
+    // 3. Hitung Landed IDR Price
+    // =============================
+    const landedIdr =
+      priceNum * (1 + landedCostNum) * tplNum * bpValue;
 
+    // =============================
+    // 4. Simpan ke DB
+    // =============================
     const res = await query(
       `
       INSERT INTO bom_costs (
@@ -96,8 +116,8 @@ export async function POST(req: Request) {
         term,
         landed_cost,
         tpl,
-        bp_2026,
-        landedIdrPrice.toFixed(2), // disimpan TEXT
+        bpRes.rows[0].bp_value,      // simpan BP text
+        landedIdr.toFixed(2),        // hasil hitung
         cost_bearing,
         tooling_cost,
       ]
@@ -107,69 +127,6 @@ export async function POST(req: Request) {
 
   } catch (err: any) {
     console.error("POST bom_costs error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
-}
-
-
-export async function PATCH(req: Request) {
-  try {
-    await initTables();
-    const body = await req.json();
-
-    const {
-      id,
-      candidate_supplier,
-      price,
-      currency,
-      term,
-      landed_cost,
-      tpl,
-      bp_2026,
-      landed_idr_price,
-      cost_bearing,
-      tooling_cost,
-    } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: "ID required" }, { status: 400 });
-    }
-
-    await query(
-      `
-      UPDATE bom_costs SET
-        candidate_supplier=$1,
-        price=$2,
-        currency=$3,
-        term=$4,
-        landed_cost=$5,
-        tpl=$6,
-        bp_2026=$7,
-        landed_idr_price=$8,
-        cost_bearing=$9,
-        tooling_cost=$10,
-        updated_at=NOW()
-      WHERE id=$11
-      `,
-      [
-        candidate_supplier,
-        price,
-        currency,
-        term,
-        landed_cost,
-        tpl,
-        bp_2026,
-        landed_idr_price,
-        cost_bearing,
-        tooling_cost,
-        id,
-      ]
-    );
-
-    return NextResponse.json({ success: true });
-
-  } catch (err: any) {
-    console.error("PATCH bom_costs error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
