@@ -10,50 +10,38 @@ export async function GET(req: Request) {
 
     if (!projectId) {
       return NextResponse.json(
-        { error: "project_id wajib" },
+        { error: "project_id required" },
         { status: 400 }
       );
     }
 
-    /**
-     * Ambil harga TERENDAH per component
-     */
-    const res = await query(`
+    const res = await query(
+      `
       SELECT
-        component,
-        MIN(landed_idr_price::numeric) AS min_cost
-      FROM bom_costs
-      WHERE project_id = $1
-      GROUP BY component
-      ORDER BY component
-    `, [projectId]);
-
-    /**
-     * Hitung total cost/bearing
-     */
-    const totalRes = await query(`
-      SELECT
-        SUM(min_cost) AS total_cost
-      FROM (
-        SELECT
-          component,
-          MIN(landed_idr_price::numeric) AS min_cost
-        FROM bom_costs
-        WHERE project_id = $1
-        GROUP BY component
-      ) t
-    `, [projectId]);
-
-    return NextResponse.json({
-      components: res.rows,
-      total_cost: totalRes.rows[0].total_cost || 0,
-    });
-
-  } catch (err: any) {
-    console.error("GET bom-cost-summary error:", err);
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
+        bc.id,
+        p.name AS project_name,
+        bc.component,
+        bc.candidate_supplier,
+        bc.price,
+        bc.currency,
+        bc.term,
+        bc.landed_cost,
+        bc.tpl,
+        bc.bp_2026,
+        bc.landed_idr_price,
+        bc.cost_bearing,
+        bc.tooling_cost
+      FROM bom_costs bc
+      JOIN projects p ON p.id = bc.project_id
+      WHERE bc.project_id = $1
+      ORDER BY bc.component, bc.landed_idr_price ASC
+      `,
+      [projectId]
     );
+
+    return NextResponse.json(res.rows);
+  } catch (err: any) {
+    console.error("GET bom summary error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
