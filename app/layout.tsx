@@ -45,12 +45,16 @@ export default function RootLayout({
               </Link>
 
               <Link href="/bom-cost" className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/20 text-white font-medium cursor-pointer">
+              
                 <img
                   src="/calculation.png"
                   alt="Calculation Icon"
                   className="w-[36px] h-[36px] object-contain flex-shrink-0"
                 />
                 <span className="text-[17px] font-semibold whitespace-nowrap">BOM Cost</span>
+              </Link>
+              <Link href="/bom-cost" className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/20 text-white font-medium cursor-pointer">
+                Data BP
               </Link>
             </nav>
           </div>
