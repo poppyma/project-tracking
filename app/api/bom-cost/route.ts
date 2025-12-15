@@ -11,20 +11,22 @@ export async function GET() {
     await initTables();
 
     const res = await query(`
-      SELECT id, name
-      FROM projects
-      ORDER BY created_at DESC
+      SELECT
+        bc.*,
+        p.name AS project_name
+      FROM bom_costs bc
+      LEFT JOIN projects p ON p.id = bc.project_id
+      ORDER BY bc.created_at DESC
     `);
 
     return NextResponse.json(res.rows);
+
   } catch (err: any) {
-    console.error("GET projects/simple error:", err);
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
+    console.error("GET bom_costs error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
 
 export async function POST(req: Request) {
   try {
