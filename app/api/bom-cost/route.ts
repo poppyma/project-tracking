@@ -94,6 +94,7 @@ export async function POST(req: Request) {
       `
       INSERT INTO bom_costs (
         project_id,
+        component,
         candidate_supplier,
         price,
         currency,
@@ -105,7 +106,7 @@ export async function POST(req: Request) {
         cost_bearing,
         tooling_cost
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
       RETURNING *
       `,
       [

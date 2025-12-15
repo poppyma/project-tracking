@@ -57,7 +57,7 @@ export default function RootLayout({
                 alt="Calculation Icon"
                 className="w-[36px] h-[36px] object-contain"
               />
-              <span className="text-[17px] font-semibold">BOM Cost</span>
+              <span className="text-[17px] font-semibold">Input BOM Cost</span>
             </div>
 
             {/* SUB MENU */}

@@ -27,9 +27,11 @@ export default function BomCostPage() {
   const [data, setData] = useState<BomCost[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [components, setComponents] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     project_id: "",
+    component: "",
     candidate_supplier: "",
     price: "",
     currency: "",
@@ -50,6 +52,18 @@ export default function BomCostPage() {
     const json = await res.json();
     setData(json);
     setLoading(false);
+  }
+
+  async function loadComponents(projectId: string) {
+    if (!projectId) {
+      setComponents([]);
+      return;
+    }
+
+    const res = await fetch(`/api/materials?project_id=${projectId}`);
+    const json = await res.json();
+
+    setComponents(json.map((m: any) => m.component));
   }
 
   async function loadProjects() {
@@ -80,6 +94,7 @@ export default function BomCostPage() {
       body: JSON.stringify({
         ...form,
         project_id: Number(form.project_id),
+        component: form.component,
       }),
     });
 
@@ -90,6 +105,7 @@ export default function BomCostPage() {
 
     setForm({
       project_id: "",
+      component: "",
       candidate_supplier: "",
       price: "",
       currency: "",
@@ -115,11 +131,12 @@ export default function BomCostPage() {
         {/* PROJECT DROPDOWN */}
         <select
           value={form.project_id}
-          onChange={(e) =>
-            setForm({ ...form, project_id: e.target.value })
-          }
+          onChange={(e) => {
+            const value = e.target.value;
+            setForm({ ...form, project_id: value, component: "" });
+            loadComponents(value);
+          }}
           className="border px-3 py-2 rounded"
-          required
         >
           <option value="">-- Pilih Project --</option>
           {projects.map((p) => (
@@ -128,6 +145,25 @@ export default function BomCostPage() {
             </option>
           ))}
         </select>
+
+        <select
+          value={form.component}
+          onChange={(e) =>
+            setForm({ ...form, component: e.target.value })
+          }
+          className="border px-3 py-2 rounded"
+          disabled={!components.length}
+          required
+        >
+          <option value="">-- Pilih Component --</option>
+          {components.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+
+
 
         <input placeholder="Candidate Supplier" value={form.candidate_supplier}
           onChange={e => setForm({ ...form, candidate_supplier: e.target.value })} />
@@ -202,3 +238,4 @@ export default function BomCostPage() {
     </div>
   );
 }
+  
