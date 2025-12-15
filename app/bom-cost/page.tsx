@@ -162,9 +162,6 @@ export default function BomCostPage() {
             </option>
           ))}
         </select>
-
-
-
         <input placeholder="Candidate Supplier" value={form.candidate_supplier}
           onChange={e => setForm({ ...form, candidate_supplier: e.target.value })} />
 
@@ -202,6 +199,7 @@ export default function BomCostPage() {
           <thead className="bg-gray-100">
             <tr>
               <th className="border px-2">Project</th>
+              <th className="border px-2">Component</th>
               <th className="border px-2">Supplier</th>
               <th className="border px-2">Price</th>
               <th className="border px-2">Currency</th>
@@ -218,6 +216,7 @@ export default function BomCostPage() {
             {data.map((d) => (
               <tr key={d.id}>
                 <td className="border px-2">{d.project_name || d.project_id}</td>
+                <th className="border px-2">Component</th>
                 <td className="border px-2">{d.candidate_supplier}</td>
                 <td className="border px-2">{d.price}</td>
                 <td className="border px-2">{d.currency}</td>
