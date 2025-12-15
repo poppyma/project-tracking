@@ -1,28 +1,39 @@
 import { NextResponse } from "next/server";
 import { initTables, query } from "@/lib/db";
 
-// GET → ambil semua BP
+/* ============================
+   GET → Ambil semua BP
+============================ */
 export async function GET() {
   try {
     await initTables();
-    const res = await query(
-      `SELECT * FROM bp_rates ORDER BY created_at DESC`
-    );
+
+    const res = await query(`
+      SELECT id, currency, bp_value
+      FROM bp_rates
+      ORDER BY currency ASC
+    `);
+
     return NextResponse.json(res.rows);
   } catch (err: any) {
+    console.error("GET bp error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-// POST → tambah BP
+/* ============================
+   POST → Tambah BP
+============================ */
 export async function POST(req: Request) {
   try {
     await initTables();
-    const { currency, bp_value } = await req.json();
+    const body = await req.json();
+
+    const { currency, bp_value } = body;
 
     if (!currency || !bp_value) {
       return NextResponse.json(
-        { error: "Currency & BP value required" },
+        { error: "Currency & BP wajib diisi" },
         { status: 400 }
       );
     }
@@ -38,6 +49,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(res.rows[0], { status: 201 });
   } catch (err: any) {
+    console.error("POST bp error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

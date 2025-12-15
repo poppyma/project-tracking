@@ -36,7 +36,8 @@ export default function DataBPPage() {
     });
 
     if (!res.ok) {
-      alert("Gagal menambahkan BP");
+      const err = await res.json();
+      alert("Gagal menambahkan BP: " + err.error);
       return;
     }
 
@@ -47,10 +48,9 @@ export default function DataBPPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Data BP</h1>
+      <h2 className="text-xl font-bold mb-3">Data BP</h2>
 
-      {/* FORM */}
-      <form onSubmit={submitBP} className="flex gap-2 mb-6">
+      <form onSubmit={submitBP} className="flex gap-2 mb-4">
         <input
           className="border px-3 py-2 rounded"
           placeholder="Currency (USD)"
@@ -68,12 +68,11 @@ export default function DataBPPage() {
         </button>
       </form>
 
-      {/* TABLE */}
-      <table className="w-full border text-sm">
+      <table className="border w-full text-sm">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border px-2">Currency</th>
-            <th className="border px-2">BP</th>
+            <th className="border px-2 py-1">Currency</th>
+            <th className="border px-2 py-1">BP</th>
           </tr>
         </thead>
         <tbody>
