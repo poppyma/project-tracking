@@ -34,29 +34,54 @@ export default function RootLayout({
               <div className="logo-wrap">
               <img src="/skf-logo.svg" alt="SKF" className="logo" />
             </div>
-            <nav className="flex flex-col gap-6">
-              <Link href="/" className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/10 text-white font-medium cursor-pointer">
-                <img
-                  src="/monitoring-icon.png"
-                  alt="Monitoring Icon"
-                  className="w-[36px] h-[36px] object-contain flex-shrink-0"
-                />
-                <span className="text-[17px] font-semibold whitespace-nowrap">Tracking</span>
+           <nav className="flex flex-col gap-4">
+          {/* TRACKING */}
+          <Link
+            href="/"
+            className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/10 text-white font-medium"
+          >
+            <img
+              src="/monitoring-icon.png"
+              alt="Monitoring Icon"
+              className="w-[36px] h-[36px] object-contain"
+            />
+            <span className="text-[17px] font-semibold">Tracking</span>
+          </Link>
+
+          {/* BOM COST (PARENT) */}
+          <div className="flex flex-col gap-2">
+
+            <div className="flex items-center gap-4 py-4 px-4 w-full rounded-xl text-white font-medium">
+              <img
+                src="/calculation.png"
+                alt="Calculation Icon"
+                className="w-[36px] h-[36px] object-contain"
+              />
+              <span className="text-[17px] font-semibold">BOM Cost</span>
+            </div>
+
+            {/* SUB MENU */}
+            <div className="ml-14 flex flex-col gap-1">
+
+              <Link
+                href="/bom-cost"
+                className="py-2 px-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white text-sm"
+              >
+                • BOM Cost
               </Link>
 
-              <Link href="/bom-cost" className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/20 text-white font-medium cursor-pointer">
-              
-                <img
-                  src="/calculation.png"
-                  alt="Calculation Icon"
-                  className="w-[36px] h-[36px] object-contain flex-shrink-0"
-                />
-                <span className="text-[17px] font-semibold whitespace-nowrap">BOM Cost</span>
+              <Link
+                href="/bom-cost/bp"
+                className="py-2 px-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white text-sm"
+              >
+                • Data BP
               </Link>
-              <Link href="/bom-cost" className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/20 text-white font-medium cursor-pointer">
-                Data BP
-              </Link>
-            </nav>
+
+            </div>
+          </div>
+
+        </nav>
+
           </div>
         </aside>
         <main className="app-main">{children}</main>
