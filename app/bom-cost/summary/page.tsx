@@ -11,7 +11,6 @@ type Row = {
   id: number;
   component: string;
   candidate_supplier: string;
-  landed_idr_price: string;
   cost_bearing: string;
 };
 
@@ -21,30 +20,34 @@ export default function BomSummaryPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [cheapestMap, setCheapestMap] = useState<Record<string, number>>({});
 
-  // ============================
-  // LOAD PROJECTS (DROPDOWN)
-  // ============================
-  async function loadProjects() {
-    const res = await fetch("/api/projects/simple");
-    const json = await res.json();
-    setProjects(json);
-  }
+  // ======================
+  // LOAD PROJECT DROPDOWN
+  // ======================
+  useEffect(() => {
+    fetch("/api/projects/simple")
+      .then((res) => res.json())
+      .then(setProjects);
+  }, []);
 
-  // ============================
-  // LOAD BOM SUMMARY
-  // ============================
+  // ======================
+  // LOAD SUMMARY
+  // ======================
   async function loadSummary(pid: string) {
-    if (!pid) return;
+    if (!pid) {
+      setRows([]);
+      return;
+    }
 
     const res = await fetch(`/api/bom-summary?project_id=${pid}`);
     const data = await res.json();
+
     setRows(data);
     calculateCheapest(data);
   }
 
-  // ============================
-  // HITUNG COST TERMURAH PER COMPONENT
-  // ============================
+  // ======================
+  // HITUNG TERMURAH PER COMPONENT
+  // ======================
   function calculateCheapest(data: Row[]) {
     const map: Record<string, number> = {};
 
@@ -63,22 +66,17 @@ export default function BomSummaryPage() {
     0
   );
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
-
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">BOM Summary</h1>
 
       {/* PROJECT DROPDOWN */}
       <select
-        className="border px-3 py-2 mb-4 rounded"
+        className="border px-3 py-2 mb-4"
         value={projectId}
         onChange={(e) => {
-          const value = e.target.value;
-          setProjectId(value);
-          loadSummary(value);
+          setProjectId(e.target.value);
+          loadSummary(e.target.value);
         }}
       >
         <option value="">-- Pilih Project --</option>
@@ -89,7 +87,6 @@ export default function BomSummaryPage() {
         ))}
       </select>
 
-      {/* TABLE */}
       {rows.length === 0 ? (
         <p className="text-gray-500">Tidak ada data</p>
       ) : (
@@ -125,7 +122,7 @@ export default function BomSummaryPage() {
           <tfoot>
             <tr className="font-bold bg-yellow-300">
               <td colSpan={2} className="border px-2 text-right">
-                TOTAL COST TERENDAH
+                TOTAL COST BEARING (TERMURAH)
               </td>
               <td className="border px-2 text-right">
                 {totalCheapest.toLocaleString("id-ID")}
