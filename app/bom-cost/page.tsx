@@ -30,7 +30,7 @@ export default function BomCostPage() {
   const [components, setComponents] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [submitting, setSubmitting] = useState(false); // Loading submit
+  const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const [form, setForm] = useState({
@@ -131,18 +131,20 @@ export default function BomCostPage() {
   }
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-6 relative min-h-screen">
 
       {/* TOAST */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 px-4 py-2 rounded shadow text-white font-semibold z-50 ${
-            toast.type === "success" ? "bg-green-500" : "bg-red-500"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
+      <div className="fixed top-4 right-4 z-[9999]">
+        {toast && (
+          <div
+            className={`px-4 py-2 rounded shadow text-white font-semibold transform transition-transform duration-300 ${
+              toast.type === "success" ? "bg-green-500" : "bg-red-500"
+            } ${toast ? "translate-x-0" : "translate-x-20"}`}
+          >
+            {toast.message}
+          </div>
+        )}
+      </div>
 
       <h1 className="text-2xl font-bold">BOM Cost</h1>
 
@@ -153,7 +155,7 @@ export default function BomCostPage() {
       >
         {submitting && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-xl z-10">
-            <span className="text-blue-600 font-semibold">Saving...</span>
+            <span className="text-blue-600 font-semibold animate-pulse">Saving...</span>
           </div>
         )}
 
