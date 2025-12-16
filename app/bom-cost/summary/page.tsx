@@ -93,63 +93,49 @@ export default function BomSummaryPage() {
         <p className="text-gray-500">Tidak ada data</p>
       ) : (
         <table className="w-full border text-sm">
-            <thead className="bg-gray-100">
-                <tr>
-                <th className="border px-2">Component</th>
-                <th className="border px-2">Supplier</th>
-                <th className="border px-2">Cost / Bearing</th>
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border px-2">Component</th>
+              <th className="border px-2">Supplier</th>
+              <th className="border px-2">Cost / Bearing</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {rows.map((r) => {
+              const isCheapest =
+                Number(r.cost_bearing) === cheapestMap[r.component];
+
+              return (
+                <tr
+                  key={r.id}
+                  className={
+                    isCheapest ? "bg-yellow-200 font-semibold" : ""
+                  }
+                >
+                  <td className="border px-2">{r.component}</td>
+                  <td className="border px-2">
+                    {r.candidate_supplier}
+                  </td>
+                  <td className="border px-2 text-right">
+                    {Number(r.cost_bearing).toLocaleString("id-ID")}
+                  </td>
                 </tr>
-            </thead>
+              );
+            })}
+          </tbody>
 
-            <tbody>
-                {rows.length === 0 ? (
-                <tr>
-                    <td
-                    colSpan={3}
-                    className="border px-2 text-center text-gray-500 py-4"
-                    >
-                    Tidak ada data
-                    </td>
-                </tr>
-                ) : (
-                rows.map((r) => {
-                    const isCheapest =
-                    Number(r.cost_bearing) === cheapestMap[r.component];
-
-                    return (
-                    <tr
-                        key={r.id}
-                        className={
-                        isCheapest ? "bg-yellow-200 font-semibold" : ""
-                        }
-                    >
-                        <td className="border px-2">{r.component}</td>
-                        <td className="border px-2">
-                        {r.candidate_supplier}
-                        </td>
-                        <td className="border px-2 text-right">
-                        {Number(r.cost_bearing).toLocaleString("id-ID")}
-                        </td>
-                    </tr>
-                    );
-                })
-                )}
-            </tbody>
-
-            <tfoot>
-                <tr className="font-bold bg-yellow-300">
-                <td colSpan={2} className="border px-2 text-right">
-                    TOTAL COST BEARING (TERMURAH)
-                </td>
-                <td className="border px-2 text-right">
-                    {Object.values(cheapestMap)
-                    .reduce((a, b) => a + b, 0)
-                    .toLocaleString("id-ID")}
-                </td>
-                </tr>
-            </tfoot>
-            </table>
-
+          <tfoot>
+            <tr className="font-bold bg-yellow-300">
+              <td colSpan={2} className="border px-2 text-right">
+                TOTAL COST BEARING (TERMURAH)
+              </td>
+              <td className="border px-2 text-right">
+                {totalCheapest.toLocaleString("id-ID")}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       )}
     </div>
   );
