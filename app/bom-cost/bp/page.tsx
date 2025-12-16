@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 type BP = {
   id: number;
-  currency: string;  
+  currency: string;
   bp_value: string;
 };
 
@@ -47,43 +47,83 @@ export default function DataBPPage() {
   }
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-3">Data BP</h2>
+    <div className="p-6 flex justify-center">
+      <div className="w-full max-w-lg">
 
-      <form onSubmit={submitBP} className="flex gap-2 mb-4">
-        <input
-          className="border px-3 py-2 rounded"
-          placeholder="Currency (USD)"
-          value={currency}
-          onChange={(e) => setCurrency(e.target.value)}
-        />
-        <input
-          className="border px-3 py-2 rounded"
-          placeholder="BP Value (2.301)"
-          value={bpValue}
-          onChange={(e) => setBpValue(e.target.value)}
-        />
-        <button className="bg-blue-600 text-white px-4 rounded">
-          Add
-        </button>
-      </form>
+        {/* TITLE */}
+        <h2 className="text-xl font-bold mb-4 text-gray-800">
+          Data BP
+        </h2>
 
-      <table className="border w-full text-sm">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border px-2 py-1">Currency</th>
-            <th className="border px-2 py-1">BP</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bps.map((bp) => (
-            <tr key={bp.id}>
-              <td className="border px-2">{bp.currency}</td>
-              <td className="border px-2">{bp.bp_value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        {/* FORM */}
+        <form
+          onSubmit={submitBP}
+          className="flex gap-2 mb-4"
+        >
+          <input
+            className="border px-3 py-2 rounded w-32 text-sm focus:ring-2 focus:ring-blue-400"
+            placeholder="Currency"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+          />
+
+          <input
+            className="border px-3 py-2 rounded flex-1 text-sm focus:ring-2 focus:ring-blue-400"
+            placeholder="BP Value (2.301)"
+            value={bpValue}
+            onChange={(e) => setBpValue(e.target.value)}
+          />
+
+          <button
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded text-sm"
+          >
+            Add
+          </button>
+        </form>
+
+        {/* TABLE CARD */}
+        <div className="border rounded-xl overflow-hidden shadow-sm bg-white">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100 text-gray-700">
+              <tr>
+                <th className="px-4 py-2 text-left">
+                  Currency
+                </th>
+                <th className="px-4 py-2 text-right">
+                  BP
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {bps.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={2}
+                    className="px-4 py-6 text-center text-gray-500"
+                  >
+                    Belum ada data
+                  </td>
+                </tr>
+              ) : (
+                bps.map((bp) => (
+                  <tr
+                    key={bp.id}
+                    className="border-t hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-2 font-medium">
+                      {bp.currency}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      {bp.bp_value}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
