@@ -33,26 +33,33 @@ export default function BomSummaryPage() {
   // ======================
   // LOAD BOM SAAT PROJECT BERUBAH
   // ======================
-  useEffect(() => {
-    if (!projectId) {
-      setRows([]);
-      setCheapestMap({});
-      return;
-    }
+useEffect(() => {
+  if (!projectId) {
+    setRows([]);
+    setCheapestMap({});
+    return;
+  }
 
-    async function load() {
-      setLoading(true);
+  async function load() {
+    setLoading(true);
+    try {
       const res = await fetch(
         `/api/bom-summary?project_id=${projectId}`
       );
       const data: Row[] = await res.json();
       setRows(data);
       calculateCheapest(data);
-      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setRows([]);
+    } finally {
+      setLoading(false); // ⬅️ WAJIB
     }
+  }
 
-    load();
-  }, [projectId]);
+  load();
+}, [projectId]);
+
 
   // ======================
   // HITUNG TERMURAH
