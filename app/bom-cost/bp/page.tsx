@@ -13,6 +13,16 @@ export default function DataBPPage() {
   const [currency, setCurrency] = useState("");
   const [bpValue, setBpValue] = useState("");
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
 
   async function loadBP() {
     const res = await fetch("/api/bp");
@@ -56,29 +66,53 @@ export default function DataBPPage() {
     } catch (err: any) {
       alert(err.message);
     } finally {
-      // 🔥 INI KUNCI UTAMA
       setSaving(false);
     }
   }
 
+   async function deleteBP(id: number) {
+      if (!confirm("Yakin mau hapus BP ini?")) return;
 
+      try {
+        const res = await fetch("/api/bp", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
+        });
 
-  async function deleteBP(id: number) {
-    if (!confirm("Hapus BP ini?")) return;
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Gagal menghapus data");
+        }
 
-    const res = await fetch("/api/bp", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
+        // reload data
+        await loadBP();
 
-    if (!res.ok) {
-      alert("Gagal menghapus BP");
-      return;
+        // ✅ TOAST SUCCESS
+        setToast({
+          show: true,
+          message: "Data BP berhasil dihapus",
+          type: "success",
+        });
+
+        // auto hide
+        setTimeout(() => {
+          setToast((t) => ({ ...t, show: false }));
+        }, 3000);
+
+      } catch (err: any) {
+        setToast({
+          show: true,
+          message: err.message,
+          type: "error",
+        });
+
+        setTimeout(() => {
+          setToast((t) => ({ ...t, show: false }));
+        }, 3000);
+      }
     }
 
-    loadBP();
-  }
 
   return (
     <div className="p-6">
@@ -92,6 +126,15 @@ export default function DataBPPage() {
       </div>
 
       <div className="max-w-2xl space-y-6">
+        {toast.show && (
+          <div
+            className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-white text-sm
+              ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}
+            `}
+          >
+            {toast.message}
+          </div>
+        )}
 
         {/* FORM */}
         <div className="bg-white border rounded-xl p-4 shadow-sm">
