@@ -19,7 +19,6 @@ export async function GET(req: Request) {
       `
       SELECT
         bc.id,
-        p.name AS project_name,
         bc.component,
         bc.candidate_supplier,
         bc.price,
@@ -29,12 +28,10 @@ export async function GET(req: Request) {
         bc.tpl,
         bc.bp_2026,
         bc.landed_idr_price,
-        bc.cost_bearing,
-        bc.tooling_cost
+        bc.cost_bearing
       FROM bom_costs bc
-      JOIN projects p ON p.id = bc.project_id
       WHERE bc.project_id = $1
-      ORDER BY bc.component, bc.landed_idr_price ASC
+      ORDER BY bc.component, bc.cost_bearing::numeric ASC
       `,
       [projectId]
     );
