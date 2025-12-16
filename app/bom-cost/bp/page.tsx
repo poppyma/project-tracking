@@ -13,6 +13,7 @@ export default function DataBPPage() {
   const [currency, setCurrency] = useState("");
   const [bpValue, setBpValue] = useState("");
   const [saving, setSaving] = useState(false);
+  const [toasts, setToasts] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
@@ -33,8 +34,6 @@ export default function DataBPPage() {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-
-  
 
 
   async function loadBP() {
@@ -87,6 +86,7 @@ export default function DataBPPage() {
       setCurrency("");
       setBpValue("");
       await loadBP();
+      setToasts("Data BP berhasil ditambahkan");
 
     } catch (err: any) {
       alert(err.message);
