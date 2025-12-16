@@ -19,11 +19,11 @@ export default function RootLayout({
       </head>
 
       <body className="antialiased">
-        <div className="flex min-h-screen bg-gray-100">
+        <div className="flex min-h-screen bg-gray-100 overflow-hidden">
 
           {/* SIDEBAR */}
-          <aside className="w-[280px] bg-[#0b2a4a] text-white">
-            <div className="p-4 flex flex-col gap-8">
+          <aside className="w-[280px] flex-shrink-0 bg-[#0b2a4a] text-white flex flex-col">
+            <div className="p-4 flex flex-col gap-8 h-full overflow-y-auto">
 
               {/* LOGO */}
               <div className="flex justify-center">
@@ -60,9 +60,7 @@ export default function RootLayout({
 
                   {/* ARROW */}
                   <svg
-                    className={`w-4 h-4 transition-transform ${
-                      bomOpen ? "rotate-180" : ""
-                    }`}
+                    className={`w-4 h-4 transition-transform ${bomOpen ? "rotate-180" : ""}`}
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={2}
@@ -105,8 +103,8 @@ export default function RootLayout({
             </div>
           </aside>
 
-          {/* MAIN */}
-          <main className="flex-1 p-6 bg-white">
+          {/* MAIN CONTENT */}
+          <main className="flex-1 p-6 bg-white overflow-auto">
             {children}
           </main>
         </div>
