@@ -46,10 +46,25 @@ export default function DataBPPage() {
     loadBP();
   }
 
+  async function deleteBP(id: number) {
+    if (!confirm("Hapus BP ini?")) return;
+
+    const res = await fetch("/api/bp", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+
+    if (!res.ok) {
+      alert("Gagal menghapus BP");
+      return;
+    }
+
+    loadBP();
+  }
+
   return (
     <div className="p-6">
-
-      {/* PAGE HEADER */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">
           Data BP
@@ -59,12 +74,11 @@ export default function DataBPPage() {
         </p>
       </div>
 
-      {/* CONTENT */}
       <div className="max-w-2xl space-y-6">
 
-        {/* FORM CARD */}
+        {/* FORM */}
         <div className="bg-white border rounded-xl p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+          <h3 className="text-sm font-semibold mb-3">
             Tambah BP
           </h3>
 
@@ -77,8 +91,7 @@ export default function DataBPPage() {
                 Currency
               </label>
               <input
-                className="border px-3 py-2 rounded-lg w-28 text-sm focus:ring-2 focus:ring-blue-500"
-                placeholder="USD"
+                className="border px-3 py-2 rounded-lg w-28 text-sm"
                 value={currency}
                 onChange={(e) =>
                   setCurrency(e.target.value.toUpperCase())
@@ -91,29 +104,20 @@ export default function DataBPPage() {
                 BP Value
               </label>
               <input
-                className="border px-3 py-2 rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-500"
-                placeholder="2.301"
+                className="border px-3 py-2 rounded-lg w-full text-sm"
                 value={bpValue}
                 onChange={(e) => setBpValue(e.target.value)}
               />
             </div>
 
-            <button
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium"
-            >
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm">
               Add
             </button>
           </form>
         </div>
 
-        {/* TABLE CARD */}
+        {/* TABLE */}
         <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <h3 className="text-sm font-semibold text-gray-700">
-              Daftar BP
-            </h3>
-          </div>
-
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
               <tr>
@@ -123,6 +127,9 @@ export default function DataBPPage() {
                 <th className="px-4 py-3 text-right">
                   BP
                 </th>
+                <th className="px-4 py-3 text-center">
+                  Action
+                </th>
               </tr>
             </thead>
 
@@ -130,7 +137,7 @@ export default function DataBPPage() {
               {bps.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={2}
+                    colSpan={3}
                     className="px-4 py-6 text-center text-gray-400"
                   >
                     Belum ada data BP
@@ -142,11 +149,20 @@ export default function DataBPPage() {
                     key={bp.id}
                     className="border-t hover:bg-gray-50"
                   >
-                    <td className="px-4 py-3 font-medium text-gray-800">
+                    <td className="px-4 py-3 font-medium">
                       {bp.currency}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-700">
+                    <td className="px-4 py-3 text-right">
                       {bp.bp_value}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => deleteBP(bp.id)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                        title="Delete"
+                      >
+                        🗑️
+                      </button>
                     </td>
                   </tr>
                 ))
