@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-/* ======================
-   TYPES
-====================== */
 type Project = {
   id: number;
   name: string;
@@ -27,22 +24,12 @@ type BomCost = {
   tooling_cost: string;
 };
 
-/* ======================
-   PAGE
-====================== */
 export default function BomCostPage() {
   const [data, setData] = useState<BomCost[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [components, setComponents] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [editingId, setEditingId] = useState<number | null>(null);
-
-  const [toast, setToast] = useState<{
-    show: boolean;
-    message: string;
-    type: "success" | "error";
-  }>({ show: false, message: "", type: "success" });
 
   const [form, setForm] = useState({
     project_id: "",
@@ -56,10 +43,11 @@ export default function BomCostPage() {
     tooling_cost: "",
   });
 
-  /* ======================
-     LOAD DATA
-  ====================== */
+  // =============================
+  // LOAD DATA
+  // =============================
   async function loadBomCost() {
+    setLoading(true);
     const res = await fetch("/api/bom-cost", { cache: "no-store" });
     setData(await res.json());
     setLoading(false);
@@ -82,12 +70,11 @@ export default function BomCostPage() {
     loadProjects();
   }, []);
 
-  /* ======================
-     SELECT ROW (EDIT)
-  ====================== */
+  // =============================
+  // SELECT ROW → EDIT
+  // =============================
   function selectRow(row: BomCost) {
     setEditingId(row.id);
-
     setForm({
       project_id: String(row.project_id),
       component: row.component,
@@ -99,44 +86,29 @@ export default function BomCostPage() {
       tpl: row.tpl,
       tooling_cost: row.tooling_cost,
     });
-
     loadComponents(String(row.project_id));
   }
 
-  /* ======================
-     SUBMIT
-  ====================== */
+  // =============================
+  // SUBMIT
+  // =============================
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
 
-    const method = editingId ? "PUT" : "POST";
-    const url = "/api/bom-cost";
-
-    const res = await fetch(url, {
-      method,
+    const res = await fetch("/api/bom-cost", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        id: editingId,
         ...form,
         project_id: Number(form.project_id),
       }),
     });
 
     if (!res.ok) {
-      showToast("Gagal menyimpan data", "error");
+      alert("Gagal menyimpan BOM Cost");
       return;
     }
 
-    showToast(
-      editingId ? "Data berhasil diupdate" : "Data berhasil ditambahkan",
-      "success"
-    );
-
-    resetForm();
-    loadBomCost();
-  }
-
-  function resetForm() {
     setEditingId(null);
     setForm({
       project_id: "",
@@ -149,38 +121,18 @@ export default function BomCostPage() {
       tpl: "",
       tooling_cost: "",
     });
+
+    loadBomCost();
   }
 
-  function showToast(message: string, type: "success" | "error") {
-    setToast({ show: true, message, type });
-    setTimeout(
-      () => setToast((t) => ({ ...t, show: false })),
-      3000
-    );
-  }
-
-  /* ======================
-     RENDER
-  ====================== */
   return (
-    <div className="p-6 max-w-7xl">
-      {/* TOAST */}
-      {toast.show && (
-        <div
-          className={`fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg text-white text-sm z-50
-            ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}
-          `}
-        >
-          {toast.message}
-        </div>
-      )}
-
-      <h1 className="text-2xl font-bold mb-4">BOM Cost</h1>
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold">BOM Cost</h1>
 
       {/* FORM */}
       <form
         onSubmit={submitForm}
-        className="grid grid-cols-3 gap-3 bg-white border p-4 rounded-xl mb-6"
+        className="grid grid-cols-3 gap-3 bg-white p-4 rounded-xl border"
       >
         <select
           value={form.project_id}
@@ -189,7 +141,6 @@ export default function BomCostPage() {
             loadComponents(e.target.value);
           }}
           className="border px-3 py-2 rounded"
-          required
         >
           <option value="">-- Pilih Project --</option>
           {projects.map((p) => (
@@ -201,154 +152,113 @@ export default function BomCostPage() {
 
         <select
           value={form.component}
-          onChange={(e) =>
-            setForm({ ...form, component: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, component: e.target.value })}
           className="border px-3 py-2 rounded"
           required
         >
           <option value="">-- Pilih Component --</option>
           {components.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
+            <option key={c}>{c}</option>
           ))}
         </select>
 
-        <input
-          placeholder="Supplier"
-          className="border px-3 py-2 rounded"
+        <input className="border px-3 py-2" placeholder="Supplier"
           value={form.candidate_supplier}
-          onChange={(e) =>
-            setForm({ ...form, candidate_supplier: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, candidate_supplier: e.target.value })}
         />
 
-        <input
-          placeholder="Price"
-          className="border px-3 py-2 rounded"
+        <input className="border px-3 py-2" placeholder="Price"
           value={form.price}
-          onChange={(e) =>
-            setForm({ ...form, price: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, price: e.target.value })}
         />
 
-        <input
-          placeholder="Currency"
-          className="border px-3 py-2 rounded"
+        <input className="border px-3 py-2" placeholder="Currency"
           value={form.currency}
-          onChange={(e) =>
-            setForm({ ...form, currency: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, currency: e.target.value })}
         />
 
-        <input
-          placeholder="Term"
-          className="border px-3 py-2 rounded"
+        <input className="border px-3 py-2" placeholder="Term"
           value={form.term}
-          onChange={(e) =>
-            setForm({ ...form, term: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, term: e.target.value })}
         />
 
-        <input
-          placeholder="Landed Cost (%)"
-          className="border px-3 py-2 rounded"
+        <input className="border px-3 py-2" placeholder="Landed Cost (%)"
           value={form.landed_cost}
-          onChange={(e) =>
-            setForm({ ...form, landed_cost: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, landed_cost: e.target.value })}
         />
 
-        <input
-          placeholder="TPL (%)"
-          className="border px-3 py-2 rounded"
+        <input className="border px-3 py-2" placeholder="TPL (%)"
           value={form.tpl}
-          onChange={(e) =>
-            setForm({ ...form, tpl: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, tpl: e.target.value })}
         />
 
-        <input
-          placeholder="Tooling Cost"
-          className="border px-3 py-2 rounded"
+        <input className="border px-3 py-2" placeholder="Tooling Cost"
           value={form.tooling_cost}
-          onChange={(e) =>
-            setForm({ ...form, tooling_cost: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, tooling_cost: e.target.value })}
         />
 
-        <div className="col-span-3 flex gap-2">
-          <button className="bg-blue-600 text-white px-6 py-2 rounded">
-            {editingId ? "Update" : "Save"}
-          </button>
-          {editingId && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="border px-6 py-2 rounded"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
+        <button className="bg-blue-600 text-white rounded px-4 py-2 col-span-3">
+          {editingId ? "Update BOM Cost" : "Save BOM Cost"}
+        </button>
       </form>
 
       {/* TABLE */}
-      <div className="bg-white border rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white border rounded-xl overflow-x-auto">
+        <table className="min-w-[1600px] w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-2">Project</th>
-              <th className="border px-2 py-2">Component</th>
-              <th className="border px-2 py-2">Supplier</th>
-              <th className="border px-2 py-2">Price</th>
-              <th className="border px-2 py-2">Currency</th>
-              <th className="border px-2 py-2">Term</th>
-              <th className="border px-2 py-2">Cost Bearing</th>
+              <th className="border px-3 py-2">Project</th>
+              <th className="border px-3 py-2">Component</th>
+              <th className="border px-3 py-2">Supplier</th>
+              <th className="border px-3 py-2">Price</th>
+              <th className="border px-3 py-2">Currency</th>
+              <th className="border px-3 py-2">Term</th>
+              <th className="border px-3 py-2">Landed Cost (%)</th>
+              <th className="border px-3 py-2">TPL (%)</th>
+              <th className="border px-3 py-2">BP 2026</th>
+              <th className="border px-3 py-2">Landed IDR</th>
+              <th className="border px-3 py-2">Cost Bearing</th>
+              <th className="border px-3 py-2">Tooling Cost</th>
             </tr>
           </thead>
+
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="text-center py-6">
+                <td colSpan={12} className="text-center py-6">
                   Loading...
                 </td>
               </tr>
             ) : (
-              <tbody>
-                {data.map((d) => (
-                  <tr
-                    key={d.id}
-                    title="Klik untuk edit"
-                    onClick={() => selectRow(d)}
-                    className={`cursor-pointer transition hover:bg-blue-50
-                      ${editingId === d.id ? "bg-blue-100 ring-1 ring-blue-300" : ""}
-                    `}
-                  >
-                    <td className="border px-2 py-2">
-                      {d.project_name || d.project_id}
-                    </td>
-                    <td className="border px-2 py-2">{d.component}</td>
-                    <td className="border px-2 py-2">{d.candidate_supplier}</td>
-                    <td className="border px-2 py-2 text-right">{d.price}</td>
-                    <td className="border px-2 py-2">{d.currency}</td>
-                    <td className="border px-2 py-2">{d.term}</td>
-                    <td className="border px-2 py-2 text-right">
-                      {d.landed_cost}%
-                    </td>
-                    <td className="border px-2 py-2 text-right">
-                      {d.tpl}%
-                    </td>
-                    <td className="border px-2 py-2 text-right">
-                      {Number(d.tooling_cost).toLocaleString("id-ID")}
-                    </td>
-                    <td className="border px-2 py-2 text-right font-semibold">
-                      {Number(d.cost_bearing).toLocaleString("id-ID")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+              data.map((d) => (
+                <tr
+                  key={d.id}
+                  title="Klik untuk edit"
+                  onClick={() => selectRow(d)}
+                  className={`cursor-pointer hover:bg-blue-50
+                    ${editingId === d.id ? "bg-blue-100 ring-1 ring-blue-300" : ""}
+                  `}
+                >
+                  <td className="border px-3 py-2">{d.project_name || d.project_id}</td>
+                  <td className="border px-3 py-2">{d.component}</td>
+                  <td className="border px-3 py-2">{d.candidate_supplier}</td>
+                  <td className="border px-3 py-2 text-right">{d.price}</td>
+                  <td className="border px-3 py-2">{d.currency}</td>
+                  <td className="border px-3 py-2">{d.term}</td>
+                  <td className="border px-3 py-2 text-right">{d.landed_cost}%</td>
+                  <td className="border px-3 py-2 text-right">{d.tpl}%</td>
+                  <td className="border px-3 py-2 text-right">{d.bp_2026}</td>
+                  <td className="border px-3 py-2 text-right">
+                    {Number(d.landed_idr_price).toLocaleString("id-ID")}
+                  </td>
+                  <td className="border px-3 py-2 text-right font-semibold">
+                    {Number(d.cost_bearing).toLocaleString("id-ID")}
+                  </td>
+                  <td className="border px-3 py-2 text-right">
+                    {Number(d.tooling_cost).toLocaleString("id-ID")}
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
