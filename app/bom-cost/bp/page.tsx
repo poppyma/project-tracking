@@ -23,6 +23,19 @@ export default function DataBPPage() {
     type: "success",
   });
 
+  const ITEMS_PER_PAGE = 20;
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(bps.length / ITEMS_PER_PAGE);
+
+  const paginatedData = bps.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  
+
 
   async function loadBP() {
     const res = await fetch("/api/bp");
@@ -40,6 +53,11 @@ export default function DataBPPage() {
   useEffect(() => {
     loadBP();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [bps]);
+
 
   async function submitBP(e: React.FormEvent) {
     e.preventDefault();
@@ -222,7 +240,7 @@ export default function DataBPPage() {
                   </td>
                 </tr>
               ) : (
-                bps.map((bp) => (
+                paginatedData.map((bp) => (
                   <tr
                     key={bp.id}
                     className="border-t hover:bg-gray-50"
@@ -248,6 +266,58 @@ export default function DataBPPage() {
             </tbody>
           </table>
         </div>
+        {/* PAGINATION */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 text-sm">
+
+              {/* PREVIOUS */}
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+                className={`px-3 py-1 rounded border ${
+                  currentPage === 1
+                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                Previous
+              </button>
+
+              {/* PAGE NUMBERS */}
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const page = i + 1;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 rounded border ${
+                        currentPage === page
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* NEXT */}
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+                className={`px-3 py-1 rounded border ${
+                  currentPage === totalPages
+                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          )}
+
 
       </div>
     </div>
