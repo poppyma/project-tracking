@@ -46,17 +46,21 @@ export default function DataBPPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        alert("Gagal menambahkan BP: " + err.error);
-        return;
+        throw new Error(err.error || "Gagal menambahkan BP");
       }
 
       setCurrency("");
       setBpValue("");
-      loadBP();
+      await loadBP();
+
+    } catch (err: any) {
+      alert(err.message);
     } finally {
+      // 🔥 INI KUNCI UTAMA
       setSaving(false);
     }
   }
+
 
 
   async function deleteBP(id: number) {
