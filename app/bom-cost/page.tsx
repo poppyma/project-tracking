@@ -149,99 +149,129 @@ export default function BomCostPage() {
       <h1 className="text-2xl font-bold">BOM Cost</h1>
 
       {/* FORM */}
-      <form
-        onSubmit={submitForm}
-        className="grid grid-cols-3 gap-3 bg-white p-4 rounded-xl border relative"
+      {/* FORM */}
+<form
+  onSubmit={submitForm}
+  className="grid grid-cols-3 gap-3 bg-white p-4 rounded-xl border relative"
+>
+  {submitting && (
+    <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-xl z-10">
+      <span className="text-blue-600 font-semibold animate-pulse">Saving...</span>
+    </div>
+  )}
+
+  <select
+    value={form.project_id}
+    onChange={(e) => {
+      setForm({ ...form, project_id: e.target.value, component: "" });
+      loadComponents(e.target.value);
+    }}
+    className="border px-3 py-2 rounded"
+  >
+    <option value="">-- Pilih Project --</option>
+    {projects.map((p) => (
+      <option key={p.id} value={p.id}>
+        {p.name}
+      </option>
+    ))}
+  </select>
+
+  <select
+    value={form.component}
+    onChange={(e) => setForm({ ...form, component: e.target.value })}
+    className="border px-3 py-2 rounded"
+  >
+    <option value="">-- Pilih Component --</option>
+    {components.map((c) => (
+      <option key={c}>{c}</option>
+    ))}
+  </select>
+
+  <input
+    className="border px-3 py-2"
+    placeholder="Supplier"
+    value={form.candidate_supplier}
+    onChange={(e) => setForm({ ...form, candidate_supplier: e.target.value })}
+  />
+
+  <input
+    className="border px-3 py-2"
+    placeholder="Price"
+    value={form.price}
+    onChange={(e) => setForm({ ...form, price: e.target.value })}
+  />
+
+  <input
+    className="border px-3 py-2"
+    placeholder="Currency"
+    value={form.currency}
+    onChange={(e) => setForm({ ...form, currency: e.target.value })}
+  />
+
+  <input
+    className="border px-3 py-2"
+    placeholder="Term"
+    value={form.term}
+    onChange={(e) => setForm({ ...form, term: e.target.value })}
+  />
+
+  <input
+    className="border px-3 py-2"
+    placeholder="Landed Cost (%)"
+    value={form.landed_cost}
+    onChange={(e) => setForm({ ...form, landed_cost: e.target.value })}
+  />
+
+  <input
+    className="border px-3 py-2"
+    placeholder="TPL (%)"
+    value={form.tpl}
+    onChange={(e) => setForm({ ...form, tpl: e.target.value })}
+  />
+
+  <input
+    className="border px-3 py-2"
+    placeholder="Tooling Cost"
+    value={form.tooling_cost}
+    onChange={(e) => setForm({ ...form, tooling_cost: e.target.value })}
+  />
+
+  {/* SUBMIT & CANCEL BUTTON */}
+  <div className="col-span-3 flex gap-2 mt-2">
+    <button
+      type="submit"
+      className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-50 flex-1"
+      disabled={submitting}
+    >
+      {editingId ? "Update BOM Cost" : "Save BOM Cost"}
+    </button>
+
+    {editingId && (
+      <button
+        type="button"
+        className="bg-gray-300 text-gray-800 rounded px-4 py-2 flex-1"
+        onClick={() => {
+          setEditingId(null);
+          setForm({
+            project_id: "",
+            component: "",
+            candidate_supplier: "",
+            price: "",
+            currency: "",
+            term: "",
+            landed_cost: "",
+            tpl: "",
+            tooling_cost: "",
+          });
+        }}
+        disabled={submitting}
       >
-        {submitting && (
-          <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-xl z-10">
-            <span className="text-blue-600 font-semibold animate-pulse">Saving...</span>
-          </div>
-        )}
+        Cancel
+      </button>
+    )}
+  </div>
+</form>
 
-        <select
-          value={form.project_id}
-          onChange={(e) => {
-            setForm({ ...form, project_id: e.target.value, component: "" });
-            loadComponents(e.target.value);
-          }}
-          className="border px-3 py-2 rounded"
-        >
-          <option value="">-- Pilih Project --</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={form.component}
-          onChange={(e) => setForm({ ...form, component: e.target.value })}
-          className="border px-3 py-2 rounded"
-        >
-          <option value="">-- Pilih Component --</option>
-          {components.map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
-
-        <input
-          className="border px-3 py-2"
-          placeholder="Supplier"
-          value={form.candidate_supplier}
-          onChange={(e) => setForm({ ...form, candidate_supplier: e.target.value })}
-        />
-
-        <input
-          className="border px-3 py-2"
-          placeholder="Price"
-          value={form.price}
-          onChange={(e) => setForm({ ...form, price: e.target.value })}
-        />
-
-        <input
-          className="border px-3 py-2"
-          placeholder="Currency"
-          value={form.currency}
-          onChange={(e) => setForm({ ...form, currency: e.target.value })}
-        />
-
-        <input
-          className="border px-3 py-2"
-          placeholder="Term"
-          value={form.term}
-          onChange={(e) => setForm({ ...form, term: e.target.value })}
-        />
-
-        <input
-          className="border px-3 py-2"
-          placeholder="Landed Cost (%)"
-          value={form.landed_cost}
-          onChange={(e) => setForm({ ...form, landed_cost: e.target.value })}
-        />
-
-        <input
-          className="border px-3 py-2"
-          placeholder="TPL (%)"
-          value={form.tpl}
-          onChange={(e) => setForm({ ...form, tpl: e.target.value })}
-        />
-
-        <input
-          className="border px-3 py-2"
-          placeholder="Tooling Cost"
-          value={form.tooling_cost}
-          onChange={(e) => setForm({ ...form, tooling_cost: e.target.value })}
-        />
-
-        <button
-          className="bg-blue-600 text-white rounded px-4 py-2 col-span-3 disabled:opacity-50"
-          disabled={submitting}
-        >
-          {editingId ? "Update BOM Cost" : "Save BOM Cost"}
-        </button>
-      </form>
 
       {/* TABLE */}
       <div className="bg-white border rounded-xl overflow-hidden">
