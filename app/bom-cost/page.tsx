@@ -203,9 +203,9 @@ export default function BomCostPage() {
       </form>
 
       {/* TABLE */}
-<div className="bg-white border rounded-xl mt-6">
+<div className="bg-white border rounded-xl">
   <div className="overflow-x-auto">
-    <table className="min-w-[1600px] w-full text-sm">
+    <table className="min-w-[1600px] text-sm">
       <thead className="bg-gray-100 sticky top-0 z-10">
         <tr>
           <th className="border px-3 py-2">Project</th>
