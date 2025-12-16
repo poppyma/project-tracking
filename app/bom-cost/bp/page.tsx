@@ -317,6 +317,11 @@ export default function DataBPPage() {
               </button>
             </div>
           )}
+        {toast && (
+          <div className="fixed bottom-6 right-6 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg text-sm animate-fade-in">
+            {toasts}
+          </div>
+        )}
 
 
       </div>
