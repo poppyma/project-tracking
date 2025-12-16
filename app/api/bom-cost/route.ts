@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     } = body;
 
     // =============================
-    // 1. Ambil BP berdasarkan currency
+    // 1. Ambil BP
     // =============================
     const bpRes = await query(
       `SELECT bp_value FROM bp_rates WHERE currency = $1`,
@@ -88,12 +88,12 @@ export async function POST(req: Request) {
       priceNum * (1 + landedCostNum) * tplNum * bpValue;
 
     // =============================
-    // 4. Ambil BOM QTY dari tracking
+    // 4. Ambil BOM QTY dari MATERIALS
     // =============================
     const qtyRes = await query(
       `
-      SELECT materials
-      FROM projects
+      SELECT bom_qty
+      FROM materials
       WHERE project_id = $1
         AND component = $2
       `,
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
 
     if (qtyRes.rowCount === 0) {
       return NextResponse.json(
-        { error: `BOM QTY untuk component ${component} tidak ditemukan` },
+        { error: `BOM QTY untuk component ${component} tidak ditemukan di materials` },
         { status: 400 }
       );
     }
@@ -110,12 +110,12 @@ export async function POST(req: Request) {
     const bomQty = Number(qtyRes.rows[0].bom_qty);
 
     // =============================
-    // 5. HITUNG COST BEARING (FINAL)
+    // 5. HITUNG COST BEARING
     // =============================
     const costBearing = landedIdrPrice * bomQty;
 
     // =============================
-    // 6. SIMPAN KE DB
+    // 6. INSERT KE BOM_COSTS
     // =============================
     const res = await query(
       `
@@ -145,7 +145,7 @@ export async function POST(req: Request) {
         term,
         landed_cost,
         tpl,
-        bpRes.rows[0].bp_value,        // simpan BP text
+        bpRes.rows[0].bp_value,
         landedIdrPrice.toFixed(2),
         costBearing.toFixed(2),
         tooling_cost,
