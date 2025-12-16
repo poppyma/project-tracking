@@ -9,10 +9,7 @@ export async function GET(req: Request) {
     const projectId = searchParams.get("project_id");
 
     if (!projectId) {
-      return NextResponse.json(
-        { error: "project_id is required" },
-        { status: 400 }
-      );
+      return NextResponse.json([]);
     }
 
     const res = await query(
@@ -21,13 +18,12 @@ export async function GET(req: Request) {
         bc.id,
         bc.component,
         bc.candidate_supplier,
-        bc.cost_bearing,
-        bc.landed_idr_price
+        bc.cost_bearing
       FROM bom_costs bc
-      WHERE bc.project_id = $1
+      WHERE bc.project_id = $1::int
       ORDER BY bc.component ASC
       `,
-      [projectId]
+      [Number(projectId)]
     );
 
     return NextResponse.json(res.rows);

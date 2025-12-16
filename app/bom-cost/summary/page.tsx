@@ -21,7 +21,7 @@ export default function BomSummaryPage() {
   const [cheapestMap, setCheapestMap] = useState<Record<string, number>>({});
 
   // ======================
-  // LOAD PROJECT DROPDOWN
+  // LOAD PROJECT
   // ======================
   useEffect(() => {
     fetch("/api/projects/simple")
@@ -39,14 +39,14 @@ export default function BomSummaryPage() {
     }
 
     const res = await fetch(`/api/bom-summary?project_id=${pid}`);
-    const data = await res.json();
+    const data: Row[] = await res.json();
 
     setRows(data);
     calculateCheapest(data);
   }
 
   // ======================
-  // HITUNG TERMURAH PER COMPONENT
+  // HITUNG TERMURAH
   // ======================
   function calculateCheapest(data: Row[]) {
     const map: Record<string, number> = {};
@@ -75,8 +75,9 @@ export default function BomSummaryPage() {
         className="border px-3 py-2 mb-4"
         value={projectId}
         onChange={(e) => {
-          setProjectId(e.target.value);
-          loadSummary(e.target.value);
+          const pid = e.target.value;
+          setProjectId(pid);
+          loadSummary(pid);
         }}
       >
         <option value="">-- Pilih Project --</option>
