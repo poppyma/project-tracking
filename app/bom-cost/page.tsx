@@ -30,6 +30,8 @@ export default function BomCostPage() {
   const [components, setComponents] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false); // Loading submit
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const [form, setForm] = useState({
     project_id: "",
@@ -88,44 +90,73 @@ export default function BomCostPage() {
   // ================= SUBMIT =================
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
+    setSubmitting(true);
 
-    const res = await fetch("/api/bom-cost", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        project_id: Number(form.project_id),
-      }),
-    });
+    try {
+      const res = await fetch("/api/bom-cost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          project_id: Number(form.project_id),
+        }),
+      });
 
-    if (!res.ok) return alert("Gagal menyimpan BOM Cost");
+      if (!res.ok) throw new Error("Gagal menyimpan BOM Cost");
 
-    setEditingId(null);
-    setForm({
-      project_id: "",
-      component: "",
-      candidate_supplier: "",
-      price: "",
-      currency: "",
-      term: "",
-      landed_cost: "",
-      tpl: "",
-      tooling_cost: "",
-    });
+      setEditingId(null);
+      setForm({
+        project_id: "",
+        component: "",
+        candidate_supplier: "",
+        price: "",
+        currency: "",
+        term: "",
+        landed_cost: "",
+        tpl: "",
+        tooling_cost: "",
+      });
 
-    loadBomCost();
+      await loadBomCost();
+
+      // Tampilkan toast sukses
+      setToast({ message: "BOM Cost berhasil disimpan!", type: "success" });
+      setTimeout(() => setToast(null), 3000);
+    } catch (err: any) {
+      setToast({ message: err.message || "Terjadi kesalahan", type: "error" });
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+
+      {/* TOAST */}
+      {toast && (
+        <div
+          className={`fixed top-4 right-4 px-4 py-2 rounded shadow text-white font-semibold z-50 ${
+            toast.type === "success" ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
 
       <h1 className="text-2xl font-bold">BOM Cost</h1>
 
       {/* FORM */}
       <form
         onSubmit={submitForm}
-        className="grid grid-cols-3 gap-3 bg-white p-4 rounded-xl border"
+        className="grid grid-cols-3 gap-3 bg-white p-4 rounded-xl border relative"
       >
+        {submitting && (
+          <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-xl z-10">
+            <span className="text-blue-600 font-semibold">Saving...</span>
+          </div>
+        )}
+
         <select
           value={form.project_id}
           onChange={(e) => {
@@ -153,42 +184,59 @@ export default function BomCostPage() {
           ))}
         </select>
 
-        <input className="border px-3 py-2" placeholder="Supplier"
+        <input
+          className="border px-3 py-2"
+          placeholder="Supplier"
           value={form.candidate_supplier}
           onChange={(e) => setForm({ ...form, candidate_supplier: e.target.value })}
         />
 
-        <input className="border px-3 py-2" placeholder="Price"
+        <input
+          className="border px-3 py-2"
+          placeholder="Price"
           value={form.price}
           onChange={(e) => setForm({ ...form, price: e.target.value })}
         />
 
-        <input className="border px-3 py-2" placeholder="Currency"
+        <input
+          className="border px-3 py-2"
+          placeholder="Currency"
           value={form.currency}
           onChange={(e) => setForm({ ...form, currency: e.target.value })}
         />
 
-        <input className="border px-3 py-2" placeholder="Term"
+        <input
+          className="border px-3 py-2"
+          placeholder="Term"
           value={form.term}
           onChange={(e) => setForm({ ...form, term: e.target.value })}
         />
 
-        <input className="border px-3 py-2" placeholder="Landed Cost (%)"
+        <input
+          className="border px-3 py-2"
+          placeholder="Landed Cost (%)"
           value={form.landed_cost}
           onChange={(e) => setForm({ ...form, landed_cost: e.target.value })}
         />
 
-        <input className="border px-3 py-2" placeholder="TPL (%)"
+        <input
+          className="border px-3 py-2"
+          placeholder="TPL (%)"
           value={form.tpl}
           onChange={(e) => setForm({ ...form, tpl: e.target.value })}
         />
 
-        <input className="border px-3 py-2" placeholder="Tooling Cost"
+        <input
+          className="border px-3 py-2"
+          placeholder="Tooling Cost"
           value={form.tooling_cost}
           onChange={(e) => setForm({ ...form, tooling_cost: e.target.value })}
         />
 
-        <button className="bg-blue-600 text-white rounded px-4 py-2 col-span-3">
+        <button
+          className="bg-blue-600 text-white rounded px-4 py-2 col-span-3 disabled:opacity-50"
+          disabled={submitting}
+        >
           {editingId ? "Update BOM Cost" : "Save BOM Cost"}
         </button>
       </form>
@@ -228,9 +276,7 @@ export default function BomCostPage() {
                     onClick={() => selectRow(d)}
                     title="Klik untuk edit"
                     className={`cursor-pointer hover:bg-blue-50 ${
-                      editingId === d.id
-                        ? "bg-blue-100 ring-1 ring-blue-300"
-                        : ""
+                      editingId === d.id ? "bg-blue-100 ring-1 ring-blue-300" : ""
                     }`}
                   >
                     <td className="border px-3 py-2">{d.project_name}</td>
@@ -258,7 +304,6 @@ export default function BomCostPage() {
           </table>
         </div>
       </div>
-
     </div>
   );
 }
