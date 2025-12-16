@@ -92,7 +92,7 @@ export async function POST(req: Request) {
     // =============================
     const qtyRes = await query(
       `
-      SELECT bom_qty
+      SELECT materials
       FROM projects
       WHERE project_id = $1
         AND component = $2
