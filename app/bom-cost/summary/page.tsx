@@ -8,17 +8,22 @@ type Project = {
 };
 
 type Row = {
-  id: number;
   component: string;
   candidate_supplier: string;
-  cost_bearing: string;
+  price: number;
+  currency: string;
+  term: string;
+  landed_cost_percent: number;
+  tpl_percent: number;
+  bp_2026: number;
+  landed_idr_price: number;
+  cost_bearing: number;
 };
 
 export default function BomSummaryPage() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [projectId, setProjectId] = useState<string>("");
+  const [projectId, setProjectId] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
-  const [cheapestMap, setCheapestMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
 
   // ======================
@@ -31,55 +36,36 @@ export default function BomSummaryPage() {
   }, []);
 
   // ======================
-  // LOAD BOM SAAT PROJECT BERUBAH
+  // LOAD BOM DATA
   // ======================
-useEffect(() => {
-  if (!projectId) {
-    setRows([]);
-    setCheapestMap({});
-    return;
-  }
-
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `/api/bom-cost-summary?project_id=${projectId}`,
-        { cache: "no-store" }
-        );
-      const data: Row[] = await res.json();
-      setRows(data);
-      calculateCheapest(data);
-    } catch (err) {
-      console.error(err);
+  useEffect(() => {
+    if (!projectId) {
       setRows([]);
-    } finally {
-      setLoading(false); // ⬅️ WAJIB
+      return;
     }
-  }
 
-  load();
-}, [projectId]);
-
-
-  // ======================
-  // HITUNG TERMURAH
-  // ======================
-  function calculateCheapest(data: Row[]) {
-    const map: Record<string, number> = {};
-
-    data.forEach((row) => {
-      const cost = Number(row.cost_bearing);
-      if (!map[row.component] || cost < map[row.component]) {
-        map[row.component] = cost;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `/api/bom-summary?project_id=${projectId}`,
+          { cache: "no-store" }
+        );
+        const data = await res.json();
+        setRows(data);
+      } catch (err) {
+        console.error(err);
+        setRows([]);
+      } finally {
+        setLoading(false);
       }
-    });
+    }
 
-    setCheapestMap(map);
-  }
+    load();
+  }, [projectId]);
 
-  const totalCheapest = Object.values(cheapestMap).reduce(
-    (a, b) => a + b,
+  const totalCost = rows.reduce(
+    (sum, r) => sum + Number(r.cost_bearing),
     0
   );
 
@@ -87,7 +73,7 @@ useEffect(() => {
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">BOM Summary</h1>
 
-      {/* PROJECT DROPDOWN */}
+      {/* PROJECT SELECT */}
       <select
         className="border px-3 py-2 mb-4"
         value={projectId}
@@ -101,50 +87,46 @@ useEffect(() => {
         ))}
       </select>
 
-      {/* TABLE SELALU MUNCUL */}
-      <table className="w-full border text-sm">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border px-2">Component</th>
-            <th className="border px-2">Supplier</th>
-            <th className="border px-2">Cost / Bearing</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {loading ? (
+      {/* TABLE (SELALU MUNCUL) */}
+      <div className="overflow-x-auto">
+        <table className="w-full border text-xs">
+          <thead className="bg-gray-100">
             <tr>
-              <td
-                colSpan={3}
-                className="border px-2 text-center py-4"
-              >
-                Loading...
-              </td>
+              <th className="border px-2">Component</th>
+              <th className="border px-2">Supplier</th>
+              <th className="border px-2">Price</th>
+              <th className="border px-2">Currency</th>
+              <th className="border px-2">Term</th>
+              <th className="border px-2">Landed %</th>
+              <th className="border px-2">TPL</th>
+              <th className="border px-2">BP 2026</th>
+              <th className="border px-2">Landed IDR</th>
+              <th className="border px-2">Cost / Bearing</th>
             </tr>
-          ) : rows.length === 0 ? (
-            <tr>
-              <td
-                colSpan={3}
-                className="border px-2 text-center text-gray-500 py-4"
-              >
-                Tidak ada data
-              </td>
-            </tr>
-          ) : (
-            rows.map((r) => {
-              const isCheapest =
-                Number(r.cost_bearing) ===
-                cheapestMap[r.component];
+          </thead>
 
-              return (
-                <tr
-                  key={r.id}
-                  className={
-                    isCheapest
-                      ? "bg-yellow-200 font-semibold"
-                      : ""
-                  }
+          <tbody>
+            {loading ? (
+              <tr>
+                <td
+                  colSpan={10}
+                  className="border text-center py-4"
                 >
+                  Loading...
+                </td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={10}
+                  className="border text-center py-4 text-gray-500"
+                >
+                  Tidak ada data
+                </td>
+              </tr>
+            ) : (
+              rows.map((r, i) => (
+                <tr key={i}>
                   <td className="border px-2">
                     {r.component}
                   </td>
@@ -152,27 +134,52 @@ useEffect(() => {
                     {r.candidate_supplier}
                   </td>
                   <td className="border px-2 text-right">
-                    {Number(
-                      r.cost_bearing
-                    ).toLocaleString("id-ID")}
+                    {r.price}
+                  </td>
+                  <td className="border px-2">
+                    {r.currency}
+                  </td>
+                  <td className="border px-2">
+                    {r.term}
+                  </td>
+                  <td className="border px-2 text-right">
+                    {r.landed_cost_percent}%
+                  </td>
+                  <td className="border px-2 text-right">
+                    {r.tpl_percent}%
+                  </td>
+                  <td className="border px-2 text-right">
+                    {r.bp_2026.toLocaleString("id-ID")}
+                  </td>
+                  <td className="border px-2 text-right">
+                    {r.landed_idr_price.toLocaleString(
+                      "id-ID"
+                    )}
+                  </td>
+                  <td className="border px-2 text-right">
+                    {r.cost_bearing.toLocaleString("id-ID")}
                   </td>
                 </tr>
-              );
-            })
-          )}
-        </tbody>
+              ))
+            )}
+          </tbody>
 
-        <tfoot>
-          <tr className="font-bold bg-yellow-300">
-            <td colSpan={2} className="border px-2 text-right">
-              TOTAL COST BEARING (TERMURAH)
-            </td>
-            <td className="border px-2 text-right">
-              {totalCheapest.toLocaleString("id-ID")}
-            </td>
-          </tr>
-        </tfoot>
-      </table>
+          {/* TOTAL */}
+          <tfoot>
+            <tr className="bg-yellow-300 font-bold">
+              <td
+                colSpan={9}
+                className="border px-2 text-right"
+              >
+                TOTAL COST BEARING
+              </td>
+              <td className="border px-2 text-right">
+                {totalCost.toLocaleString("id-ID")}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 }

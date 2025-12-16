@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
-import { initTables, query } from "@/lib/db";
+import { query } from "@/lib/db";
 
 export async function GET(req: Request) {
   try {
-    await initTables();
-
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get("project_id");
 
-    // kalau belum pilih project
     if (!projectId) {
       return NextResponse.json([]);
     }
@@ -16,20 +13,26 @@ export async function GET(req: Request) {
     const res = await query(
       `
       SELECT
-        bc.id,
-        bc.component,
-        bc.candidate_supplier,
-        bc.cost_bearing
-      FROM bom_costs bc
-      WHERE bc.project_id = $1
-      ORDER BY bc.component ASC
+        component,
+        candidate_supplier,
+        price,
+        currency,
+        term,
+        landed_cost_percent,
+        tpl_percent,
+        bp_2026,
+        landed_idr_price,
+        cost_bearing
+      FROM bom_costs
+      WHERE project_id = $1
+      ORDER BY component, candidate_supplier
       `,
-      [projectId] // ❗ kirim STRING (aman untuk BIGINT)
+      [projectId] // STRING → aman untuk int8
     );
 
     return NextResponse.json(res.rows);
   } catch (err: any) {
-    console.error("GET bom-summary error:", err);
+    console.error("BOM SUMMARY ERROR:", err);
     return NextResponse.json(
       { error: err.message },
       { status: 500 }
