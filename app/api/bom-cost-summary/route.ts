@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { initTables, query } from "@/lib/db";
 
+/* ======================================================
+   GET BOM SUMMARY
+   ?project_id=1
+====================================================== */
 export async function GET(req: Request) {
   try {
     await initTables();
@@ -10,7 +14,7 @@ export async function GET(req: Request) {
 
     if (!projectId) {
       return NextResponse.json(
-        { error: "project_id required" },
+        { error: "project_id is required" },
         { status: 400 }
       );
     }
@@ -21,24 +25,17 @@ export async function GET(req: Request) {
         bc.id,
         bc.component,
         bc.candidate_supplier,
-        bc.price,
-        bc.currency,
-        bc.term,
-        bc.landed_cost,
-        bc.tpl,
-        bc.bp_2026,
-        bc.landed_idr_price,
         bc.cost_bearing
       FROM bom_costs bc
       WHERE bc.project_id = $1
-      ORDER BY bc.component, bc.cost_bearing::numeric ASC
+      ORDER BY bc.component ASC
       `,
       [projectId]
     );
 
     return NextResponse.json(res.rows);
   } catch (err: any) {
-    console.error("GET bom summary error:", err);
+    console.error("GET bom-summary error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
