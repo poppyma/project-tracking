@@ -1,7 +1,10 @@
+"use client";
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import { useState } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,81 +23,122 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
+  const [bomOpen, setBomOpen] = useState(true);
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="app-root">
-          <aside className="sidebar">
-            <div className="p-1 flex flex-col gap-10 w-full">
-              <div className="logo-wrap">
-              <img src="/skf-logo.svg" alt="SKF" className="logo" />
+        <div className="app-root flex">
+          {/* SIDEBAR */}
+          <aside className="sidebar w-[280px] bg-[#0b2a4a] text-white">
+            <div className="p-4 flex flex-col gap-8">
+
+              {/* LOGO */}
+              <div className="flex justify-center">
+                <img
+                  src="/skf-logo.svg"
+                  alt="SKF"
+                  className="h-10 object-contain"
+                />
+              </div>
+
+              {/* NAV */}
+              <nav className="flex flex-col gap-2">
+
+                {/* TRACKING */}
+                <Link
+                  href="/"
+                  className="flex items-center gap-4 py-3 px-4 rounded-xl hover:bg-white/10 font-medium"
+                >
+                  <img
+                    src="/monitoring-icon.png"
+                    alt="Monitoring"
+                    className="w-7 h-7"
+                  />
+                  <span className="text-[16px]">Tracking</span>
+                </Link>
+
+                {/* =========================
+                    BOM COST (DROPDOWN)
+                ========================== */}
+                <div className="flex flex-col">
+
+                  {/* PARENT */}
+                  <button
+                    type="button"
+                    onClick={() => setBomOpen(!bomOpen)}
+                    className="flex items-center justify-between gap-4 py-3 px-4 rounded-xl hover:bg-white/10 font-medium"
+                  >
+                    <div className="flex items-center gap-4">
+                      <img
+                        src="/calculation.png"
+                        alt="Calculation"
+                        className="w-7 h-7"
+                      />
+                      <span className="text-[16px]">BOM Cost</span>
+                    </div>
+
+                    {/* ARROW */}
+                    <svg
+                      className={`w-4 h-4 transition-transform ${
+                        bomOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* SUB MENU */}
+                  {bomOpen && (
+                    <div className="ml-12 mt-2 flex flex-col gap-1 border-l border-white/20 pl-4">
+
+                      <Link
+                        href="/bom-cost"
+                        className="py-2 px-3 rounded-lg text-sm text-white/80 hover:bg-white/10 hover:text-white"
+                      >
+                        Input Bom Cost
+                      </Link>
+
+                      <Link
+                        href="/bom-cost/bp"
+                        className="py-2 px-3 rounded-lg text-sm text-white/80 hover:bg-white/10 hover:text-white"
+                      >
+                        Data BP
+                      </Link>
+
+                      <Link
+                        href="/bom-cost/list"
+                        className="py-2 px-3 rounded-lg text-sm text-white/80 hover:bg-white/10 hover:text-white"
+                      >
+                        Bom Cost List
+                      </Link>
+
+                    </div>
+                  )}
+                </div>
+              </nav>
             </div>
-           <nav className="flex flex-col gap-4">
-          {/* TRACKING */}
-          <Link
-            href="/"
-            className="flex items-center gap-4 py-4 px-4 w-full rounded-xl hover:bg-white/10 text-white font-medium"
-          >
-            <img
-              src="/monitoring-icon.png"
-              alt="Monitoring Icon"
-              className="w-[36px] h-[36px] object-contain"
-            />
-            <span className="text-[17px] font-semibold">Tracking</span>
-          </Link>
+          </aside>
 
-          {/* BOM COST (PARENT) */}
-          <div className="flex flex-col gap-2">
-
-            <div className="flex items-center gap-4 py-4 px-4 w-full rounded-xl text-white font-medium">
-              <img
-                src="/calculation.png"
-                alt="Calculation Icon"
-                className="w-[36px] h-[36px] object-contain"
-              />
-              <span className="text-[17px] font-semibold">Input BOM Cost</span>
-            </div>
-
-            {/* SUB MENU */}
-            <div className="ml-14 flex flex-col gap-1">
-
-              <Link
-                href="/bom-cost"
-                className="py-2 px-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white text-sm"
-              >
-                • BOM Cost
-              </Link>
-
-              <Link
-                href="/bom-cost/bp"
-                className="py-2 px-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white text-sm"
-              >
-                • Data BP
-              </Link>
-
-              <Link
-                href="/bom-cost/summary"
-                className="ml-10 text-sm text-white/80 hover:text-white"
-              >
-                • BOM Cost Summary
-              </Link>
-
-
-            </div>
-          </div>
-
-        </nav>
-
-          </div>
-        </aside>
-        <main className="app-main">{children}</main>
-      </div>
-    </body>
-  </html>
+          {/* MAIN */}
+          <main className="app-main flex-1 bg-gray-50">
+            {children}
+          </main>
+        </div>
+      </body>
+    </html>
   );
 }
