@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Project = {
-  id: number; // boleh number di UI
+  id: number;
   name: string;
 };
 
@@ -19,6 +19,7 @@ export default function BomSummaryPage() {
   const [projectId, setProjectId] = useState<string>("");
   const [rows, setRows] = useState<Row[]>([]);
   const [cheapestMap, setCheapestMap] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(false);
 
   // ======================
   // LOAD PROJECT LIST
@@ -30,24 +31,31 @@ export default function BomSummaryPage() {
   }, []);
 
   // ======================
-  // LOAD BOM SUMMARY
+  // LOAD BOM SAAT PROJECT BERUBAH
   // ======================
-  async function loadSummary(pid: string) {
-    if (!pid) {
+  useEffect(() => {
+    if (!projectId) {
       setRows([]);
       setCheapestMap({});
       return;
     }
 
-    const res = await fetch(`/api/bom-summary?project_id=${pid}`);
-    const data: Row[] = await res.json();
+    async function load() {
+      setLoading(true);
+      const res = await fetch(
+        `/api/bom-summary?project_id=${projectId}`
+      );
+      const data: Row[] = await res.json();
+      setRows(data);
+      calculateCheapest(data);
+      setLoading(false);
+    }
 
-    setRows(data);
-    calculateCheapest(data);
-  }
+    load();
+  }, [projectId]);
 
   // ======================
-  // HITUNG COST TERMURAH
+  // HITUNG TERMURAH
   // ======================
   function calculateCheapest(data: Row[]) {
     const map: Record<string, number> = {};
@@ -75,11 +83,7 @@ export default function BomSummaryPage() {
       <select
         className="border px-3 py-2 mb-4"
         value={projectId}
-        onChange={(e) => {
-          const pid = e.target.value;
-          setProjectId(pid);
-          loadSummary(pid);
-        }}
+        onChange={(e) => setProjectId(e.target.value)}
       >
         <option value="">-- Pilih Project --</option>
         {projects.map((p) => (
@@ -89,54 +93,78 @@ export default function BomSummaryPage() {
         ))}
       </select>
 
-      {rows.length === 0 ? (
-        <p className="text-gray-500">Tidak ada data</p>
-      ) : (
-        <table className="w-full border text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border px-2">Component</th>
-              <th className="border px-2">Supplier</th>
-              <th className="border px-2">Cost / Bearing</th>
-            </tr>
-          </thead>
+      {/* TABLE SELALU MUNCUL */}
+      <table className="w-full border text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border px-2">Component</th>
+            <th className="border px-2">Supplier</th>
+            <th className="border px-2">Cost / Bearing</th>
+          </tr>
+        </thead>
 
-          <tbody>
-            {rows.map((r) => {
+        <tbody>
+          {loading ? (
+            <tr>
+              <td
+                colSpan={3}
+                className="border px-2 text-center py-4"
+              >
+                Loading...
+              </td>
+            </tr>
+          ) : rows.length === 0 ? (
+            <tr>
+              <td
+                colSpan={3}
+                className="border px-2 text-center text-gray-500 py-4"
+              >
+                Tidak ada data
+              </td>
+            </tr>
+          ) : (
+            rows.map((r) => {
               const isCheapest =
-                Number(r.cost_bearing) === cheapestMap[r.component];
+                Number(r.cost_bearing) ===
+                cheapestMap[r.component];
 
               return (
                 <tr
                   key={r.id}
                   className={
-                    isCheapest ? "bg-yellow-200 font-semibold" : ""
+                    isCheapest
+                      ? "bg-yellow-200 font-semibold"
+                      : ""
                   }
                 >
-                  <td className="border px-2">{r.component}</td>
+                  <td className="border px-2">
+                    {r.component}
+                  </td>
                   <td className="border px-2">
                     {r.candidate_supplier}
                   </td>
                   <td className="border px-2 text-right">
-                    {Number(r.cost_bearing).toLocaleString("id-ID")}
+                    {Number(
+                      r.cost_bearing
+                    ).toLocaleString("id-ID")}
                   </td>
                 </tr>
               );
-            })}
-          </tbody>
+            })
+          )}
+        </tbody>
 
-          <tfoot>
-            <tr className="font-bold bg-yellow-300">
-              <td colSpan={2} className="border px-2 text-right">
-                TOTAL COST BEARING (TERMURAH)
-              </td>
-              <td className="border px-2 text-right">
-                {totalCheapest.toLocaleString("id-ID")}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      )}
+        <tfoot>
+          <tr className="font-bold bg-yellow-300">
+            <td colSpan={2} className="border px-2 text-right">
+              TOTAL COST BEARING (TERMURAH)
+            </td>
+            <td className="border px-2 text-right">
+              {totalCheapest.toLocaleString("id-ID")}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   );
 }
