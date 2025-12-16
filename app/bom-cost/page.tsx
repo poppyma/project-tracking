@@ -316,30 +316,39 @@ export default function BomCostPage() {
                 </td>
               </tr>
             ) : (
-              data.map((d) => (
-                <tr
-                  key={d.id}
-                  title="Klik untuk edit"
-                  onClick={() => selectRow(d)}
-                  className={`cursor-pointer hover:bg-blue-50
-                    ${editingId === d.id ? "bg-blue-100 ring-1 ring-blue-300" : ""}
-                  `}
-                >
-                  <td className="border px-2 py-2">
-                    {d.project_name || d.project_id}
-                  </td>
-                  <td className="border px-2 py-2">{d.component}</td>
-                  <td className="border px-2 py-2">
-                    {d.candidate_supplier}
-                  </td>
-                  <td className="border px-2 py-2">{d.price}</td>
-                  <td className="border px-2 py-2">{d.currency}</td>
-                  <td className="border px-2 py-2">{d.term}</td>
-                  <td className="border px-2 py-2 font-semibold text-right">
-                    {Number(d.cost_bearing).toLocaleString("id-ID")}
-                  </td>
-                </tr>
-              ))
+              <tbody>
+                {data.map((d) => (
+                  <tr
+                    key={d.id}
+                    title="Klik untuk edit"
+                    onClick={() => selectRow(d)}
+                    className={`cursor-pointer transition hover:bg-blue-50
+                      ${editingId === d.id ? "bg-blue-100 ring-1 ring-blue-300" : ""}
+                    `}
+                  >
+                    <td className="border px-2 py-2">
+                      {d.project_name || d.project_id}
+                    </td>
+                    <td className="border px-2 py-2">{d.component}</td>
+                    <td className="border px-2 py-2">{d.candidate_supplier}</td>
+                    <td className="border px-2 py-2 text-right">{d.price}</td>
+                    <td className="border px-2 py-2">{d.currency}</td>
+                    <td className="border px-2 py-2">{d.term}</td>
+                    <td className="border px-2 py-2 text-right">
+                      {d.landed_cost}%
+                    </td>
+                    <td className="border px-2 py-2 text-right">
+                      {d.tpl}%
+                    </td>
+                    <td className="border px-2 py-2 text-right">
+                      {Number(d.tooling_cost).toLocaleString("id-ID")}
+                    </td>
+                    <td className="border px-2 py-2 text-right font-semibold">
+                      {Number(d.cost_bearing).toLocaleString("id-ID")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             )}
           </tbody>
         </table>
