@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+/* ======================
+   TYPES
+====================== */
 type Project = {
   id: number;
   name: string;
@@ -24,24 +27,22 @@ type BomCost = {
   tooling_cost: string;
 };
 
+/* ======================
+   PAGE
+====================== */
 export default function BomCostPage() {
   const [data, setData] = useState<BomCost[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [components, setComponents] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 EDIT MODE
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
     type: "success" | "error";
-  }>({
-    show: false,
-    message: "",
-    type: "success",
-  });
+  }>({ show: false, message: "", type: "success" });
 
   const [form, setForm] = useState({
     project_id: "",
@@ -55,11 +56,12 @@ export default function BomCostPage() {
     tooling_cost: "",
   });
 
-  /* ================= LOAD DATA ================= */
+  /* ======================
+     LOAD DATA
+  ====================== */
   async function loadBomCost() {
-    const res = await fetch("/api/bom-cost");
-    const json = await res.json();
-    setData(json);
+    const res = await fetch("/api/bom-cost", { cache: "no-store" });
+    setData(await res.json());
     setLoading(false);
   }
 
@@ -69,10 +71,7 @@ export default function BomCostPage() {
   }
 
   async function loadComponents(projectId: string) {
-    if (!projectId) {
-      setComponents([]);
-      return;
-    }
+    if (!projectId) return setComponents([]);
     const res = await fetch(`/api/materials?project_id=${projectId}`);
     const json = await res.json();
     setComponents(json.map((m: any) => m.component));
@@ -83,59 +82,58 @@ export default function BomCostPage() {
     loadProjects();
   }, []);
 
-  /* ================= SUBMIT ================= */
+  /* ======================
+     SELECT ROW (EDIT)
+  ====================== */
+  function selectRow(row: BomCost) {
+    setEditingId(row.id);
+
+    setForm({
+      project_id: String(row.project_id),
+      component: row.component,
+      candidate_supplier: row.candidate_supplier,
+      price: row.price,
+      currency: row.currency,
+      term: row.term,
+      landed_cost: row.landed_cost,
+      tpl: row.tpl,
+      tooling_cost: row.tooling_cost,
+    });
+
+    loadComponents(String(row.project_id));
+  }
+
+  /* ======================
+     SUBMIT
+  ====================== */
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!form.project_id) {
-      showToast("Pilih project terlebih dahulu", "error");
+    const method = editingId ? "PUT" : "POST";
+    const url = "/api/bom-cost";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: editingId,
+        ...form,
+        project_id: Number(form.project_id),
+      }),
+    });
+
+    if (!res.ok) {
+      showToast("Gagal menyimpan data", "error");
       return;
     }
 
-    try {
-      const res = await fetch("/api/bom-cost", {
-        method: editingId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingId,
-          ...form,
-          project_id: Number(form.project_id),
-        }),
-      });
+    showToast(
+      editingId ? "Data berhasil diupdate" : "Data berhasil ditambahkan",
+      "success"
+    );
 
-      if (!res.ok) {
-        throw new Error("Gagal menyimpan BOM Cost");
-      }
-
-      resetForm();
-      await loadBomCost();
-
-      showToast(
-        editingId
-          ? "BOM Cost berhasil diupdate"
-          : "BOM Cost berhasil ditambahkan",
-        "success"
-      );
-    } catch (err: any) {
-      showToast(err.message, "error");
-    }
-  }
-
-  /* ================= SELECT ROW ================= */
-  function selectRow(d: BomCost) {
-    setEditingId(d.id);
-    setForm({
-      project_id: String(d.project_id),
-      component: d.component,
-      candidate_supplier: d.candidate_supplier,
-      price: d.price,
-      currency: d.currency,
-      term: d.term,
-      landed_cost: d.landed_cost,
-      tpl: d.tpl,
-      tooling_cost: d.tooling_cost,
-    });
-    loadComponents(String(d.project_id));
+    resetForm();
+    loadBomCost();
   }
 
   function resetForm() {
@@ -155,17 +153,21 @@ export default function BomCostPage() {
 
   function showToast(message: string, type: "success" | "error") {
     setToast({ show: true, message, type });
-    setTimeout(() => {
-      setToast((t) => ({ ...t, show: false }));
-    }, 3000);
+    setTimeout(
+      () => setToast((t) => ({ ...t, show: false })),
+      3000
+    );
   }
 
+  /* ======================
+     RENDER
+  ====================== */
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl">
       {/* TOAST */}
       {toast.show && (
         <div
-          className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-white text-sm
+          className={`fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg text-white text-sm z-50
             ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}
           `}
         >
@@ -176,7 +178,10 @@ export default function BomCostPage() {
       <h1 className="text-2xl font-bold mb-4">BOM Cost</h1>
 
       {/* FORM */}
-      <form onSubmit={submitForm} className="grid grid-cols-3 gap-3 mb-6">
+      <form
+        onSubmit={submitForm}
+        className="grid grid-cols-3 gap-3 bg-white border p-4 rounded-xl mb-6"
+      >
         <select
           value={form.project_id}
           onChange={(e) => {
@@ -184,6 +189,7 @@ export default function BomCostPage() {
             loadComponents(e.target.value);
           }}
           className="border px-3 py-2 rounded"
+          required
         >
           <option value="">-- Pilih Project --</option>
           {projects.map((p) => (
@@ -199,6 +205,7 @@ export default function BomCostPage() {
             setForm({ ...form, component: e.target.value })
           }
           className="border px-3 py-2 rounded"
+          required
         >
           <option value="">-- Pilih Component --</option>
           {components.map((c) => (
@@ -208,51 +215,78 @@ export default function BomCostPage() {
           ))}
         </select>
 
-        <input className="border px-3 py-2" placeholder="Candidate Supplier"
+        <input
+          placeholder="Supplier"
+          className="border px-3 py-2 rounded"
           value={form.candidate_supplier}
-          onChange={(e) => setForm({ ...form, candidate_supplier: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, candidate_supplier: e.target.value })
+          }
         />
 
-        <input className="border px-3 py-2" placeholder="Price"
+        <input
+          placeholder="Price"
+          className="border px-3 py-2 rounded"
           value={form.price}
-          onChange={(e) => setForm({ ...form, price: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, price: e.target.value })
+          }
         />
 
-        <input className="border px-3 py-2" placeholder="Currency"
+        <input
+          placeholder="Currency"
+          className="border px-3 py-2 rounded"
           value={form.currency}
-          onChange={(e) => setForm({ ...form, currency: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, currency: e.target.value })
+          }
         />
 
-        <input className="border px-3 py-2" placeholder="Term"
+        <input
+          placeholder="Term"
+          className="border px-3 py-2 rounded"
           value={form.term}
-          onChange={(e) => setForm({ ...form, term: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, term: e.target.value })
+          }
         />
 
-        <input className="border px-3 py-2" placeholder="Landed Cost (%)"
+        <input
+          placeholder="Landed Cost (%)"
+          className="border px-3 py-2 rounded"
           value={form.landed_cost}
-          onChange={(e) => setForm({ ...form, landed_cost: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, landed_cost: e.target.value })
+          }
         />
 
-        <input className="border px-3 py-2" placeholder="TPL (%)"
+        <input
+          placeholder="TPL (%)"
+          className="border px-3 py-2 rounded"
           value={form.tpl}
-          onChange={(e) => setForm({ ...form, tpl: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, tpl: e.target.value })
+          }
         />
 
-        <input className="border px-3 py-2" placeholder="Tooling Cost"
+        <input
+          placeholder="Tooling Cost"
+          className="border px-3 py-2 rounded"
           value={form.tooling_cost}
-          onChange={(e) => setForm({ ...form, tooling_cost: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, tooling_cost: e.target.value })
+          }
         />
 
         <div className="col-span-3 flex gap-2">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded">
-            {editingId ? "Update BOM Cost" : "Save BOM Cost"}
+          <button className="bg-blue-600 text-white px-6 py-2 rounded">
+            {editingId ? "Update" : "Save"}
           </button>
-
           {editingId && (
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 border rounded"
+              className="border px-6 py-2 rounded"
             >
               Cancel
             </button>
@@ -261,33 +295,55 @@ export default function BomCostPage() {
       </form>
 
       {/* TABLE */}
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <table className="w-full border text-sm">
+      <div className="bg-white border rounded-xl overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border px-2 py-2">Project</th>
+              <th className="border px-2 py-2">Component</th>
+              <th className="border px-2 py-2">Supplier</th>
+              <th className="border px-2 py-2">Price</th>
+              <th className="border px-2 py-2">Currency</th>
+              <th className="border px-2 py-2">Term</th>
+              <th className="border px-2 py-2">Cost Bearing</th>
+            </tr>
+          </thead>
           <tbody>
-            {data.map((d) => (
-              <tr
-                key={d.id}
-                onClick={() => selectRow(d)}
-                className={`cursor-pointer hover:bg-gray-50 ${
-                  editingId === d.id ? "bg-blue-50" : ""
-                }`}
-              >
-                <td className="border px-2">{d.project_name}</td>
-                <td className="border px-2">{d.component}</td>
-                <td className="border px-2">{d.candidate_supplier}</td>
-                <td className="border px-2">{d.price}</td>
-                <td className="border px-2">{d.currency}</td>
-                <td className="border px-2">{d.term}</td>
-                <td className="border px-2 text-right font-semibold">
-                  {Number(d.cost_bearing).toLocaleString("id-ID")}
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="text-center py-6">
+                  Loading...
                 </td>
               </tr>
-            ))}
+            ) : (
+              data.map((d) => (
+                <tr
+                  key={d.id}
+                  title="Klik untuk edit"
+                  onClick={() => selectRow(d)}
+                  className={`cursor-pointer hover:bg-blue-50
+                    ${editingId === d.id ? "bg-blue-100 ring-1 ring-blue-300" : ""}
+                  `}
+                >
+                  <td className="border px-2 py-2">
+                    {d.project_name || d.project_id}
+                  </td>
+                  <td className="border px-2 py-2">{d.component}</td>
+                  <td className="border px-2 py-2">
+                    {d.candidate_supplier}
+                  </td>
+                  <td className="border px-2 py-2">{d.price}</td>
+                  <td className="border px-2 py-2">{d.currency}</td>
+                  <td className="border px-2 py-2">{d.term}</td>
+                  <td className="border px-2 py-2 font-semibold text-right">
+                    {Number(d.cost_bearing).toLocaleString("id-ID")}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
-      )}
+      </div>
     </div>
   );
 }
