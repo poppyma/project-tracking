@@ -181,7 +181,7 @@ export default function DataBPPage() {
 
         <form onSubmit={submitBP} className="flex gap-3 items-end">
           <div>
-            <label className="text-xs text-gray-500">Currency</label>
+            <label className="block text-xs text-gray-500 mb-1">Currency</label>
             <input
               className="border px-3 py-2 rounded-lg w-28 text-sm"
               value={currency}
@@ -192,7 +192,7 @@ export default function DataBPPage() {
           </div>
 
           <div className="flex-1">
-            <label className="text-xs text-gray-500">BP Value</label>
+            <label className="block text-xs text-gray-500 mb-1">BP Value</label>
             <input
               className="border px-3 py-2 rounded-lg w-full text-sm"
               value={bpValue}
@@ -222,7 +222,7 @@ export default function DataBPPage() {
             </tr>
           </thead>
           <tbody>
-            {bps.length === 0 ? (
+            {paginatedData.length === 0 ? (
               <tr>
                 <td colSpan={3} className="px-4 py-6 text-center text-gray-400">
                   Belum ada data
