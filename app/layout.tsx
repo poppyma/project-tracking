@@ -94,7 +94,7 @@ export default function RootLayout({
                     </Link>
 
                     <Link
-                      href="/bom-cost/list"
+                      href="/bom-cost/summary"
                       className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
                     >
                       Bom Cost List
