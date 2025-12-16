@@ -30,6 +30,9 @@ export default function BomCostPage() {
   const [components, setComponents] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 🔹 EDIT MODE
+  const [editingId, setEditingId] = useState<number | null>(null);
+
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
@@ -91,9 +94,10 @@ export default function BomCostPage() {
 
     try {
       const res = await fetch("/api/bom-cost", {
-        method: "POST",
+        method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: editingId,
           ...form,
           project_id: Number(form.project_id),
         }),
@@ -103,25 +107,50 @@ export default function BomCostPage() {
         throw new Error("Gagal menyimpan BOM Cost");
       }
 
-      setForm({
-        project_id: "",
-        component: "",
-        candidate_supplier: "",
-        price: "",
-        currency: "",
-        term: "",
-        landed_cost: "",
-        tpl: "",
-        tooling_cost: "",
-      });
-
+      resetForm();
       await loadBomCost();
 
-      showToast("BOM Cost berhasil ditambahkan", "success");
-
+      showToast(
+        editingId
+          ? "BOM Cost berhasil diupdate"
+          : "BOM Cost berhasil ditambahkan",
+        "success"
+      );
     } catch (err: any) {
       showToast(err.message, "error");
     }
+  }
+
+  /* ================= SELECT ROW ================= */
+  function selectRow(d: BomCost) {
+    setEditingId(d.id);
+    setForm({
+      project_id: String(d.project_id),
+      component: d.component,
+      candidate_supplier: d.candidate_supplier,
+      price: d.price,
+      currency: d.currency,
+      term: d.term,
+      landed_cost: d.landed_cost,
+      tpl: d.tpl,
+      tooling_cost: d.tooling_cost,
+    });
+    loadComponents(String(d.project_id));
+  }
+
+  function resetForm() {
+    setEditingId(null);
+    setForm({
+      project_id: "",
+      component: "",
+      candidate_supplier: "",
+      price: "",
+      currency: "",
+      term: "",
+      landed_cost: "",
+      tpl: "",
+      tooling_cost: "",
+    });
   }
 
   function showToast(message: string, type: "success" | "error") {
@@ -133,7 +162,6 @@ export default function BomCostPage() {
 
   return (
     <div className="p-6">
-
       {/* TOAST */}
       {toast.show && (
         <div
@@ -148,16 +176,12 @@ export default function BomCostPage() {
       <h1 className="text-2xl font-bold mb-4">BOM Cost</h1>
 
       {/* FORM */}
-      <form
-        onSubmit={submitForm}
-        className="grid grid-cols-3 gap-3 mb-6"
-      >
+      <form onSubmit={submitForm} className="grid grid-cols-3 gap-3 mb-6">
         <select
           value={form.project_id}
           onChange={(e) => {
-            const value = e.target.value;
-            setForm({ ...form, project_id: value, component: "" });
-            loadComponents(value);
+            setForm({ ...form, project_id: e.target.value, component: "" });
+            loadComponents(e.target.value);
           }}
           className="border px-3 py-2 rounded"
         >
@@ -175,7 +199,6 @@ export default function BomCostPage() {
             setForm({ ...form, component: e.target.value })
           }
           className="border px-3 py-2 rounded"
-          required
         >
           <option value="">-- Pilih Component --</option>
           {components.map((c) => (
@@ -220,9 +243,21 @@ export default function BomCostPage() {
           onChange={(e) => setForm({ ...form, tooling_cost: e.target.value })}
         />
 
-        <button className="bg-blue-600 text-white px-4 py-2 rounded col-span-3">
-          Save BOM Cost
-        </button>
+        <div className="col-span-3 flex gap-2">
+          <button className="bg-blue-600 text-white px-4 py-2 rounded">
+            {editingId ? "Update BOM Cost" : "Save BOM Cost"}
+          </button>
+
+          {editingId && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="px-4 py-2 border rounded"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
 
       {/* TABLE */}
@@ -230,41 +265,24 @@ export default function BomCostPage() {
         <p>Loading...</p>
       ) : (
         <table className="w-full border text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border px-2">Project</th>
-              <th className="border px-2">Component</th>
-              <th className="border px-2">Supplier</th>
-              <th className="border px-2">Price</th>
-              <th className="border px-2">Currency</th>
-              <th className="border px-2">Term</th>
-              <th className="border px-2">Landed Cost</th>
-              <th className="border px-2">TPL</th>
-              <th className="border px-2">BP 2026</th>
-              <th className="border px-2">Landed IDR</th>
-              <th className="border px-2">Cost Bearing</th>
-              <th className="border px-2">Tooling Cost</th>
-            </tr>
-          </thead>
           <tbody>
             {data.map((d) => (
-              <tr key={d.id}>
-                <td className="border px-2">{d.project_name || d.project_id}</td>
+              <tr
+                key={d.id}
+                onClick={() => selectRow(d)}
+                className={`cursor-pointer hover:bg-gray-50 ${
+                  editingId === d.id ? "bg-blue-50" : ""
+                }`}
+              >
+                <td className="border px-2">{d.project_name}</td>
                 <td className="border px-2">{d.component}</td>
                 <td className="border px-2">{d.candidate_supplier}</td>
                 <td className="border px-2">{d.price}</td>
                 <td className="border px-2">{d.currency}</td>
                 <td className="border px-2">{d.term}</td>
-                <td className="border px-2">{d.landed_cost}</td>
-                <td className="border px-2">{d.tpl}</td>
-                <td className="border px-2">{d.bp_2026}</td>
-                <td className="border px-2 text-right">
-                  {Number(d.landed_idr_price).toLocaleString("id-ID")}
-                </td>
                 <td className="border px-2 text-right font-semibold">
                   {Number(d.cost_bearing).toLocaleString("id-ID")}
                 </td>
-                <td className="border px-2">{d.tooling_cost}</td>
               </tr>
             ))}
           </tbody>
