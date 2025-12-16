@@ -48,7 +48,7 @@ export default function BomSummaryPage() {
       setLoading(true);
       try {
         const res = await fetch(
-          `/api/bom-summary?project_id=${projectId}`,
+          `/api/bom-cost-summary?project_id=${projectId}`,
           { cache: "no-store" }
         );
         const data = await res.json();
