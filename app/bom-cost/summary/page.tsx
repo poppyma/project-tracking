@@ -44,8 +44,9 @@ useEffect(() => {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/bom-summary?project_id=${projectId}`
-      );
+        `/api/bom-summary?project_id=${projectId}`,
+        { cache: "no-store" }
+        );
       const data: Row[] = await res.json();
       setRows(data);
       calculateCheapest(data);
