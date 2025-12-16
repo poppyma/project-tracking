@@ -47,49 +47,80 @@ export default function DataBPPage() {
   }
 
   return (
-    <div className="p-6 flex justify-center">
-      <div className="w-full max-w-lg">
+    <div className="p-6">
 
-        {/* TITLE */}
-        <h2 className="text-xl font-bold mb-4 text-gray-800">
+      {/* PAGE HEADER */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-gray-800">
           Data BP
-        </h2>
+        </h1>
+        <p className="text-sm text-gray-500">
+          Master data BP berdasarkan currency
+        </p>
+      </div>
 
-        {/* FORM */}
-        <form
-          onSubmit={submitBP}
-          className="flex gap-2 mb-4"
-        >
-          <input
-            className="border px-3 py-2 rounded w-32 text-sm focus:ring-2 focus:ring-blue-400"
-            placeholder="Currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-          />
+      {/* CONTENT */}
+      <div className="max-w-2xl space-y-6">
 
-          <input
-            className="border px-3 py-2 rounded flex-1 text-sm focus:ring-2 focus:ring-blue-400"
-            placeholder="BP Value (2.301)"
-            value={bpValue}
-            onChange={(e) => setBpValue(e.target.value)}
-          />
+        {/* FORM CARD */}
+        <div className="bg-white border rounded-xl p-4 shadow-sm">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            Tambah BP
+          </h3>
 
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded text-sm"
+          <form
+            onSubmit={submitBP}
+            className="flex items-end gap-3"
           >
-            Add
-          </button>
-        </form>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Currency
+              </label>
+              <input
+                className="border px-3 py-2 rounded-lg w-28 text-sm focus:ring-2 focus:ring-blue-500"
+                placeholder="USD"
+                value={currency}
+                onChange={(e) =>
+                  setCurrency(e.target.value.toUpperCase())
+                }
+              />
+            </div>
+
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 mb-1">
+                BP Value
+              </label>
+              <input
+                className="border px-3 py-2 rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-500"
+                placeholder="2.301"
+                value={bpValue}
+                onChange={(e) => setBpValue(e.target.value)}
+              />
+            </div>
+
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium"
+            >
+              Add
+            </button>
+          </form>
+        </div>
 
         {/* TABLE CARD */}
-        <div className="border rounded-xl overflow-hidden shadow-sm bg-white">
+        <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b">
+            <h3 className="text-sm font-semibold text-gray-700">
+              Daftar BP
+            </h3>
+          </div>
+
           <table className="w-full text-sm">
-            <thead className="bg-gray-100 text-gray-700">
+            <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
               <tr>
-                <th className="px-4 py-2 text-left">
+                <th className="px-4 py-3 text-left">
                   Currency
                 </th>
-                <th className="px-4 py-2 text-right">
+                <th className="px-4 py-3 text-right">
                   BP
                 </th>
               </tr>
@@ -100,9 +131,9 @@ export default function DataBPPage() {
                 <tr>
                   <td
                     colSpan={2}
-                    className="px-4 py-6 text-center text-gray-500"
+                    className="px-4 py-6 text-center text-gray-400"
                   >
-                    Belum ada data
+                    Belum ada data BP
                   </td>
                 </tr>
               ) : (
@@ -111,10 +142,10 @@ export default function DataBPPage() {
                     key={bp.id}
                     className="border-t hover:bg-gray-50"
                   >
-                    <td className="px-4 py-2 font-medium">
+                    <td className="px-4 py-3 font-medium text-gray-800">
                       {bp.currency}
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-3 text-right text-gray-700">
                       {bp.bp_value}
                     </td>
                   </tr>
@@ -123,6 +154,7 @@ export default function DataBPPage() {
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   );
