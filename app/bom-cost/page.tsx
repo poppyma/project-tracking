@@ -43,9 +43,7 @@ export default function BomCostPage() {
     tooling_cost: "",
   });
 
-  // =============================
-  // LOAD DATA
-  // =============================
+  // ================= LOAD DATA =================
   async function loadBomCost() {
     setLoading(true);
     const res = await fetch("/api/bom-cost", { cache: "no-store" });
@@ -70,9 +68,7 @@ export default function BomCostPage() {
     loadProjects();
   }, []);
 
-  // =============================
-  // SELECT ROW → EDIT
-  // =============================
+  // ================= EDIT =================
   function selectRow(row: BomCost) {
     setEditingId(row.id);
     setForm({
@@ -89,9 +85,7 @@ export default function BomCostPage() {
     loadComponents(String(row.project_id));
   }
 
-  // =============================
-  // SUBMIT
-  // =============================
+  // ================= SUBMIT =================
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
 
@@ -104,10 +98,7 @@ export default function BomCostPage() {
       }),
     });
 
-    if (!res.ok) {
-      alert("Gagal menyimpan BOM Cost");
-      return;
-    }
+    if (!res.ok) return alert("Gagal menyimpan BOM Cost");
 
     setEditingId(null);
     setForm({
@@ -126,7 +117,8 @@ export default function BomCostPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
+
       <h1 className="text-2xl font-bold">BOM Cost</h1>
 
       {/* FORM */}
@@ -154,7 +146,6 @@ export default function BomCostPage() {
           value={form.component}
           onChange={(e) => setForm({ ...form, component: e.target.value })}
           className="border px-3 py-2 rounded"
-          required
         >
           <option value="">-- Pilih Component --</option>
           {components.map((c) => (
@@ -203,53 +194,70 @@ export default function BomCostPage() {
       </form>
 
       {/* TABLE */}
-<div className="bg-white border rounded-xl">
-  <div className="overflow-x-auto">
-    <table className="min-w-[1600px] text-sm">
-      <thead className="bg-gray-100 sticky top-0 z-10">
-        <tr>
-          <th className="border px-3 py-2">Project</th>
-          <th className="border px-3 py-2">Component</th>
-          <th className="border px-3 py-2">Supplier</th>
-          <th className="border px-3 py-2">Price</th>
-          <th className="border px-3 py-2">Currency</th>
-          <th className="border px-3 py-2">Term</th>
-          <th className="border px-3 py-2">Landed Cost (%)</th>
-          <th className="border px-3 py-2">TPL (%)</th>
-          <th className="border px-3 py-2">BP 2026</th>
-          <th className="border px-3 py-2">Landed IDR</th>
-          <th className="border px-3 py-2">Cost Bearing</th>
-          <th className="border px-3 py-2">Tooling Cost</th>
-        </tr>
-      </thead>
+      <div className="bg-white border rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-[1700px] text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="border px-3 py-2">Project</th>
+                <th className="border px-3 py-2">Component</th>
+                <th className="border px-3 py-2">Supplier</th>
+                <th className="border px-3 py-2">Price</th>
+                <th className="border px-3 py-2">Currency</th>
+                <th className="border px-3 py-2">Term</th>
+                <th className="border px-3 py-2">Landed Cost (%)</th>
+                <th className="border px-3 py-2">TPL (%)</th>
+                <th className="border px-3 py-2">BP 2026</th>
+                <th className="border px-3 py-2">Landed IDR</th>
+                <th className="border px-3 py-2">Cost Bearing</th>
+                <th className="border px-3 py-2">Tooling Cost</th>
+              </tr>
+            </thead>
 
-      <tbody>
-        {data.map((d) => (
-          <tr key={d.id} className="hover:bg-blue-50">
-            <td className="border px-3 py-2 whitespace-nowrap">{d.project_name}</td>
-            <td className="border px-3 py-2 whitespace-nowrap">{d.component}</td>
-            <td className="border px-3 py-2">{d.candidate_supplier}</td>
-            <td className="border px-3 py-2 text-right">{d.price}</td>
-            <td className="border px-3 py-2">{d.currency}</td>
-            <td className="border px-3 py-2">{d.term}</td>
-            <td className="border px-3 py-2 text-right">{d.landed_cost}%</td>
-            <td className="border px-3 py-2 text-right">{d.tpl}%</td>
-            <td className="border px-3 py-2 text-right">{d.bp_2026}</td>
-            <td className="border px-3 py-2 text-right">
-              {Number(d.landed_idr_price).toLocaleString("id-ID")}
-            </td>
-            <td className="border px-3 py-2 text-right font-semibold">
-              {Number(d.cost_bearing).toLocaleString("id-ID")}
-            </td>
-            <td className="border px-3 py-2 text-right">
-              {Number(d.tooling_cost).toLocaleString("id-ID")}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-</div>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={12} className="text-center py-6">
+                    Loading...
+                  </td>
+                </tr>
+              ) : (
+                data.map((d) => (
+                  <tr
+                    key={d.id}
+                    onClick={() => selectRow(d)}
+                    title="Klik untuk edit"
+                    className={`cursor-pointer hover:bg-blue-50 ${
+                      editingId === d.id
+                        ? "bg-blue-100 ring-1 ring-blue-300"
+                        : ""
+                    }`}
+                  >
+                    <td className="border px-3 py-2">{d.project_name}</td>
+                    <td className="border px-3 py-2">{d.component}</td>
+                    <td className="border px-3 py-2">{d.candidate_supplier}</td>
+                    <td className="border px-3 py-2 text-right">{d.price}</td>
+                    <td className="border px-3 py-2">{d.currency}</td>
+                    <td className="border px-3 py-2">{d.term}</td>
+                    <td className="border px-3 py-2 text-right">{d.landed_cost}%</td>
+                    <td className="border px-3 py-2 text-right">{d.tpl}%</td>
+                    <td className="border px-3 py-2 text-right">{d.bp_2026}</td>
+                    <td className="border px-3 py-2 text-right">
+                      {Number(d.landed_idr_price).toLocaleString("id-ID")}
+                    </td>
+                    <td className="border px-3 py-2 text-right font-semibold">
+                      {Number(d.cost_bearing).toLocaleString("id-ID")}
+                    </td>
+                    <td className="border px-3 py-2 text-right">
+                      {Number(d.tooling_cost).toLocaleString("id-ID")}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
     </div>
   );
