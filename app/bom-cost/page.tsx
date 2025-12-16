@@ -30,6 +30,16 @@ export default function BomCostPage() {
   const [components, setComponents] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
   const [form, setForm] = useState({
     project_id: "",
     component: "",
@@ -42,9 +52,7 @@ export default function BomCostPage() {
     tooling_cost: "",
   });
 
-  // =============================
-  // LOAD DATA
-  // =============================
+  /* ================= LOAD DATA ================= */
   async function loadBomCost() {
     const res = await fetch("/api/bom-cost");
     const json = await res.json();
@@ -72,48 +80,71 @@ export default function BomCostPage() {
     loadProjects();
   }, []);
 
-  // =============================
-  // SUBMIT
-  // =============================
+  /* ================= SUBMIT ================= */
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
 
     if (!form.project_id) {
-      alert("Pilih project terlebih dahulu");
+      showToast("Pilih project terlebih dahulu", "error");
       return;
     }
 
-    const res = await fetch("/api/bom-cost", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        project_id: Number(form.project_id),
-      }),
-    });
+    try {
+      const res = await fetch("/api/bom-cost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          project_id: Number(form.project_id),
+        }),
+      });
 
-    if (!res.ok) {
-      alert("Gagal menyimpan BOM Cost");
-      return;
+      if (!res.ok) {
+        throw new Error("Gagal menyimpan BOM Cost");
+      }
+
+      setForm({
+        project_id: "",
+        component: "",
+        candidate_supplier: "",
+        price: "",
+        currency: "",
+        term: "",
+        landed_cost: "",
+        tpl: "",
+        tooling_cost: "",
+      });
+
+      await loadBomCost();
+
+      showToast("BOM Cost berhasil ditambahkan", "success");
+
+    } catch (err: any) {
+      showToast(err.message, "error");
     }
+  }
 
-    setForm({
-      project_id: "",
-      component: "",
-      candidate_supplier: "",
-      price: "",
-      currency: "",
-      term: "",
-      landed_cost: "",
-      tpl: "",
-      tooling_cost: "",
-    });
-
-    loadBomCost();
+  function showToast(message: string, type: "success" | "error") {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast((t) => ({ ...t, show: false }));
+    }, 3000);
   }
 
   return (
     <div className="p-6">
+
+      {/* TOAST */}
+      {toast.show && (
+        <div
+          className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-white text-sm
+            ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}
+          `}
+        >
+          {toast.message}
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold mb-4">BOM Cost</h1>
 
       {/* FORM */}
@@ -154,67 +185,39 @@ export default function BomCostPage() {
           ))}
         </select>
 
-        <input
-          placeholder="Candidate Supplier"
+        <input className="border px-3 py-2" placeholder="Candidate Supplier"
           value={form.candidate_supplier}
-          onChange={(e) =>
-            setForm({ ...form, candidate_supplier: e.target.value })
-          }
-          className="border px-3 py-2"
+          onChange={(e) => setForm({ ...form, candidate_supplier: e.target.value })}
         />
 
-        <input
-          placeholder="Price"
+        <input className="border px-3 py-2" placeholder="Price"
           value={form.price}
-          onChange={(e) =>
-            setForm({ ...form, price: e.target.value })
-          }
-          className="border px-3 py-2"
+          onChange={(e) => setForm({ ...form, price: e.target.value })}
         />
 
-        <input
-          placeholder="Currency"
+        <input className="border px-3 py-2" placeholder="Currency"
           value={form.currency}
-          onChange={(e) =>
-            setForm({ ...form, currency: e.target.value })
-          }
-          className="border px-3 py-2"
+          onChange={(e) => setForm({ ...form, currency: e.target.value })}
         />
 
-        <input
-          placeholder="Term"
+        <input className="border px-3 py-2" placeholder="Term"
           value={form.term}
-          onChange={(e) =>
-            setForm({ ...form, term: e.target.value })
-          }
-          className="border px-3 py-2"
+          onChange={(e) => setForm({ ...form, term: e.target.value })}
         />
 
-        <input
-          placeholder="Landed Cost (%)"
+        <input className="border px-3 py-2" placeholder="Landed Cost (%)"
           value={form.landed_cost}
-          onChange={(e) =>
-            setForm({ ...form, landed_cost: e.target.value })
-          }
-          className="border px-3 py-2"
+          onChange={(e) => setForm({ ...form, landed_cost: e.target.value })}
         />
 
-        <input
-          placeholder="TPL (%)"
+        <input className="border px-3 py-2" placeholder="TPL (%)"
           value={form.tpl}
-          onChange={(e) =>
-            setForm({ ...form, tpl: e.target.value })
-          }
-          className="border px-3 py-2"
+          onChange={(e) => setForm({ ...form, tpl: e.target.value })}
         />
 
-        <input
-          placeholder="Tooling Cost"
+        <input className="border px-3 py-2" placeholder="Tooling Cost"
           value={form.tooling_cost}
-          onChange={(e) =>
-            setForm({ ...form, tooling_cost: e.target.value })
-          }
-          className="border px-3 py-2"
+          onChange={(e) => setForm({ ...form, tooling_cost: e.target.value })}
         />
 
         <button className="bg-blue-600 text-white px-4 py-2 rounded col-span-3">
@@ -246,13 +249,9 @@ export default function BomCostPage() {
           <tbody>
             {data.map((d) => (
               <tr key={d.id}>
-                <td className="border px-2">
-                  {d.project_name || d.project_id}
-                </td>
+                <td className="border px-2">{d.project_name || d.project_id}</td>
                 <td className="border px-2">{d.component}</td>
-                <td className="border px-2">
-                  {d.candidate_supplier}
-                </td>
+                <td className="border px-2">{d.candidate_supplier}</td>
                 <td className="border px-2">{d.price}</td>
                 <td className="border px-2">{d.currency}</td>
                 <td className="border px-2">{d.term}</td>
@@ -265,9 +264,7 @@ export default function BomCostPage() {
                 <td className="border px-2 text-right font-semibold">
                   {Number(d.cost_bearing).toLocaleString("id-ID")}
                 </td>
-                <td className="border px-2">
-                  {d.tooling_cost}
-                </td>
+                <td className="border px-2">{d.tooling_cost}</td>
               </tr>
             ))}
           </tbody>
