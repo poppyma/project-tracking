@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { initTables, query } from "@/lib/db";
 
-/* ======================================================
-   GET BOM SUMMARY
-   ?project_id=1
-====================================================== */
 export async function GET(req: Request) {
   try {
     await initTables();
@@ -25,7 +21,8 @@ export async function GET(req: Request) {
         bc.id,
         bc.component,
         bc.candidate_supplier,
-        bc.cost_bearing
+        bc.cost_bearing,
+        bc.landed_idr_price
       FROM bom_costs bc
       WHERE bc.project_id = $1
       ORDER BY bc.component ASC

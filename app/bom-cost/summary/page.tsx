@@ -11,6 +11,7 @@ type Row = {
   id: number;
   component: string;
   candidate_supplier: string;
+  landed_idr_price: string;
   cost_bearing: string;
 };
 
@@ -20,23 +21,20 @@ export default function BomSummaryPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [cheapestMap, setCheapestMap] = useState<Record<string, number>>({});
 
-  // =========================
-  // LOAD PROJECT DROPDOWN
-  // =========================
+  // ============================
+  // LOAD PROJECTS (DROPDOWN)
+  // ============================
   async function loadProjects() {
     const res = await fetch("/api/projects/simple");
     const json = await res.json();
     setProjects(json);
   }
 
-  // =========================
+  // ============================
   // LOAD BOM SUMMARY
-  // =========================
+  // ============================
   async function loadSummary(pid: string) {
-    if (!pid) {
-      setRows([]);
-      return;
-    }
+    if (!pid) return;
 
     const res = await fetch(`/api/bom-summary?project_id=${pid}`);
     const data = await res.json();
@@ -44,9 +42,9 @@ export default function BomSummaryPage() {
     calculateCheapest(data);
   }
 
-  // =========================
-  // HITUNG TERMURAH PER COMPONENT
-  // =========================
+  // ============================
+  // HITUNG COST TERMURAH PER COMPONENT
+  // ============================
   function calculateCheapest(data: Row[]) {
     const map: Record<string, number> = {};
 
@@ -73,9 +71,7 @@ export default function BomSummaryPage() {
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">BOM Summary</h1>
 
-      {/* =========================
-          PILIH PROJECT
-      ========================= */}
+      {/* PROJECT DROPDOWN */}
       <select
         className="border px-3 py-2 mb-4 rounded"
         value={projectId}
@@ -93,49 +89,51 @@ export default function BomSummaryPage() {
         ))}
       </select>
 
-      {/* =========================
-          TABLE
-      ========================= */}
-      <table className="w-full border text-sm">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border px-2">Component</th>
-            <th className="border px-2">Supplier</th>
-            <th className="border px-2">Cost/Bearing</th>
-          </tr>
-        </thead>
+      {/* TABLE */}
+      {rows.length === 0 ? (
+        <p className="text-gray-500">Tidak ada data</p>
+      ) : (
+        <table className="w-full border text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border px-2">Component</th>
+              <th className="border px-2">Supplier</th>
+              <th className="border px-2">Cost/Bearing</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          {rows.map((r) => {
-            const isCheapest =
-              Number(r.cost_bearing) === cheapestMap[r.component];
+          <tbody>
+            {rows.map((r) => {
+              const isCheapest =
+                Number(r.cost_bearing) === cheapestMap[r.component];
 
-            return (
-              <tr
-                key={r.id}
-                className={isCheapest ? "bg-yellow-200 font-semibold" : ""}
-              >
-                <td className="border px-2">{r.component}</td>
-                <td className="border px-2">{r.candidate_supplier}</td>
-                <td className="border px-2 text-right">
-                  {Number(r.cost_bearing).toLocaleString("id-ID")}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
+              return (
+                <tr
+                  key={r.id}
+                  className={isCheapest ? "bg-yellow-200 font-semibold" : ""}
+                >
+                  <td className="border px-2">{r.component}</td>
+                  <td className="border px-2">{r.candidate_supplier}</td>
+                  <td className="border px-2 text-right">
+                    {Number(r.cost_bearing).toLocaleString("id-ID")}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
 
-        <tfoot>
-          <tr className="font-bold bg-yellow-300">
-            <td colSpan={2} className="border px-2 text-right">
-              TOTAL
-            </td>
-            <td className="border px-2 text-right">
-              {totalCheapest.toLocaleString("id-ID")}
-            </td>
-          </tr>
-        </tfoot>
-      </table>
+          <tfoot>
+            <tr className="font-bold bg-yellow-300">
+              <td colSpan={2} className="border px-2 text-right">
+                TOTAL COST TERENDAH
+              </td>
+              <td className="border px-2 text-right">
+                {totalCheapest.toLocaleString("id-ID")}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      )}
     </div>
   );
 }
