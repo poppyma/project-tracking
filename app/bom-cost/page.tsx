@@ -27,8 +27,8 @@ type BomCost = {
 export default function BomCostPage() {
   const [data, setData] = useState<BomCost[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const [components, setComponents] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState({
     project_id: "",
@@ -39,9 +39,6 @@ export default function BomCostPage() {
     term: "",
     landed_cost: "",
     tpl: "",
-    bp_2026: "",
-    landed_idr_price: "",
-    cost_bearing: "",
     tooling_cost: "",
   });
 
@@ -55,22 +52,19 @@ export default function BomCostPage() {
     setLoading(false);
   }
 
+  async function loadProjects() {
+    const res = await fetch("/api/projects/simple");
+    setProjects(await res.json());
+  }
+
   async function loadComponents(projectId: string) {
     if (!projectId) {
       setComponents([]);
       return;
     }
-
     const res = await fetch(`/api/materials?project_id=${projectId}`);
     const json = await res.json();
-
     setComponents(json.map((m: any) => m.component));
-  }
-
-  async function loadProjects() {
-    const res = await fetch("/api/projects/simple");
-    const json = await res.json();
-    setProjects(json);
   }
 
   useEffect(() => {
@@ -95,7 +89,6 @@ export default function BomCostPage() {
       body: JSON.stringify({
         ...form,
         project_id: Number(form.project_id),
-        component: form.component,
       }),
     });
 
@@ -113,9 +106,6 @@ export default function BomCostPage() {
       term: "",
       landed_cost: "",
       tpl: "",
-      bp_2026: "",
-      landed_idr_price: "",
-      cost_bearing: "",
       tooling_cost: "",
     });
 
@@ -127,9 +117,10 @@ export default function BomCostPage() {
       <h1 className="text-2xl font-bold mb-4">BOM Cost</h1>
 
       {/* FORM */}
-      <form onSubmit={submitForm} className="grid grid-cols-3 gap-3 mb-6">
-
-        {/* PROJECT DROPDOWN */}
+      <form
+        onSubmit={submitForm}
+        className="grid grid-cols-3 gap-3 mb-6"
+      >
         <select
           value={form.project_id}
           onChange={(e) => {
@@ -153,7 +144,6 @@ export default function BomCostPage() {
             setForm({ ...form, component: e.target.value })
           }
           className="border px-3 py-2 rounded"
-          disabled={!components.length}
           required
         >
           <option value="">-- Pilih Component --</option>
@@ -163,29 +153,69 @@ export default function BomCostPage() {
             </option>
           ))}
         </select>
-        <input placeholder="Candidate Supplier" value={form.candidate_supplier}
-          onChange={e => setForm({ ...form, candidate_supplier: e.target.value })} />
 
-        <input placeholder="Price" value={form.price}
-          onChange={e => setForm({ ...form, price: e.target.value })} />
+        <input
+          placeholder="Candidate Supplier"
+          value={form.candidate_supplier}
+          onChange={(e) =>
+            setForm({ ...form, candidate_supplier: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
-        <input placeholder="Currency" value={form.currency}
-          onChange={e => setForm({ ...form, currency: e.target.value })} />
+        <input
+          placeholder="Price"
+          value={form.price}
+          onChange={(e) =>
+            setForm({ ...form, price: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
-        <input placeholder="Term" value={form.term}
-          onChange={e => setForm({ ...form, term: e.target.value })} />
+        <input
+          placeholder="Currency"
+          value={form.currency}
+          onChange={(e) =>
+            setForm({ ...form, currency: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
-        <input placeholder="Landed Cost" value={form.landed_cost}
-          onChange={e => setForm({ ...form, landed_cost: e.target.value })} />
+        <input
+          placeholder="Term"
+          value={form.term}
+          onChange={(e) =>
+            setForm({ ...form, term: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
-        <input placeholder="TPL" value={form.tpl}
-          onChange={e => setForm({ ...form, tpl: e.target.value })} />
+        <input
+          placeholder="Landed Cost (%)"
+          value={form.landed_cost}
+          onChange={(e) =>
+            setForm({ ...form, landed_cost: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
-        <input placeholder="Cost Bearing" value={form.cost_bearing}
-          onChange={e => setForm({ ...form, cost_bearing: e.target.value })} />
+        <input
+          placeholder="TPL (%)"
+          value={form.tpl}
+          onChange={(e) =>
+            setForm({ ...form, tpl: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
-        <input placeholder="Tooling Cost" value={form.tooling_cost}
-          onChange={e => setForm({ ...form, tooling_cost: e.target.value })} />
+        <input
+          placeholder="Tooling Cost"
+          value={form.tooling_cost}
+          onChange={(e) =>
+            setForm({ ...form, tooling_cost: e.target.value })
+          }
+          className="border px-3 py-2"
+        />
 
         <button className="bg-blue-600 text-white px-4 py-2 rounded col-span-3">
           Save BOM Cost
@@ -208,17 +238,21 @@ export default function BomCostPage() {
               <th className="border px-2">Landed Cost</th>
               <th className="border px-2">TPL</th>
               <th className="border px-2">BP 2026</th>
-              <th className="border px-2">Landed IDR Price</th>
-              <th className="border px-2">Cost/bearing</th>
-              <th className="border px-2">Tooling cost</th>
+              <th className="border px-2">Landed IDR</th>
+              <th className="border px-2">Cost Bearing</th>
+              <th className="border px-2">Tooling Cost</th>
             </tr>
           </thead>
           <tbody>
             {data.map((d) => (
               <tr key={d.id}>
-                <td className="border px-2">{d.project_name || d.project_id}</td>
+                <td className="border px-2">
+                  {d.project_name || d.project_id}
+                </td>
                 <td className="border px-2">{d.component}</td>
-                <td className="border px-2">{d.candidate_supplier}</td>
+                <td className="border px-2">
+                  {d.candidate_supplier}
+                </td>
                 <td className="border px-2">{d.price}</td>
                 <td className="border px-2">{d.currency}</td>
                 <td className="border px-2">{d.term}</td>
@@ -228,8 +262,12 @@ export default function BomCostPage() {
                 <td className="border px-2 text-right">
                   {Number(d.landed_idr_price).toLocaleString("id-ID")}
                 </td>
-                <td className="border px-2">{d.cost_bearing}</td>
-                <td className="border px-2">{d.tooling_cost}</td>
+                <td className="border px-2 text-right font-semibold">
+                  {Number(d.cost_bearing).toLocaleString("id-ID")}
+                </td>
+                <td className="border px-2">
+                  {d.tooling_cost}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -238,4 +276,3 @@ export default function BomCostPage() {
     </div>
   );
 }
-  

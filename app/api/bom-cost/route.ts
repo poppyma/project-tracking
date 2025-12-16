@@ -54,7 +54,6 @@ export async function POST(req: Request) {
       term,
       landed_cost,
       tpl,
-      cost_bearing,
       tooling_cost,
     } = body;
 
@@ -76,20 +75,47 @@ export async function POST(req: Request) {
     const bpValue = parseNumber(bpRes.rows[0].bp_value);
 
     // =============================
-    // 2. Parse semua angka
+    // 2. Parse angka
     // =============================
     const priceNum = parseNumber(price);
     const landedCostNum = parseNumber(landed_cost) / 100;
     const tplNum = parseNumber(tpl) / 100;
 
     // =============================
-    // 3. Hitung Landed IDR Price
+    // 3. Hitung LANDED IDR PRICE
     // =============================
-    const landedIdr =
+    const landedIdrPrice =
       priceNum * (1 + landedCostNum) * tplNum * bpValue;
 
     // =============================
-    // 4. Simpan ke DB
+    // 4. Ambil BOM QTY dari tracking
+    // =============================
+    const qtyRes = await query(
+      `
+      SELECT bom_qty
+      FROM bom_tracking
+      WHERE project_id = $1
+        AND component = $2
+      `,
+      [project_id, component]
+    );
+
+    if (qtyRes.rowCount === 0) {
+      return NextResponse.json(
+        { error: `BOM QTY untuk component ${component} tidak ditemukan` },
+        { status: 400 }
+      );
+    }
+
+    const bomQty = Number(qtyRes.rows[0].bom_qty);
+
+    // =============================
+    // 5. HITUNG COST BEARING (FINAL)
+    // =============================
+    const costBearing = landedIdrPrice * bomQty;
+
+    // =============================
+    // 6. SIMPAN KE DB
     // =============================
     const res = await query(
       `
@@ -119,9 +145,9 @@ export async function POST(req: Request) {
         term,
         landed_cost,
         tpl,
-        bpRes.rows[0].bp_value,      // simpan BP text
-        landedIdr.toFixed(2),        // hasil hitung
-        cost_bearing,
+        bpRes.rows[0].bp_value,        // simpan BP text
+        landedIdrPrice.toFixed(2),
+        costBearing.toFixed(2),
         tooling_cost,
       ]
     );
