@@ -27,8 +27,15 @@ export default function DataBPPage() {
   async function loadBP() {
     const res = await fetch("/api/bp");
     const json = await res.json();
-    setBps(json);
+
+    // ✅ BP terbaru di atas
+    const sorted = [...json].sort(
+      (a, b) => b.id - a.id
+    );
+
+    setBps(sorted);
   }
+
 
   useEffect(() => {
     loadBP();
