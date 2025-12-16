@@ -18,7 +18,6 @@ export async function GET(req: Request) {
         price,
         currency,
         term,
-        landed_cost_percent,
         tpl_percent,
         bp_2026,
         landed_idr_price,
