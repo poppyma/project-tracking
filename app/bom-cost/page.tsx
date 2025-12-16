@@ -93,14 +93,28 @@ export default function BomCostPage() {
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/bom-cost", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          project_id: Number(form.project_id),
-        }),
-      });
+      let res;
+      if (editingId) {
+        // UPDATE existing BOM
+        res = await fetch(`/api/bom-cost/${editingId}`, {
+          method: "PUT", // atau PATCH sesuai API-mu
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...form,
+            project_id: Number(form.project_id),
+          }),
+        });
+      } else {
+        // CREATE new BOM
+        res = await fetch("/api/bom-cost", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...form,
+            project_id: Number(form.project_id),
+          }),
+        });
+      }
 
       if (!res.ok) throw new Error("Gagal menyimpan BOM Cost");
 
@@ -119,8 +133,7 @@ export default function BomCostPage() {
 
       await loadBomCost();
 
-      // Tampilkan toast sukses
-      setToast({ message: "BOM Cost berhasil disimpan!", type: "success" });
+      setToast({ message: editingId ? "BOM Cost berhasil diupdate!" : "BOM Cost berhasil disimpan!", type: "success" });
       setTimeout(() => setToast(null), 3000);
     } catch (err: any) {
       setToast({ message: err.message || "Terjadi kesalahan", type: "error" });
@@ -129,6 +142,7 @@ export default function BomCostPage() {
       setSubmitting(false);
     }
   }
+
 
   return (
     <div className="space-y-6 relative min-h-screen">
