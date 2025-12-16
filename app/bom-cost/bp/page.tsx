@@ -12,6 +12,7 @@ export default function DataBPPage() {
   const [bps, setBps] = useState<BP[]>([]);
   const [currency, setCurrency] = useState("");
   const [bpValue, setBpValue] = useState("");
+  const [saving, setSaving] = useState(false);
 
   async function loadBP() {
     const res = await fetch("/api/bp");
@@ -26,25 +27,37 @@ export default function DataBPPage() {
   async function submitBP(e: React.FormEvent) {
     e.preventDefault();
 
-    const res = await fetch("/api/bp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        currency,
-        bp_value: bpValue,
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      alert("Gagal menambahkan BP: " + err.error);
+    if (!currency || !bpValue) {
+      alert("Currency dan BP wajib diisi");
       return;
     }
 
-    setCurrency("");
-    setBpValue("");
-    loadBP();
+    setSaving(true);
+
+    try {
+      const res = await fetch("/api/bp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currency,
+          bp_value: bpValue,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert("Gagal menambahkan BP: " + err.error);
+        return;
+      }
+
+      setCurrency("");
+      setBpValue("");
+      loadBP();
+    } finally {
+      setSaving(false);
+    }
   }
+
 
   async function deleteBP(id: number) {
     if (!confirm("Hapus BP ini?")) return;
@@ -81,6 +94,11 @@ export default function DataBPPage() {
           <h3 className="text-sm font-semibold mb-3">
             Tambah BP
           </h3>
+          {saving && (
+            <div className="h-1 w-full bg-blue-100 overflow-hidden rounded mb-3">
+              <div className="h-full bg-blue-600 animate-pulse w-2/3" />
+            </div>
+          )}
 
           <form
             onSubmit={submitBP}
@@ -110,9 +128,15 @@ export default function DataBPPage() {
               />
             </div>
 
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm">
-              Add
+            <button
+              disabled={saving}
+              className={`px-5 py-2 rounded-lg text-sm font-medium text-white
+                ${saving ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}
+              `}
+            >
+              {saving ? "Saving..." : "Add"}
             </button>
+
           </form>
         </div>
 
