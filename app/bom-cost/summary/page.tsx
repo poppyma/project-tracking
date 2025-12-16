@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 type Project = {
   id: number;
@@ -32,7 +32,8 @@ export default function BomSummaryPage() {
   useEffect(() => {
     fetch("/api/projects/simple")
       .then((res) => res.json())
-      .then(setProjects);
+      .then(setProjects)
+      .catch(console.error);
   }, []);
 
   // ======================
@@ -64,10 +65,29 @@ export default function BomSummaryPage() {
     load();
   }, [projectId]);
 
-  const totalCost = rows.reduce(
-    (sum, r) => sum + Number(r.cost_bearing),
-    0
-  );
+  // ======================
+  // MAP COST TERMURAH PER COMPONENT
+  // ======================
+  const cheapestMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    rows.forEach((r) => {
+      const cost = Number(r.cost_bearing);
+      if (!map[r.component] || cost < map[r.component]) {
+        map[r.component] = cost;
+      }
+    });
+    return map;
+  }, [rows]);
+
+  // ======================
+  // TOTAL COST (TERMURAH SAJA)
+  // ======================
+  const totalCost = useMemo(() => {
+    return Object.values(cheapestMap).reduce(
+      (sum, val) => sum + val,
+      0
+    );
+  }, [cheapestMap]);
 
   return (
     <div className="p-6">
@@ -87,7 +107,7 @@ export default function BomSummaryPage() {
         ))}
       </select>
 
-      {/* TABLE (SELALU MUNCUL) */}
+      {/* TABLE */}
       <div className="overflow-x-auto">
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
@@ -108,10 +128,7 @@ export default function BomSummaryPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td
-                  colSpan={10}
-                  className="border text-center py-4"
-                >
+                <td colSpan={10} className="border text-center py-4">
                   Loading...
                 </td>
               </tr>
@@ -125,42 +142,55 @@ export default function BomSummaryPage() {
                 </td>
               </tr>
             ) : (
-              rows.map((r, i) => (
-                <tr key={i}>
-                  <td className="border px-2">
-                    {r.component}
-                  </td>
-                  <td className="border px-2">
-                    {r.candidate_supplier}
-                  </td>
-                  <td className="border px-2 text-right">
-                    {r.price}
-                  </td>
-                  <td className="border px-2">
-                    {r.currency}
-                  </td>
-                  <td className="border px-2">
-                    {r.term}
-                  </td>
-                  <td className="border px-2 text-right">
-                    {r.landed_cost_percent}%
-                  </td>
-                  <td className="border px-2 text-right">
-                    {r.tpl_percent}%
-                  </td>
-                  <td className="border px-2 text-right">
-                    {r.bp_2026.toLocaleString("id-ID")}
-                  </td>
-                  <td className="border px-2 text-right">
-                    {r.landed_idr_price.toLocaleString(
-                      "id-ID"
-                    )}
-                  </td>
-                  <td className="border px-2 text-right">
-                    {r.cost_bearing.toLocaleString("id-ID")}
-                  </td>
-                </tr>
-              ))
+              rows.map((r, i) => {
+                const cost = Number(r.cost_bearing);
+                const isCheapest =
+                  cost === cheapestMap[r.component];
+
+                return (
+                  <tr
+                    key={i}
+                    className={
+                      isCheapest
+                        ? "bg-yellow-100 font-semibold"
+                        : ""
+                    }
+                  >
+                    <td className="border px-2">
+                      {r.component}
+                    </td>
+                    <td className="border px-2">
+                      {r.candidate_supplier}
+                    </td>
+                    <td className="border px-2 text-right">
+                      {r.price.toLocaleString("id-ID")}
+                    </td>
+                    <td className="border px-2">
+                      {r.currency}
+                    </td>
+                    <td className="border px-2">
+                      {r.term}
+                    </td>
+                    <td className="border px-2 text-right">
+                      {r.landed_cost_percent}%
+                    </td>
+                    <td className="border px-2 text-right">
+                      {r.tpl_percent}%
+                    </td>
+                    <td className="border px-2 text-right">
+                      {r.bp_2026.toLocaleString("id-ID")}
+                    </td>
+                    <td className="border px-2 text-right">
+                      {r.landed_idr_price.toLocaleString(
+                        "id-ID"
+                      )}
+                    </td>
+                    <td className="border px-2 text-right">
+                      {cost.toLocaleString("id-ID")}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
 
@@ -171,7 +201,7 @@ export default function BomSummaryPage() {
                 colSpan={9}
                 className="border px-2 text-right"
               >
-                TOTAL COST BEARING
+                TOTAL COST BEARING (TERMURAH)
               </td>
               <td className="border px-2 text-right">
                 {totalCost.toLocaleString("id-ID")}
