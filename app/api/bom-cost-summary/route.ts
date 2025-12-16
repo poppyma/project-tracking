@@ -8,6 +8,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get("project_id");
 
+    // kalau belum pilih project
     if (!projectId) {
       return NextResponse.json([]);
     }
@@ -20,15 +21,18 @@ export async function GET(req: Request) {
         bc.candidate_supplier,
         bc.cost_bearing
       FROM bom_costs bc
-      WHERE bc.project_id = $1::int
+      WHERE bc.project_id = $1
       ORDER BY bc.component ASC
       `,
-      [Number(projectId)]
+      [projectId] // ❗ kirim STRING (aman untuk BIGINT)
     );
 
     return NextResponse.json(res.rows);
   } catch (err: any) {
     console.error("GET bom-summary error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500 }
+    );
   }
 }

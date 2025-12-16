@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Project = {
-  id: number;
+  id: number; // boleh number di UI
   name: string;
 };
 
@@ -16,12 +16,12 @@ type Row = {
 
 export default function BomSummaryPage() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [projectId, setProjectId] = useState("");
+  const [projectId, setProjectId] = useState<string>("");
   const [rows, setRows] = useState<Row[]>([]);
   const [cheapestMap, setCheapestMap] = useState<Record<string, number>>({});
 
   // ======================
-  // LOAD PROJECT
+  // LOAD PROJECT LIST
   // ======================
   useEffect(() => {
     fetch("/api/projects/simple")
@@ -30,11 +30,12 @@ export default function BomSummaryPage() {
   }, []);
 
   // ======================
-  // LOAD SUMMARY
+  // LOAD BOM SUMMARY
   // ======================
   async function loadSummary(pid: string) {
     if (!pid) {
       setRows([]);
+      setCheapestMap({});
       return;
     }
 
@@ -46,7 +47,7 @@ export default function BomSummaryPage() {
   }
 
   // ======================
-  // HITUNG TERMURAH
+  // HITUNG COST TERMURAH
   // ======================
   function calculateCheapest(data: Row[]) {
     const map: Record<string, number> = {};
@@ -82,7 +83,7 @@ export default function BomSummaryPage() {
       >
         <option value="">-- Pilih Project --</option>
         {projects.map((p) => (
-          <option key={p.id} value={p.id}>
+          <option key={p.id} value={String(p.id)}>
             {p.name}
           </option>
         ))}
@@ -96,7 +97,7 @@ export default function BomSummaryPage() {
             <tr>
               <th className="border px-2">Component</th>
               <th className="border px-2">Supplier</th>
-              <th className="border px-2">Cost/Bearing</th>
+              <th className="border px-2">Cost / Bearing</th>
             </tr>
           </thead>
 
@@ -108,10 +109,14 @@ export default function BomSummaryPage() {
               return (
                 <tr
                   key={r.id}
-                  className={isCheapest ? "bg-yellow-200 font-semibold" : ""}
+                  className={
+                    isCheapest ? "bg-yellow-200 font-semibold" : ""
+                  }
                 >
                   <td className="border px-2">{r.component}</td>
-                  <td className="border px-2">{r.candidate_supplier}</td>
+                  <td className="border px-2">
+                    {r.candidate_supplier}
+                  </td>
                   <td className="border px-2 text-right">
                     {Number(r.cost_bearing).toLocaleString("id-ID")}
                   </td>
