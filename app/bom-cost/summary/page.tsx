@@ -21,16 +21,6 @@ type Row = {
   cost_bearing: string | null;
 };
 
-/* ================= HELPERS ================= */
-
-/**
- * PARSE ANGKA AMAN
- * Support:
- * - 1202,6
- * - 1.202,6
- * - 1202.6
- * - 2,751.48
- */
 function parseNumber(value: string | null): number {
   if (!value) return 0;
 
