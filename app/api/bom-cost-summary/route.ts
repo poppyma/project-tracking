@@ -12,24 +12,25 @@ export async function GET(req: Request) {
     }
 
     const res = await query(
-      `
-      SELECT
-        component,
-        candidate_supplier,
-        price,
-        currency,
-        term,
-        landed_cost,
-        tpl,
-        bp_2026,
-        landed_idr_price,
-        cost_bearing
-      FROM bom_costs
-      WHERE project_id = $1
-      ORDER BY component, candidate_supplier
-      `,
-      [projectId] // STRING → aman untuk int8
-    );
+    `
+    SELECT
+      component,
+      candidate_supplier,
+      price,
+      currency,
+      term,
+      landed_cost AS landed_cost_percent,
+      tpl AS tpl_percent,
+      bp_2026,
+      landed_idr_price,
+      cost_bearing
+    FROM bom_costs
+    WHERE project_id = $1
+    ORDER BY component, candidate_supplier
+    `,
+    [projectId]
+  );
+
 
     return NextResponse.json(res.rows);
   } catch (err: any) {
