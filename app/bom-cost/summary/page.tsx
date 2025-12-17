@@ -75,6 +75,7 @@ export default function BomSummaryPage() {
           }
         });
         setSelectedSupplierMap(defaultSelection);
+
       } catch (err) {
         console.error(err);
         setRows([]);
@@ -98,6 +99,7 @@ export default function BomSummaryPage() {
     });
     return sum;
   }, [rows, selectedSupplierMap]);
+
 
   // ======================
   // HANDLE PILIH SUPPLIER
