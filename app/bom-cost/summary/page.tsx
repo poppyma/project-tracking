@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 type Project = {
   id: number;
@@ -25,7 +25,6 @@ export default function BomSummaryPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Map yang menyimpan supplier yang dipilih per component
   const [selectedSupplierMap, setSelectedSupplierMap] = useState<Record<string, string>>({});
 
   // ======================
@@ -54,9 +53,7 @@ export default function BomSummaryPage() {
         const data: Row[] = await res.json();
         setRows(data);
 
-        // ======================
         // DEFAULT: PILIH SUPPLIER TERMURAH
-        // ======================
         const defaultSelection: Record<string, string> = {};
         const groupedByComponent: Record<string, Row[]> = {};
 
@@ -90,7 +87,7 @@ export default function BomSummaryPage() {
   const totalCost = useMemo(() => {
     return rows.reduce((sum, r) => {
       if (selectedSupplierMap[r.component] === r.candidate_supplier) {
-        return sum + Number(r.cost_bearing); // pastikan number
+        return sum + Number(r.cost_bearing);
       }
       return sum;
     }, 0);
@@ -105,6 +102,17 @@ export default function BomSummaryPage() {
       [component]: supplier,
     }));
   };
+
+  // ======================
+  // GROUP ROWS PER COMPONENT
+  // ======================
+  const groupedRows = useMemo(() => {
+    return rows.reduce<Record<string, Row[]>>((acc, r) => {
+      if (!acc[r.component]) acc[r.component] = [];
+      acc[r.component].push(r);
+      return acc;
+    }, {});
+  }, [rows]);
 
   return (
     <div className="p-6">
@@ -143,61 +151,54 @@ export default function BomSummaryPage() {
             </tr>
           </thead>
           <tbody>
-  {loading ? (
-    <tr>
-      <td colSpan={11} className="border text-center py-4">
-        Loading...
-      </td>
-    </tr>
-  ) : rows.length === 0 ? (
-    <tr>
-      <td colSpan={11} className="border text-center py-4 text-gray-500">
-        Tidak ada data
-      </td>
-    </tr>
-  ) : (
-    Object.entries(
-      rows.reduce<Record<string, Row[]>>((acc, r) => {
-        if (!acc[r.component]) acc[r.component] = [];
-        acc[r.component].push(r);
-        return acc;
-      }, {})
-    ).map(([component, componentRows]) => (
-      <React.Fragment key={component}>
-        {componentRows.map((r, i) => {
-          const isSelected = selectedSupplierMap[r.component] === r.candidate_supplier;
-          return (
-            <tr key={i} className={isSelected ? "bg-yellow-100 font-semibold" : ""}>
-              <td className="border px-2">{r.component}</td>
-              <td className="border px-2">{r.candidate_supplier}</td>
-              <td className="border px-2 text-right">{Number(r.price).toLocaleString("id-ID")}</td>
-              <td className="border px-2">{r.currency}</td>
-              <td className="border px-2">{r.term}</td>
-              <td className="border px-2 text-right">{r.landed_cost_percent}%</td>
-              <td className="border px-2 text-right">{r.tpl_percent}%</td>
-              <td className="border px-2 text-right">{Number(r.bp_2026).toLocaleString("id-ID")}</td>
-              <td className="border px-2 text-right">{Number(r.landed_idr_price).toLocaleString("id-ID")}</td>
-              <td className="border px-2 text-right">{Number(r.cost_bearing).toLocaleString("id-ID")}</td>
-              <td className="border px-2 text-center">
-                <input
-                  type="radio"
-                  name={`selected-${r.component}`}
-                  checked={isSelected}
-                  onChange={() => handleSelectSupplier(r.component, r.candidate_supplier)}
-                />
-              </td>
-            </tr>
-          );
-        })}
-        {/* Spacer row untuk visual break antar komponen */}
-        <tr>
-          <td colSpan={11} className="py-2"></td>
-        </tr>
-      </React.Fragment>
-    ))
-  )}
-</tbody>
-
+            {loading ? (
+              <tr>
+                <td colSpan={11} className="border text-center py-4">
+                  Loading...
+                </td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={11} className="border text-center py-4 text-gray-500">
+                  Tidak ada data
+                </td>
+              </tr>
+            ) : (
+              Object.entries(groupedRows).map(([component, componentRows]) => (
+                <>
+                  {componentRows.map((r, i) => {
+                    const isSelected = selectedSupplierMap[r.component] === r.candidate_supplier;
+                    return (
+                      <tr key={i} className={isSelected ? "bg-yellow-100 font-semibold" : ""}>
+                        <td className="border px-2">{r.component}</td>
+                        <td className="border px-2">{r.candidate_supplier}</td>
+                        <td className="border px-2 text-right">{Number(r.price).toLocaleString("id-ID")}</td>
+                        <td className="border px-2">{r.currency}</td>
+                        <td className="border px-2">{r.term}</td>
+                        <td className="border px-2 text-right">{r.landed_cost_percent}%</td>
+                        <td className="border px-2 text-right">{r.tpl_percent}%</td>
+                        <td className="border px-2 text-right">{Number(r.bp_2026).toLocaleString("id-ID")}</td>
+                        <td className="border px-2 text-right">{Number(r.landed_idr_price).toLocaleString("id-ID")}</td>
+                        <td className="border px-2 text-right">{Number(r.cost_bearing).toLocaleString("id-ID")}</td>
+                        <td className="border px-2 text-center">
+                          <input
+                            type="radio"
+                            name={`selected-${r.component}`}
+                            checked={isSelected}
+                            onChange={() => handleSelectSupplier(r.component, r.candidate_supplier)}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {/* Spacer row antar component */}
+                  <tr>
+                    <td colSpan={11} className="py-2"></td>
+                  </tr>
+                </>
+              ))
+            )}
+          </tbody>
           <tfoot>
             <tr className="bg-yellow-300 font-bold">
               <td colSpan={10} className="border px-2 text-right">
