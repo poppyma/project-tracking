@@ -172,7 +172,9 @@ export default function BomSummaryPage() {
                       <tr key={i} className={isSelected ? "bg-yellow-100 font-semibold" : ""}>
                         <td className="border px-2">{r.component}</td>
                         <td className="border px-2">{r.candidate_supplier}</td>
-                        <td className="border px-2 text-right">{Number(r.price).toLocaleString("id-ID")}</td>
+                        <td className="border px-2 text-right">
+                          {r.price ? Number(r.price).toLocaleString("id-ID") : "-"}
+                        </td>                        
                         <td className="border px-2">{r.currency}</td>
                         <td className="border px-2">{r.term}</td>
                         <td className="border px-2 text-right">{r.landed_cost_percent}%</td>
