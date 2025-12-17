@@ -9,14 +9,14 @@ type Project = {
 type Row = {
   component: string;
   candidate_supplier: string;
-  price: number;
+  price: number | string | null;
   currency: string;
   term: string;
-  landed_cost_percent: number;
-  tpl_percent: number;
-  bp_2026: number;
-  landed_idr_price: number;
-  cost_bearing: number | string; // Bisa string dari API, nanti convert ke number
+  landed_cost_percent: number | string | null;
+  tpl_percent: number | string | null;
+  bp_2026: number | string | null;
+  landed_idr_price: number | string | null;
+  cost_bearing: number | string | null;
 };
 
 export default function BomSummaryPage() {
@@ -51,6 +51,7 @@ export default function BomSummaryPage() {
       try {
         const res = await fetch(`/api/bom-cost-summary?project_id=${projectId}`, { cache: "no-store" });
         const data: Row[] = await res.json();
+        console.log("API data:", data); // cek data dari API
         setRows(data);
 
         // DEFAULT: PILIH SUPPLIER TERMURAH
@@ -64,7 +65,7 @@ export default function BomSummaryPage() {
 
         for (const comp in groupedByComponent) {
           const cheapest = groupedByComponent[comp].reduce((prev, curr) =>
-            Number(curr.cost_bearing) < Number(prev.cost_bearing) ? curr : prev
+            Number(curr.cost_bearing ?? Infinity) < Number(prev.cost_bearing ?? Infinity) ? curr : prev
           );
           defaultSelection[comp] = cheapest.candidate_supplier;
         }
@@ -87,7 +88,7 @@ export default function BomSummaryPage() {
   const totalCost = useMemo(() => {
     return rows.reduce((sum, r) => {
       if (selectedSupplierMap[r.component] === r.candidate_supplier) {
-        return sum + Number(r.cost_bearing);
+        return sum + Number(r.cost_bearing ?? 0);
       }
       return sum;
     }, 0);
@@ -114,6 +115,9 @@ export default function BomSummaryPage() {
     }, {});
   }, [rows]);
 
+  // ======================
+  // RENDER TABLE
+  // ======================
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">BOM Summary</h1>
@@ -172,16 +176,14 @@ export default function BomSummaryPage() {
                       <tr key={i} className={isSelected ? "bg-yellow-100 font-semibold" : ""}>
                         <td className="border px-2">{r.component}</td>
                         <td className="border px-2">{r.candidate_supplier}</td>
-                        <td className="border px-2 text-right">
-                          {r.price ? Number(r.price).toLocaleString("id-ID") : "-"}
-                        </td>                        
+                        <td className="border px-2 text-right">{r.price != null ? Number(r.price).toLocaleString("id-ID") : "-"}</td>
                         <td className="border px-2">{r.currency}</td>
                         <td className="border px-2">{r.term}</td>
-                        <td className="border px-2 text-right">{r.landed_cost_percent}%</td>
-                        <td className="border px-2 text-right">{r.tpl_percent}%</td>
-                        <td className="border px-2 text-right">{Number(r.bp_2026).toLocaleString("id-ID")}</td>
-                        <td className="border px-2 text-right">{Number(r.landed_idr_price).toLocaleString("id-ID")}</td>
-                        <td className="border px-2 text-right">{Number(r.cost_bearing).toLocaleString("id-ID")}</td>
+                        <td className="border px-2 text-right">{r.landed_cost_percent != null ? r.landed_cost_percent + "%" : "-"}</td>
+                        <td className="border px-2 text-right">{r.tpl_percent != null ? r.tpl_percent + "%" : "-"}</td>
+                        <td className="border px-2 text-right">{r.bp_2026 != null ? Number(r.bp_2026).toLocaleString("id-ID") : "-"}</td>
+                        <td className="border px-2 text-right">{r.landed_idr_price != null ? Number(r.landed_idr_price).toLocaleString("id-ID") : "-"}</td>
+                        <td className="border px-2 text-right">{r.cost_bearing != null ? Number(r.cost_bearing).toLocaleString("id-ID") : "-"}</td>
                         <td className="border px-2 text-center">
                           <input
                             type="radio"
