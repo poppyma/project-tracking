@@ -20,13 +20,13 @@ type Row = {
 };
 
 // ======================
-// Fungsi parseNumber
+// Fungsi parseNumber dari string Supabase
 // ======================
 function parseNumber(value: string | null): number {
   if (!value) return 0;
   return Number(
     value
-      .replace(/\./g, "")   // hapus pemisah ribuan
+      .replace(/\./g, "")   // hapus titik ribuan
       .replace(",", ".")    // koma jadi desimal
       .replace("%", "")     // hapus %
       .trim()
@@ -65,7 +65,11 @@ export default function BomSummaryPage() {
       try {
         const res = await fetch(`/api/bom-cost-summary?project_id=${projectId}`, { cache: "no-store" });
         const data: Row[] = await res.json();
-        console.log("API data:", data);
+        console.log("API data landed/tpl:", data.map(r => ({
+          component: r.component,
+          landed: r.landed_cost_percent,
+          tpl: r.tpl_percent
+        })));
         setRows(data);
 
         // DEFAULT: PILIH SUPPLIER TERMURAH
@@ -129,9 +133,6 @@ export default function BomSummaryPage() {
     }, {});
   }, [rows]);
 
-  // ======================
-  // RENDER TABLE
-  // ======================
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">BOM Summary</h1>
