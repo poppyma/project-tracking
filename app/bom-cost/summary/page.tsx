@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState, useMemo } from "react";
 
 type Project = {
@@ -51,31 +50,29 @@ export default function BomSummaryPage() {
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch(
-          `/api/bom-cost-summary?project_id=${projectId}`,
-          { cache: "no-store" }
-        );
-        const data = await res.json();
+        const res = await fetch(`/api/bom-cost-summary?project_id=${projectId}`, { cache: "no-store" });
+        const data: Row[] = await res.json();
         setRows(data);
 
-        // Default: pilih supplier dengan cost termurah
+        // Default: pilih supplier dengan cost_bearing termurah per component
         const defaultSelection: Record<string, string> = {};
-        data.forEach((r: Row) => {
-          const comp = r.component;
-          const current = defaultSelection[comp];
-          if (!current) {
-            defaultSelection[comp] = r.candidate_supplier;
-          } else {
-            const currentCost = data.find(
-              (row: Row) => row.component === comp && row.candidate_supplier === current
-            )?.cost_bearing;
-            if (r.cost_bearing < (currentCost || Infinity)) {
-              defaultSelection[comp] = r.candidate_supplier;
-            }
-          }
-        });
-        setSelectedSupplierMap(defaultSelection);
+        const groupedByComponent: Record<string, Row[]> = {};
 
+        // Kelompokkan rows per component
+        data.forEach((r) => {
+          if (!groupedByComponent[r.component]) groupedByComponent[r.component] = [];
+          groupedByComponent[r.component].push(r);
+        });
+
+        // Ambil supplier termurah per component
+        for (const comp in groupedByComponent) {
+          const cheapest = groupedByComponent[comp].reduce((prev, curr) =>
+            curr.cost_bearing < prev.cost_bearing ? curr : prev
+          );
+          defaultSelection[comp] = cheapest.candidate_supplier;
+        }
+
+        setSelectedSupplierMap(defaultSelection);
       } catch (err) {
         console.error(err);
         setRows([]);
@@ -91,15 +88,13 @@ export default function BomSummaryPage() {
   // HITUNG TOTAL COST SESUAI PILIHAN USER
   // ======================
   const totalCost = useMemo(() => {
-    let sum = 0;
-    rows.forEach((r) => {
+    return rows.reduce((sum, r) => {
       if (selectedSupplierMap[r.component] === r.candidate_supplier) {
-        sum += r.cost_bearing;
+        return sum + r.cost_bearing;
       }
-    });
-    return sum;
+      return sum;
+    }, 0);
   }, [rows, selectedSupplierMap]);
-
 
   // ======================
   // HANDLE PILIH SUPPLIER
@@ -147,7 +142,6 @@ export default function BomSummaryPage() {
               <th className="border px-2">Use for Total?</th>
             </tr>
           </thead>
-
           <tbody>
             {loading ? (
               <tr>
@@ -189,16 +183,13 @@ export default function BomSummaryPage() {
               })
             )}
           </tbody>
-
           {/* TOTAL */}
           <tfoot>
             <tr className="bg-yellow-300 font-bold">
               <td colSpan={10} className="border px-2 text-right">
                 TOTAL COST BEARING
               </td>
-              <td className="border px-2 text-right">
-                {totalCost.toLocaleString("id-ID")}
-              </td>
+              <td className="border px-2 text-right">{totalCost.toLocaleString("id-ID")}</td>
             </tr>
           </tfoot>
         </table>
