@@ -101,6 +101,21 @@ export default function BomCostPage() {
     loadComponents(String(row.project_id));
   }
 
+  function normalizeNumberInput(value: string): string {
+    if (!value) return "";
+
+    // hilangkan spasi
+    let v = value.trim();
+
+    // jika format indonesia: 20.000,50
+    v = v.replace(/\./g, "").replace(",", ".");
+
+    // pastikan numeric
+    if (isNaN(Number(v))) return "";
+
+    return v;
+  }
+
   // ================= SUBMIT =================
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
@@ -291,7 +306,15 @@ export default function BomCostPage() {
           className="border px-3 py-2"
           placeholder="Tooling Cost"
           value={form.tooling_cost}
-          onChange={(e) => setForm({ ...form, tooling_cost: e.target.value })}
+          onChange={(e) => {
+            const raw = e.target.value;
+            const normalized = normalizeNumberInput(raw);
+
+            setForm({
+              ...form,
+              tooling_cost: normalized,
+            });
+          }}
         />
 
         {/* SUBMIT & CANCEL BUTTON */}
