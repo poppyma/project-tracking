@@ -1,6 +1,8 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
 
+import React, { useEffect, useMemo, useState } from "react";
+
+/* ================= TYPES ================= */
 type Project = {
   id: number;
   name: string;
@@ -19,43 +21,55 @@ type Row = {
   cost_bearing: string | null;
 };
 
-/* =====================================================
-   FORMAT & PARSE ANGKA INDONESIA (FINAL)
-===================================================== */
+/* ================= HELPERS ================= */
 
-// DISPLAY ONLY (JANGAN DIHITUNG)
-function formatIdNumber(value: string | null) {
-  if (!value) return "-";
-  return value; // tampilkan apa adanya dari backend
-}
-
-// KHUSUS UNTUK TOTAL (DIHITUNG)
-function parseIdNumber(value: string | null): number {
+// Parsing AMAN (TIDAK dikali 100)
+function parseNumber(value: string | null): number {
   if (!value) return 0;
-  return Number(value.replace(/\./g, "").replace(",", "."));
+  return Number(
+    value
+      .replace(/\./g, "")
+      .replace(",", ".")
+      .replace("%", "")
+      .trim()
+  ) || 0;
 }
 
+// 1202.60 -> 1202.6 | 1202.00 -> 1202
+function formatTrimDecimal(value: string | null) {
+  if (!value) return "-";
+  const num = Number(value.replace(",", "."));
+  if (isNaN(num)) return value;
+  return num.toString().replace(".", ",");
+}
+
+// 10 -> 10% | 7.5 -> 7.5%
+function formatPercent(value: string | null) {
+  if (!value) return "-";
+  const num = Number(value.replace("%", "").replace(",", "."));
+  if (isNaN(num)) return value;
+  return num.toString().replace(".", ",") + "%";
+}
+
+/* ================= COMPONENT ================= */
 export default function BomSummaryClient() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [selectedSupplierMap, setSelectedSupplierMap] = useState<Record<string, string>>({});
+  const [selectedSupplierMap, setSelectedSupplierMap] =
+    useState<Record<string, string>>({});
 
-  /* ======================
-     LOAD PROJECT LIST
-  ====================== */
+  /* ===== LOAD PROJECTS ===== */
   useEffect(() => {
     fetch("/api/projects/simple")
-      .then((res) => res.json())
+      .then((r) => r.json())
       .then(setProjects)
       .catch(console.error);
   }, []);
 
-  /* ======================
-     LOAD BOM SUMMARY
-  ====================== */
+  /* ===== LOAD BOM SUMMARY ===== */
   useEffect(() => {
     if (!projectId) {
       setRows([]);
@@ -69,29 +83,28 @@ export default function BomSummaryClient() {
           `/api/bom-cost-summary?project_id=${projectId}`,
           { cache: "no-store" }
         );
-
         const data: Row[] = await res.json();
         setRows(data);
 
-        // DEFAULT PILIH SUPPLIER TERMURAH
+        // default pilih supplier termurah per component
+        const map: Record<string, string> = {};
         const grouped: Record<string, Row[]> = {};
-        const defaultSelection: Record<string, string> = {};
 
         data.forEach((r) => {
           if (!grouped[r.component]) grouped[r.component] = [];
           grouped[r.component].push(r);
         });
 
-        for (const comp in grouped) {
-          const cheapest = grouped[comp].reduce((a, b) =>
-            parseIdNumber(a.cost_bearing) < parseIdNumber(b.cost_bearing) ? a : b
+        Object.entries(grouped).forEach(([comp, list]) => {
+          const cheapest = list.reduce((a, b) =>
+            parseNumber(b.cost_bearing) < parseNumber(a.cost_bearing) ? b : a
           );
-          defaultSelection[comp] = cheapest.candidate_supplier;
-        }
+          map[comp] = cheapest.candidate_supplier;
+        });
 
-        setSelectedSupplierMap(defaultSelection);
-      } catch (err) {
-        console.error(err);
+        setSelectedSupplierMap(map);
+      } catch (e) {
+        console.error(e);
         setRows([]);
       } finally {
         setLoading(false);
@@ -101,9 +114,17 @@ export default function BomSummaryClient() {
     load();
   }, [projectId]);
 
-  /* ======================
-     GROUP BY COMPONENT
-  ====================== */
+  /* ===== TOTAL COST ===== */
+  const totalCost = useMemo(() => {
+    return rows.reduce((sum, r) => {
+      if (selectedSupplierMap[r.component] === r.candidate_supplier) {
+        return sum + parseNumber(r.cost_bearing);
+      }
+      return sum;
+    }, 0);
+  }, [rows, selectedSupplierMap]);
+
+  /* ===== GROUP PER COMPONENT ===== */
   const groupedRows = useMemo(() => {
     return rows.reduce<Record<string, Row[]>>((acc, r) => {
       if (!acc[r.component]) acc[r.component] = [];
@@ -111,28 +132,6 @@ export default function BomSummaryClient() {
       return acc;
     }, {});
   }, [rows]);
-
-  /* ======================
-     TOTAL COST BEARING
-  ====================== */
-  const totalCost = useMemo(() => {
-    return rows.reduce((sum, r) => {
-      if (selectedSupplierMap[r.component] === r.candidate_supplier) {
-        return sum + parseIdNumber(r.cost_bearing);
-      }
-      return sum;
-    }, 0);
-  }, [rows, selectedSupplierMap]);
-
-  /* ======================
-     SELECT SUPPLIER
-  ====================== */
-  const handleSelectSupplier = (component: string, supplier: string) => {
-    setSelectedSupplierMap((prev) => ({
-      ...prev,
-      [component]: supplier,
-    }));
-  };
 
   return (
     <div className="p-6">
@@ -146,7 +145,7 @@ export default function BomSummaryClient() {
       >
         <option value="">-- Pilih Project --</option>
         {projects.map((p) => (
-          <option key={p.id} value={String(p.id)}>
+          <option key={p.id} value={p.id}>
             {p.name}
           </option>
         ))}
@@ -163,65 +162,83 @@ export default function BomSummaryClient() {
               <th className="border px-2">Currency</th>
               <th className="border px-2">Term</th>
               <th className="border px-2">Landed %</th>
-              <th className="border px-2">TPL %</th>
-              <th className="border px-2">BP 2026</th>
+              <th className="border px-2">TPL</th>
+              <th className="border px-2">BP</th>
               <th className="border px-2">Landed IDR</th>
-              <th className="border px-2">Cost / Bearing</th>
-              <th className="border px-2">Use?</th>
+              <th className="border px-2">Cost Bearing</th>
+              <th className="border px-2">Use</th>
             </tr>
           </thead>
 
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={11} className="border text-center py-4">Loading...</td>
+                <td colSpan={11} className="text-center py-4">
+                  Loading...
+                </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={11} className="border text-center py-4 text-gray-500">
+                <td colSpan={11} className="text-center py-4 text-gray-500">
                   Tidak ada data
                 </td>
               </tr>
             ) : (
-              Object.entries(groupedRows).map(([component, componentRows]) => (
+              Object.entries(groupedRows).map(([component, list]) => (
                 <React.Fragment key={component}>
-                  {componentRows.map((r, i) => {
-                    const isSelected =
-                      selectedSupplierMap[r.component] === r.candidate_supplier;
+                  {list.map((r, i) => {
+                    const selected =
+                      selectedSupplierMap[r.component] ===
+                      r.candidate_supplier;
 
                     return (
                       <tr
                         key={i}
-                        className={isSelected ? "bg-yellow-100 font-semibold" : ""}
+                        className={selected ? "bg-yellow-100 font-semibold" : ""}
                       >
                         <td className="border px-2">{r.component}</td>
-                        <td className="border px-2">{r.candidate_supplier}</td>
-                        <td className="border px-2 text-right">{r.price ?? "-"}</td>
-                        <td className="border px-2">{r.currency}</td>
-                        <td className="border px-2">{r.term}</td>
-                        <td className="border px-2 text-right">{r.landed_cost_percent ?? "-"}</td>
-                        <td className="border px-2 text-right">{r.tpl_percent ?? "-"}</td>
-                        <td className="border px-2 text-right">{r.bp_2026 ?? "-"}</td>
-                        <td className="border px-2 text-right">
-                          {formatIdNumber(r.landed_idr_price)}
+                        <td className="border px-2">
+                          {r.candidate_supplier}
                         </td>
                         <td className="border px-2 text-right">
-                          {formatIdNumber(r.cost_bearing)}
+                          {formatTrimDecimal(r.price)}
+                        </td>
+                        <td className="border px-2">{r.currency}</td>
+                        <td className="border px-2">{r.term}</td>
+                        <td className="border px-2 text-right">
+                          {formatPercent(r.landed_cost_percent)}
+                        </td>
+                        <td className="border px-2 text-right">
+                          {formatPercent(r.tpl_percent)}
+                        </td>
+                        <td className="border px-2 text-right">
+                          {formatTrimDecimal(r.bp_2026)}
+                        </td>
+                        <td className="border px-2 text-right">
+                          {formatTrimDecimal(r.landed_idr_price)}
+                        </td>
+                        <td className="border px-2 text-right">
+                          {formatTrimDecimal(r.cost_bearing)}
                         </td>
                         <td className="border px-2 text-center">
                           <input
                             type="radio"
-                            name={`selected-${r.component}`}
-                            checked={isSelected}
+                            name={`pick-${r.component}`}
+                            checked={selected}
                             onChange={() =>
-                              handleSelectSupplier(r.component, r.candidate_supplier)
+                              setSelectedSupplierMap((p) => ({
+                                ...p,
+                                [r.component]: r.candidate_supplier,
+                              }))
                             }
                           />
                         </td>
                       </tr>
                     );
                   })}
-                  <tr><td colSpan={11} className="py-2" /></tr>
+                  <tr>
+                    <td colSpan={11} className="py-2" />
+                  </tr>
                 </React.Fragment>
               ))
             )}
@@ -233,7 +250,7 @@ export default function BomSummaryClient() {
                 TOTAL COST BEARING
               </td>
               <td className="border px-2 text-right">
-                {totalCost.toLocaleString("id-ID")}
+                {totalCost.toString().replace(".", ",")}
               </td>
             </tr>
           </tfoot>
