@@ -26,6 +26,9 @@ export default function BomSummaryPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Map yang menyimpan supplier yang dipilih per component
+  const [selectedSupplierMap, setSelectedSupplierMap] = useState<Record<string, string>>({});
+
   // ======================
   // LOAD PROJECT LIST
   // ======================
@@ -54,6 +57,24 @@ export default function BomSummaryPage() {
         );
         const data = await res.json();
         setRows(data);
+
+        // Default: pilih supplier dengan cost termurah
+        const defaultSelection: Record<string, string> = {};
+        data.forEach((r: Row) => {
+          const comp = r.component;
+          const current = defaultSelection[comp];
+          if (!current) {
+            defaultSelection[comp] = r.candidate_supplier;
+          } else {
+            const currentCost = data.find(
+              (row: Row) => row.component === comp && row.candidate_supplier === current
+            )?.cost_bearing;
+            if (r.cost_bearing < (currentCost || Infinity)) {
+              defaultSelection[comp] = r.candidate_supplier;
+            }
+          }
+        });
+        setSelectedSupplierMap(defaultSelection);
       } catch (err) {
         console.error(err);
         setRows([]);
@@ -66,28 +87,27 @@ export default function BomSummaryPage() {
   }, [projectId]);
 
   // ======================
-  // MAP COST TERMURAH PER COMPONENT
-  // ======================
-  const cheapestMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    rows.forEach((r) => {
-      const cost = Number(r.cost_bearing);
-      if (!map[r.component] || cost < map[r.component]) {
-        map[r.component] = cost;
-      }
-    });
-    return map;
-  }, [rows]);
-
-  // ======================
-  // TOTAL COST (TERMURAH SAJA)
+  // HITUNG TOTAL COST SESUAI PILIHAN USER
   // ======================
   const totalCost = useMemo(() => {
-    return Object.values(cheapestMap).reduce(
-      (sum, val) => sum + val,
-      0
-    );
-  }, [cheapestMap]);
+    let sum = 0;
+    rows.forEach((r) => {
+      if (selectedSupplierMap[r.component] === r.candidate_supplier) {
+        sum += r.cost_bearing;
+      }
+    });
+    return sum;
+  }, [rows, selectedSupplierMap]);
+
+  // ======================
+  // HANDLE PILIH SUPPLIER
+  // ======================
+  const handleSelectSupplier = (component: string, supplier: string) => {
+    setSelectedSupplierMap((prev) => ({
+      ...prev,
+      [component]: supplier,
+    }));
+  };
 
   return (
     <div className="p-6">
@@ -122,71 +142,45 @@ export default function BomSummaryPage() {
               <th className="border px-2">BP 2026</th>
               <th className="border px-2">Landed IDR</th>
               <th className="border px-2">Cost / Bearing</th>
+              <th className="border px-2">Use for Total?</th>
             </tr>
           </thead>
 
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={10} className="border text-center py-4">
+                <td colSpan={11} className="border text-center py-4">
                   Loading...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td
-                  colSpan={10}
-                  className="border text-center py-4 text-gray-500"
-                >
+                <td colSpan={11} className="border text-center py-4 text-gray-500">
                   Tidak ada data
                 </td>
               </tr>
             ) : (
               rows.map((r, i) => {
-                const cost = Number(r.cost_bearing);
-                const isCheapest =
-                  cost === cheapestMap[r.component];
-
+                const isSelected = selectedSupplierMap[r.component] === r.candidate_supplier;
                 return (
-                  <tr
-                    key={i}
-                    className={
-                      isCheapest
-                        ? "bg-yellow-100 font-semibold"
-                        : ""
-                    }
-                  >
-                    <td className="border px-2">
-                      {r.component}
-                    </td>
-                    <td className="border px-2">
-                      {r.candidate_supplier}
-                    </td>
-                    <td className="border px-2 text-right">
-                      {r.price.toLocaleString("id-ID")}
-                    </td>
-                    <td className="border px-2">
-                      {r.currency}
-                    </td>
-                    <td className="border px-2">
-                      {r.term}
-                    </td>
-                    <td className="border px-2 text-right">
-                      {r.landed_cost_percent}%
-                    </td>
-                    <td className="border px-2 text-right">
-                      {r.tpl_percent}%
-                    </td>
-                    <td className="border px-2 text-right">
-                      {r.bp_2026.toLocaleString("id-ID")}
-                    </td>
-                    <td className="border px-2 text-right">
-                      {r.landed_idr_price.toLocaleString(
-                        "id-ID"
-                      )}
-                    </td>
-                    <td className="border px-2 text-right">
-                      {cost.toLocaleString("id-ID")}
+                  <tr key={i} className={isSelected ? "bg-yellow-100 font-semibold" : ""}>
+                    <td className="border px-2">{r.component}</td>
+                    <td className="border px-2">{r.candidate_supplier}</td>
+                    <td className="border px-2 text-right">{r.price.toLocaleString("id-ID")}</td>
+                    <td className="border px-2">{r.currency}</td>
+                    <td className="border px-2">{r.term}</td>
+                    <td className="border px-2 text-right">{r.landed_cost_percent}%</td>
+                    <td className="border px-2 text-right">{r.tpl_percent}%</td>
+                    <td className="border px-2 text-right">{r.bp_2026.toLocaleString("id-ID")}</td>
+                    <td className="border px-2 text-right">{r.landed_idr_price.toLocaleString("id-ID")}</td>
+                    <td className="border px-2 text-right">{r.cost_bearing.toLocaleString("id-ID")}</td>
+                    <td className="border px-2 text-center">
+                      <input
+                        type="radio"
+                        name={`selected-${r.component}`}
+                        checked={isSelected}
+                        onChange={() => handleSelectSupplier(r.component, r.candidate_supplier)}
+                      />
                     </td>
                   </tr>
                 );
@@ -197,11 +191,8 @@ export default function BomSummaryPage() {
           {/* TOTAL */}
           <tfoot>
             <tr className="bg-yellow-300 font-bold">
-              <td
-                colSpan={9}
-                className="border px-2 text-right"
-              >
-                TOTAL COST BEARING (TERMURAH)
+              <td colSpan={10} className="border px-2 text-right">
+                TOTAL COST BEARING
               </td>
               <td className="border px-2 text-right">
                 {totalCost.toLocaleString("id-ID")}
