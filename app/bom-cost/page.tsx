@@ -288,68 +288,94 @@ export default function BomCostPage() {
 
 
       {/* TABLE */}
-      <div className="bg-white border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-[1700px] text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border px-3 py-2">Project</th>
-                <th className="border px-3 py-2">Component</th>
-                <th className="border px-3 py-2">Supplier</th>
-                <th className="border px-3 py-2">Price</th>
-                <th className="border px-3 py-2">Currency</th>
-                <th className="border px-3 py-2">Term</th>
-                <th className="border px-3 py-2">Landed Cost (%)</th>
-                <th className="border px-3 py-2">TPL (%)</th>
-                <th className="border px-3 py-2">BP 2026</th>
-                <th className="border px-3 py-2">Landed IDR</th>
-                <th className="border px-3 py-2">Cost Bearing</th>
-                <th className="border px-3 py-2">Tooling Cost</th>
-              </tr>
-            </thead>
+<div className="bg-white border rounded-xl overflow-hidden">
+  <div className="overflow-x-auto">
+    <table className="min-w-[1700px] text-sm">
+      <thead className="bg-gray-100">
+        <tr>
+          <th className="border px-3 py-2">Project</th>
+          <th className="border px-3 py-2">Component</th>
+          <th className="border px-3 py-2">Supplier</th>
+          <th className="border px-3 py-2">Price</th>
+          <th className="border px-3 py-2">Currency</th>
+          <th className="border px-3 py-2">Term</th>
+          <th className="border px-3 py-2">Landed Cost (%)</th>
+          <th className="border px-3 py-2">TPL (%)</th>
+          <th className="border px-3 py-2">BP 2026</th>
+          <th className="border px-3 py-2">Landed IDR</th>
+          <th className="border px-3 py-2">Cost Bearing</th>
+          <th className="border px-3 py-2">Tooling Cost</th>
+          <th className="border px-3 py-2">Action</th> {/* Tambah kolom Action */}
+        </tr>
+      </thead>
 
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={12} className="text-center py-6">
-                    Loading...
-                  </td>
-                </tr>
-              ) : (
-                data.map((d) => (
-                  <tr
-                    key={d.id}
-                    onClick={() => selectRow(d)}
-                    title="Klik untuk edit"
-                    className={`cursor-pointer hover:bg-blue-50 ${
-                      editingId === d.id ? "bg-blue-100 ring-1 ring-blue-300" : ""
-                    }`}
-                  >
-                    <td className="border px-3 py-2">{d.project_name}</td>
-                    <td className="border px-3 py-2">{d.component}</td>
-                    <td className="border px-3 py-2">{d.candidate_supplier}</td>
-                    <td className="border px-3 py-2 text-right">{d.price}</td>
-                    <td className="border px-3 py-2">{d.currency}</td>
-                    <td className="border px-3 py-2">{d.term}</td>
-                    <td className="border px-3 py-2 text-right">{d.landed_cost}%</td>
-                    <td className="border px-3 py-2 text-right">{d.tpl}%</td>
-                    <td className="border px-3 py-2 text-right">{d.bp_2026}</td>
-                    <td className="border px-3 py-2 text-right">
-                      {Number(d.landed_idr_price).toLocaleString("id-ID")}
-                    </td>
-                    <td className="border px-3 py-2 text-right font-semibold">
-                      {Number(d.cost_bearing).toLocaleString("id-ID")}
-                    </td>
-                    <td className="border px-3 py-2 text-right">
-                      {Number(d.tooling_cost).toLocaleString("id-ID")}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <tbody>
+        {loading ? (
+          <tr>
+            <td colSpan={13} className="text-center py-6">Loading...</td>
+          </tr>
+        ) : (
+          data.map((d) => (
+            <tr
+              key={d.id}
+              onClick={() => selectRow(d)}
+              title="Klik untuk edit"
+              className={`cursor-pointer hover:bg-blue-50 ${editingId === d.id ? "bg-blue-100 ring-1 ring-blue-300" : ""}`}
+            >
+              <td className="border px-3 py-2">{d.project_name}</td>
+              <td className="border px-3 py-2">{d.component}</td>
+              <td className="border px-3 py-2">{d.candidate_supplier}</td>
+              <td className="border px-3 py-2 text-right">{d.price}</td>
+              <td className="border px-3 py-2">{d.currency}</td>
+              <td className="border px-3 py-2">{d.term}</td>
+              <td className="border px-3 py-2 text-right">{d.landed_cost}%</td>
+              <td className="border px-3 py-2 text-right">{d.tpl}%</td>
+              <td className="border px-3 py-2 text-right">{d.bp_2026}</td>
+              <td className="border px-3 py-2 text-right">{Number(d.landed_idr_price).toLocaleString("id-ID")}</td>
+              <td className="border px-3 py-2 text-right font-semibold">{Number(d.cost_bearing).toLocaleString("id-ID")}</td>
+              <td className="border px-3 py-2 text-right">{Number(d.tooling_cost).toLocaleString("id-ID")}</td>
+
+              {/* DELETE BUTTON */}
+              <td className="border px-3 py-2 text-center">
+                <button
+                  className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                  onClick={async (e) => {
+                    e.stopPropagation(); // supaya tidak ikut trigger selectRow
+                    if (!confirm("Yakin ingin menghapus data ini?")) return;
+
+                    try {
+                      setSubmitting(true);
+                      const res = await fetch("/api/bom-cost", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: d.id }),
+                      });
+                      const json = await res.json();
+                      if (!res.ok) throw new Error(json.error || "Gagal menghapus data");
+
+                      setToast({ message: "Data berhasil dihapus!", type: "success" });
+                      setTimeout(() => setToast(null), 3000);
+                      await loadBomCost();
+                    } catch (err: any) {
+                      setToast({ message: err.message || "Terjadi kesalahan", type: "error" });
+                      setTimeout(() => setToast(null), 3000);
+                    } finally {
+                      setSubmitting(false);
+                    }
+                  }}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
     </div>
   );
 }
