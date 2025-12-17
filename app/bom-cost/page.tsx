@@ -84,33 +84,40 @@ export default function BomCostPage() {
 
   // ================= EDIT =================
   function selectRow(row: BomCost) {
-    setEditingId(row.id);
-    setForm({
-      id: row.id,
-      project_id: String(row.project_id),
-      component: row.component,
-      candidate_supplier: row.candidate_supplier,
-      price: row.price,
-      currency: row.currency,
-      term: row.term,
-      landed_cost: row.landed_cost,
-      tpl: row.tpl,
-      tooling_cost: row.tooling_cost,
-    });
-    setCurrencyInput(row.currency);
-    loadComponents(String(row.project_id));
-  }
+  setEditingId(row.id);
+  setForm({
+    id: row.id,
+    project_id: String(row.project_id),
+    component: row.component,
+    candidate_supplier: row.candidate_supplier,
+    price: String(row.price ?? ""),
+    currency: row.currency,
+    term: row.term,
+    landed_cost: String(row.landed_cost ?? ""),
+    tpl: String(row.tpl ?? ""),
+    tooling_cost: String(row.tooling_cost ?? ""),
+  });
+  setCurrencyInput(row.currency);
+  loadComponents(String(row.project_id));
+}
 
-  function parseIDNumber(value: string): number {
-      if (!value) return 0;
 
-      return Number(
-        value
-          .replace(/\s/g, "")
-          .replace(/\./g, "")
-          .replace(",", ".")
-      ) || 0;
+  function parseIDNumber(value: string | number | null | undefined): number {
+      if (value === null || value === undefined) return 0;
+
+      if (typeof value === "number") return value;
+
+      return (
+        Number(
+          value
+            .toString()
+            .replace(/\s/g, "")
+            .replace(/\./g, "")
+            .replace(",", ".")
+        ) || 0
+      );
     }
+
 
   function formatID(value: string | number) {
     const num = Number(value);
