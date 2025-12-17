@@ -101,19 +101,25 @@ export default function BomCostPage() {
     loadComponents(String(row.project_id));
   }
 
-  function normalizeNumberInput(value: string): string {
-    if (!value) return "";
+  function parseIDNumber(value: string): number {
+      if (!value) return 0;
 
-    // hilangkan spasi
-    let v = value.trim();
+      return Number(
+        value
+          .replace(/\s/g, "")
+          .replace(/\./g, "")
+          .replace(",", ".")
+      ) || 0;
+    }
 
-    // jika format indonesia: 20.000,50
-    v = v.replace(/\./g, "").replace(",", ".");
+  function formatID(value: string | number) {
+    const num = Number(value);
+    if (isNaN(num)) return "-";
 
-    // pastikan numeric
-    if (isNaN(Number(v))) return "";
-
-    return v;
+    return new Intl.NumberFormat("id-ID", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(num);
   }
 
   // ================= SUBMIT =================
@@ -127,7 +133,16 @@ export default function BomCostPage() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, project_id: Number(form.project_id) }),
+        body: JSON.stringify({
+          ...form,
+          project_id: Number(form.project_id),
+
+          price: parseIDNumber(form.price),
+          landed_cost: parseIDNumber(form.landed_cost),
+          tpl: parseIDNumber(form.tpl),
+          tooling_cost: parseIDNumber(form.tooling_cost),
+        }),
+
       });
 
       if (!res.ok) throw new Error("Gagal menyimpan BOM Cost");
@@ -306,15 +321,9 @@ export default function BomCostPage() {
           className="border px-3 py-2"
           placeholder="Tooling Cost"
           value={form.tooling_cost}
-          onChange={(e) => {
-            const raw = e.target.value;
-            const normalized = normalizeNumberInput(raw);
-
-            setForm({
-              ...form,
-              tooling_cost: normalized,
-            });
-          }}
+          onChange={(e) =>
+            setForm({ ...form, tooling_cost: e.target.value })
+          }
         />
 
         {/* SUBMIT & CANCEL BUTTON */}
@@ -401,7 +410,10 @@ export default function BomCostPage() {
                     <td className="border px-3 py-2 text-right">{d.bp_2026}</td>
                     <td className="border px-3 py-2 text-right">{Number(d.landed_idr_price).toLocaleString("id-ID")}</td>
                     <td className="border px-3 py-2 text-right font-semibold">{Number(d.cost_bearing).toLocaleString("id-ID")}</td>
-                    <td className="border px-3 py-2 text-right">{Number(d.tooling_cost).toLocaleString("id-ID")}</td>
+                    <td className="border px-3 py-2 text-right">
+  {formatID(d.tooling_cost)}
+</td>
+
                     <td className="border px-3 py-2 text-center">
                       <button
                         className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
