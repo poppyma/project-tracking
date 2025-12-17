@@ -19,18 +19,20 @@ type Row = {
   cost_bearing: string | null;
 };
 
-// ======================
-// Parse string Supabase ke number
-// ======================
-function parseNumber(value: string | null): number {
+/* =====================================================
+   FORMAT & PARSE ANGKA INDONESIA (FINAL)
+===================================================== */
+
+// DISPLAY ONLY (JANGAN DIHITUNG)
+function formatIdNumber(value: string | null) {
+  if (!value) return "-";
+  return value; // tampilkan apa adanya dari backend
+}
+
+// KHUSUS UNTUK TOTAL (DIHITUNG)
+function parseIdNumber(value: string | null): number {
   if (!value) return 0;
-  return Number(
-    value
-      .replace(/\./g, "")
-      .replace(",", ".")
-      .replace("%", "")
-      .trim()
-  ) || 0;
+  return Number(value.replace(/\./g, "").replace(",", "."));
 }
 
 export default function BomSummaryClient() {
@@ -41,9 +43,9 @@ export default function BomSummaryClient() {
 
   const [selectedSupplierMap, setSelectedSupplierMap] = useState<Record<string, string>>({});
 
-  // ======================
-  // Load project list
-  // ======================
+  /* ======================
+     LOAD PROJECT LIST
+  ====================== */
   useEffect(() => {
     fetch("/api/projects/simple")
       .then((res) => res.json())
@@ -51,9 +53,9 @@ export default function BomSummaryClient() {
       .catch(console.error);
   }, []);
 
-  // ======================
-  // Load BOM data per project
-  // ======================
+  /* ======================
+     LOAD BOM SUMMARY
+  ====================== */
   useEffect(() => {
     if (!projectId) {
       setRows([]);
@@ -63,13 +65,17 @@ export default function BomSummaryClient() {
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/bom-cost-summary?project_id=${projectId}`, { cache: "no-store" });
+        const res = await fetch(
+          `/api/bom-cost-summary?project_id=${projectId}`,
+          { cache: "no-store" }
+        );
+
         const data: Row[] = await res.json();
         setRows(data);
 
-        // DEFAULT: pilih supplier termurah per component
-        const defaultSelection: Record<string, string> = {};
+        // DEFAULT PILIH SUPPLIER TERMURAH
         const grouped: Record<string, Row[]> = {};
+        const defaultSelection: Record<string, string> = {};
 
         data.forEach((r) => {
           if (!grouped[r.component]) grouped[r.component] = [];
@@ -77,8 +83,8 @@ export default function BomSummaryClient() {
         });
 
         for (const comp in grouped) {
-          const cheapest = grouped[comp].reduce((prev, curr) =>
-            parseNumber(curr.cost_bearing) < parseNumber(prev.cost_bearing) ? curr : prev
+          const cheapest = grouped[comp].reduce((a, b) =>
+            parseIdNumber(a.cost_bearing) < parseIdNumber(b.cost_bearing) ? a : b
           );
           defaultSelection[comp] = cheapest.candidate_supplier;
         }
@@ -95,31 +101,9 @@ export default function BomSummaryClient() {
     load();
   }, [projectId]);
 
-  // ======================
-  // Total cost sesuai pilihan user
-  // ======================
-  const totalCost = useMemo(() => {
-    return rows.reduce((sum, r) => {
-      if (selectedSupplierMap[r.component] === r.candidate_supplier) {
-        return sum + parseNumber(r.cost_bearing);
-      }
-      return sum;
-    }, 0);
-  }, [rows, selectedSupplierMap]);
-
-  // ======================
-  // Pilih supplier
-  // ======================
-  const handleSelectSupplier = (component: string, supplier: string) => {
-    setSelectedSupplierMap((prev) => ({
-      ...prev,
-      [component]: supplier,
-    }));
-  };
-
-  // ======================
-  // Group rows per component
-  // ======================
+  /* ======================
+     GROUP BY COMPONENT
+  ====================== */
   const groupedRows = useMemo(() => {
     return rows.reduce<Record<string, Row[]>>((acc, r) => {
       if (!acc[r.component]) acc[r.component] = [];
@@ -128,11 +112,33 @@ export default function BomSummaryClient() {
     }, {});
   }, [rows]);
 
+  /* ======================
+     TOTAL COST BEARING
+  ====================== */
+  const totalCost = useMemo(() => {
+    return rows.reduce((sum, r) => {
+      if (selectedSupplierMap[r.component] === r.candidate_supplier) {
+        return sum + parseIdNumber(r.cost_bearing);
+      }
+      return sum;
+    }, 0);
+  }, [rows, selectedSupplierMap]);
+
+  /* ======================
+     SELECT SUPPLIER
+  ====================== */
+  const handleSelectSupplier = (component: string, supplier: string) => {
+    setSelectedSupplierMap((prev) => ({
+      ...prev,
+      [component]: supplier,
+    }));
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">BOM Summary</h1>
 
-      {/* Project select */}
+      {/* PROJECT SELECT */}
       <select
         className="border px-3 py-2 mb-4"
         value={projectId}
@@ -146,7 +152,7 @@ export default function BomSummaryClient() {
         ))}
       </select>
 
-      {/* Table */}
+      {/* TABLE */}
       <div className="overflow-x-auto">
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
@@ -157,13 +163,14 @@ export default function BomSummaryClient() {
               <th className="border px-2">Currency</th>
               <th className="border px-2">Term</th>
               <th className="border px-2">Landed %</th>
-              <th className="border px-2">TPL</th>
+              <th className="border px-2">TPL %</th>
               <th className="border px-2">BP 2026</th>
               <th className="border px-2">Landed IDR</th>
               <th className="border px-2">Cost / Bearing</th>
-              <th className="border px-2">Use for Total?</th>
+              <th className="border px-2">Use?</th>
             </tr>
           </thead>
+
           <tbody>
             {loading ? (
               <tr>
@@ -171,46 +178,63 @@ export default function BomSummaryClient() {
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={11} className="border text-center py-4 text-gray-500">Tidak ada data</td>
+                <td colSpan={11} className="border text-center py-4 text-gray-500">
+                  Tidak ada data
+                </td>
               </tr>
             ) : (
               Object.entries(groupedRows).map(([component, componentRows]) => (
                 <React.Fragment key={component}>
                   {componentRows.map((r, i) => {
-                    const isSelected = selectedSupplierMap[r.component] === r.candidate_supplier;
+                    const isSelected =
+                      selectedSupplierMap[r.component] === r.candidate_supplier;
+
                     return (
-                      <tr key={i} className={isSelected ? "bg-yellow-100 font-semibold" : ""}>
+                      <tr
+                        key={i}
+                        className={isSelected ? "bg-yellow-100 font-semibold" : ""}
+                      >
                         <td className="border px-2">{r.component}</td>
                         <td className="border px-2">{r.candidate_supplier}</td>
-                        <td className="border px-2 text-right">{r.price ? parseNumber(r.price).toLocaleString("id-ID") : "-"}</td>
+                        <td className="border px-2 text-right">{r.price ?? "-"}</td>
                         <td className="border px-2">{r.currency}</td>
                         <td className="border px-2">{r.term}</td>
-                        <td className="border px-2 text-right">{r.landed_cost_percent ? parseNumber(r.landed_cost_percent) + "%" : "-"}</td>
-                        <td className="border px-2 text-right">{r.tpl_percent ? parseNumber(r.tpl_percent) + "%" : "-"}</td>
-                        <td className="border px-2 text-right">{r.bp_2026 ? parseNumber(r.bp_2026).toLocaleString("id-ID") : "-"}</td>
-                        <td className="border px-2 text-right">{r.landed_idr_price ? parseNumber(r.landed_idr_price).toLocaleString("id-ID") : "-"}</td>
-                        <td className="border px-2 text-right">{r.cost_bearing ? parseNumber(r.cost_bearing).toLocaleString("id-ID") : "-"}</td>
+                        <td className="border px-2 text-right">{r.landed_cost_percent ?? "-"}</td>
+                        <td className="border px-2 text-right">{r.tpl_percent ?? "-"}</td>
+                        <td className="border px-2 text-right">{r.bp_2026 ?? "-"}</td>
+                        <td className="border px-2 text-right">
+                          {formatIdNumber(r.landed_idr_price)}
+                        </td>
+                        <td className="border px-2 text-right">
+                          {formatIdNumber(r.cost_bearing)}
+                        </td>
                         <td className="border px-2 text-center">
                           <input
                             type="radio"
                             name={`selected-${r.component}`}
                             checked={isSelected}
-                            onChange={() => handleSelectSupplier(r.component, r.candidate_supplier)}
+                            onChange={() =>
+                              handleSelectSupplier(r.component, r.candidate_supplier)
+                            }
                           />
                         </td>
                       </tr>
                     );
                   })}
-                  {/* Spacer antar component */}
-                  <tr><td colSpan={11} className="py-2"></td></tr>
+                  <tr><td colSpan={11} className="py-2" /></tr>
                 </React.Fragment>
               ))
             )}
           </tbody>
+
           <tfoot>
             <tr className="bg-yellow-300 font-bold">
-              <td colSpan={10} className="border px-2 text-right">TOTAL COST BEARING</td>
-              <td className="border px-2 text-right">{totalCost.toLocaleString("id-ID")}</td>
+              <td colSpan={10} className="border px-2 text-right">
+                TOTAL COST BEARING
+              </td>
+              <td className="border px-2 text-right">
+                {totalCost.toLocaleString("id-ID")}
+              </td>
             </tr>
           </tfoot>
         </table>
