@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 type Project = {
   id: number;
@@ -30,11 +31,14 @@ function parseNumber(value: string | null | undefined): number {
 }
 
 export default function BomSummaryPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const initialProjectId = searchParams.get("project_id") || "";
+
   const [projects, setProjects] = useState<Project[]>([]);
-  const [projectId, setProjectId] = useState("");
+  const [projectId, setProjectId] = useState(initialProjectId);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
-
   const [selectedSupplierMap, setSelectedSupplierMap] = useState<Record<string, string>>({});
 
   // ======================
@@ -59,7 +63,7 @@ export default function BomSummaryPage() {
         const res = await fetch(`/api/bom-cost-summary?project_id=${projectId}`, { cache: "no-store" });
         const data: Row[] = await res.json();
 
-        // DEFAULT: pilih supplier termurah
+        // Default: pilih supplier termurah
         const defaultSelection: Record<string, string> = {};
         const groupedByComponent: Record<string, Row[]> = {};
 
@@ -110,6 +114,16 @@ export default function BomSummaryPage() {
   };
 
   // ======================
+  // Handle pilih project & update URL
+  // ======================
+  const handleProjectChange = (id: string) => {
+    setProjectId(id);
+    const url = new URL(window.location.href);
+    url.searchParams.set("project_id", id);
+    window.history.replaceState({}, "", url.toString());
+  };
+
+  // ======================
   // Group rows per component untuk spacer
   // ======================
   const groupedRows = useMemo(() => {
@@ -128,7 +142,7 @@ export default function BomSummaryPage() {
       <select
         className="border px-3 py-2 mb-4"
         value={projectId}
-        onChange={(e) => setProjectId(e.target.value)}
+        onChange={(e) => handleProjectChange(e.target.value)}
       >
         <option value="">-- Pilih Project --</option>
         {projects.map(p => (
