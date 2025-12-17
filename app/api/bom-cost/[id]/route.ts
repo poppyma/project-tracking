@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { initTables, query } from "@/lib/db";
 
 function parseNumber(value: string): number {
@@ -12,10 +12,11 @@ function parseNumber(value: string): number {
   ) || 0;
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: { id: string } }) {
   try {
+    const { id } = context.params; // context.params sekarang sesuai tipe Next.js
     await initTables();
-    const { id } = params;
+
     const body = await req.json();
 
     const {
