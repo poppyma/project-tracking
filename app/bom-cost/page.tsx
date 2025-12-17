@@ -101,16 +101,24 @@ export default function BomCostPage() {
     loadComponents(String(row.project_id));
   }
 
-  function parseIDNumber(value: string): number {
-      if (!value) return 0;
+  function parseIDNumber(value: string | number): number {
+    if (value === null || value === undefined) return 0;
 
-      return Number(
+    // kalau sudah number → langsung pakai
+    if (typeof value === "number") return value;
+
+    // kalau string → baru di-parse
+    return (
+      Number(
         value
+          .toString()
           .replace(/\s/g, "")
           .replace(/\./g, "")
           .replace(",", ".")
-      ) || 0;
-    }
+      ) || 0
+    );
+  }
+
 
   function formatID(value: string | number) {
     const num = Number(value);
