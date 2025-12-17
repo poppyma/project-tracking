@@ -2,11 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Project = {
-  id: number;
-  name: string;
-};
-
+type Project = { id: number; name: string };
 type BomCost = {
   id: number;
   project_id: number;
@@ -35,6 +31,7 @@ export default function BomCostPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const [form, setForm] = useState({
+    id: 0,
     project_id: "",
     component: "",
     candidate_supplier: "",
@@ -78,7 +75,7 @@ export default function BomCostPage() {
   async function loadCurrencies() {
     try {
       const res = await fetch("/api/bp");
-      const json = await res.json(); // [{ currency: "USD" }, ...]
+      const json = await res.json();
       setCurrencies(json.map((c: any) => c.currency));
     } catch (err) {
       console.error("Gagal load currencies:", err);
@@ -89,6 +86,7 @@ export default function BomCostPage() {
   function selectRow(row: BomCost) {
     setEditingId(row.id);
     setForm({
+      id: row.id,
       project_id: String(row.project_id),
       component: row.component,
       candidate_supplier: row.candidate_supplier,
@@ -109,27 +107,19 @@ export default function BomCostPage() {
     setSubmitting(true);
 
     try {
-      let res;
-      if (editingId) {
-        // UPDATE existing BOM
-        res = await fetch(`/api/bom-cost/${editingId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, project_id: Number(form.project_id) }),
-        });
-      } else {
-        // CREATE new BOM
-        res = await fetch("/api/bom-cost", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, project_id: Number(form.project_id) }),
-        });
-      }
+      const method = editingId ? "PUT" : "POST";
+      const url = editingId ? `/api/bom-cost` : `/api/bom-cost`;
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, project_id: Number(form.project_id) }),
+      });
 
       if (!res.ok) throw new Error("Gagal menyimpan BOM Cost");
 
       setEditingId(null);
       setForm({
+        id: 0,
         project_id: "",
         component: "",
         candidate_supplier: "",
@@ -321,6 +311,7 @@ export default function BomCostPage() {
               onClick={() => {
                 setEditingId(null);
                 setForm({
+                  id: 0,
                   project_id: "",
                   component: "",
                   candidate_supplier: "",
