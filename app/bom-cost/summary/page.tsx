@@ -23,45 +23,53 @@ type Row = {
 
 /* ================= HELPERS ================= */
 
-// Parsing AMAN (TIDAK dikali 100)
+/**
+ * PARSE ANGKA AMAN
+ * Support:
+ * - 1202,6
+ * - 1.202,6
+ * - 1202.6
+ * - 2,751.48
+ */
 function parseNumber(value: string | null): number {
   if (!value) return 0;
-  return Number(
-    value
-      .replace(/\./g, "")
-      .replace(",", ".")
-      .replace("%", "")
-      .trim()
-  ) || 0;
+
+  const v = value.toString().trim();
+
+  // koma sebagai desimal (format ID)
+  if (v.includes(",") && v.lastIndexOf(",") > v.lastIndexOf(".")) {
+    return Number(v.replace(/\./g, "").replace(",", ".")) || 0;
+  }
+
+  // titik sebagai desimal (format backend / standard)
+  return Number(v.replace(/,/g, "")) || 0;
 }
 
-// 1202.60 -> 1202.6 | 1202.00 -> 1202
-function formatTrimDecimal(value: string | null) {
-  if (!value) return "-";
-  const num = Number(value.replace(",", "."));
-  if (isNaN(num)) return value;
-  return num.toString().replace(".", ",");
-}
-
-function formatIDString(value: string | null) {
-  if (!value) return "-";
-
-  // ubah "1202,6" → number 1202.6
-  const num = Number(value.replace(/\./g, "").replace(",", "."));
-  if (isNaN(num)) return value;
+/**
+ * FORMAT TAMPILAN INDONESIA
+ * 1202.6 -> 1.202,6
+ * 2751.48 -> 2.751,48
+ */
+function formatID(value: number | null) {
+  if (value === null || isNaN(value)) return "-";
 
   return new Intl.NumberFormat("id-ID", {
     maximumFractionDigits: 2,
-  }).format(num);
+  }).format(value);
 }
 
-
-// 10 -> 10% | 7.5 -> 7.5%
+// 10 -> 10% | 7.5 -> 7,5%
 function formatPercent(value: string | null) {
   if (!value) return "-";
-  const num = Number(value.replace("%", "").replace(",", "."));
-  if (isNaN(num)) return value;
+  const num = parseNumber(value);
   return num.toString().replace(".", ",") + "%";
+}
+
+// Harga supplier (tetap trim decimal)
+function formatTrimDecimal(value: string | null) {
+  if (!value) return "-";
+  const num = parseNumber(value);
+  return num.toString().replace(".", ",");
 }
 
 /* ================= COMPONENT ================= */
@@ -99,7 +107,7 @@ export default function BomSummaryClient() {
         const data: Row[] = await res.json();
         setRows(data);
 
-        // default pilih supplier termurah per component
+        // default supplier termurah per component
         const map: Record<string, string> = {};
         const grouped: Record<string, Row[]> = {};
 
@@ -228,10 +236,10 @@ export default function BomSummaryClient() {
                           {formatTrimDecimal(r.bp_2026)}
                         </td>
                         <td className="border px-2 text-right">
-                          {formatTrimDecimal(r.landed_idr_price)}
+                          {formatID(parseNumber(r.landed_idr_price))}
                         </td>
                         <td className="border px-2 text-right">
-                          {formatIDString(r.cost_bearing)}
+                          {formatID(parseNumber(r.cost_bearing))}
                         </td>
                         <td className="border px-2 text-center">
                           <input
@@ -263,13 +271,10 @@ export default function BomSummaryClient() {
                 TOTAL COST BEARING
               </td>
               <td className="border px-2 text-right">
-                {new Intl.NumberFormat("id-ID", {
-                  maximumFractionDigits: 2,
-                }).format(totalCost)}
+                {formatID(totalCost)}
               </td>
             </tr>
           </tfoot>
-
         </table>
       </div>
     </div>
