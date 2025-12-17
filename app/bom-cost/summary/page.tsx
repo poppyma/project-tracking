@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 
 type Project = {
   id: number;
@@ -21,24 +20,25 @@ type Row = {
 };
 
 // ======================
-// Parse angka dari string Supabase
+// Parse string Supabase ke number
 // ======================
-function parseNumber(value: string | null | undefined): number {
+function parseNumber(value: string | null): number {
   if (!value) return 0;
-  const cleaned = value.toString().replace(/\./g, "").replace(",", ".").replace("%", "").trim();
-  const num = Number(cleaned);
-  return isNaN(num) ? 0 : num;
+  return Number(
+    value
+      .replace(/\./g, "")
+      .replace(",", ".")
+      .replace("%", "")
+      .trim()
+  ) || 0;
 }
 
-export default function BomSummaryPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const initialProjectId = searchParams.get("project_id") || "";
-
+export default function BomSummaryClient() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [projectId, setProjectId] = useState(initialProjectId);
+  const [projectId, setProjectId] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
+
   const [selectedSupplierMap, setSelectedSupplierMap] = useState<Record<string, string>>({});
 
   // ======================
@@ -46,7 +46,7 @@ export default function BomSummaryPage() {
   // ======================
   useEffect(() => {
     fetch("/api/projects/simple")
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(setProjects)
       .catch(console.error);
   }, []);
@@ -55,34 +55,38 @@ export default function BomSummaryPage() {
   // Load BOM data per project
   // ======================
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId) {
+      setRows([]);
+      return;
+    }
 
     async function load() {
       setLoading(true);
       try {
         const res = await fetch(`/api/bom-cost-summary?project_id=${projectId}`, { cache: "no-store" });
         const data: Row[] = await res.json();
+        setRows(data);
 
-        // Default: pilih supplier termurah
+        // DEFAULT: pilih supplier termurah per component
         const defaultSelection: Record<string, string> = {};
-        const groupedByComponent: Record<string, Row[]> = {};
+        const grouped: Record<string, Row[]> = {};
 
-        data.forEach(r => {
-          if (!groupedByComponent[r.component]) groupedByComponent[r.component] = [];
-          groupedByComponent[r.component].push(r);
+        data.forEach((r) => {
+          if (!grouped[r.component]) grouped[r.component] = [];
+          grouped[r.component].push(r);
         });
 
-        for (const comp in groupedByComponent) {
-          const cheapest = groupedByComponent[comp].reduce((prev, curr) =>
+        for (const comp in grouped) {
+          const cheapest = grouped[comp].reduce((prev, curr) =>
             parseNumber(curr.cost_bearing) < parseNumber(prev.cost_bearing) ? curr : prev
           );
           defaultSelection[comp] = cheapest.candidate_supplier;
         }
 
-        setRows(data);
         setSelectedSupplierMap(defaultSelection);
       } catch (err) {
         console.error(err);
+        setRows([]);
       } finally {
         setLoading(false);
       }
@@ -92,7 +96,7 @@ export default function BomSummaryPage() {
   }, [projectId]);
 
   // ======================
-  // Hitung total cost sesuai supplier yang dipilih
+  // Total cost sesuai pilihan user
   // ======================
   const totalCost = useMemo(() => {
     return rows.reduce((sum, r) => {
@@ -104,27 +108,17 @@ export default function BomSummaryPage() {
   }, [rows, selectedSupplierMap]);
 
   // ======================
-  // Handle pilih supplier
+  // Pilih supplier
   // ======================
   const handleSelectSupplier = (component: string, supplier: string) => {
-    setSelectedSupplierMap(prev => ({
+    setSelectedSupplierMap((prev) => ({
       ...prev,
       [component]: supplier,
     }));
   };
 
   // ======================
-  // Handle pilih project & update URL
-  // ======================
-  const handleProjectChange = (id: string) => {
-    setProjectId(id);
-    const url = new URL(window.location.href);
-    url.searchParams.set("project_id", id);
-    window.history.replaceState({}, "", url.toString());
-  };
-
-  // ======================
-  // Group rows per component untuk spacer
+  // Group rows per component
   // ======================
   const groupedRows = useMemo(() => {
     return rows.reduce<Record<string, Row[]>>((acc, r) => {
@@ -142,21 +136,18 @@ export default function BomSummaryPage() {
       <select
         className="border px-3 py-2 mb-4"
         value={projectId}
-        onChange={(e) => handleProjectChange(e.target.value)}
+        onChange={(e) => setProjectId(e.target.value)}
       >
         <option value="">-- Pilih Project --</option>
-        {projects.map(p => (
-          <option key={p.id} value={String(p.id)}>{p.name}</option>
+        {projects.map((p) => (
+          <option key={p.id} value={String(p.id)}>
+            {p.name}
+          </option>
         ))}
       </select>
 
       {/* Table */}
-      <div className="overflow-x-auto relative">
-        {loading && (
-          <div className="absolute top-0 left-0 w-full bg-white bg-opacity-50 text-center py-1 text-gray-600">
-            Loading data project...
-          </div>
-        )}
+      <div className="overflow-x-auto">
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
@@ -174,11 +165,13 @@ export default function BomSummaryPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {loading ? (
               <tr>
-                <td colSpan={11} className="border text-center py-4 text-gray-500">
-                  Tidak ada data
-                </td>
+                <td colSpan={11} className="border text-center py-4">Loading...</td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={11} className="border text-center py-4 text-gray-500">Tidak ada data</td>
               </tr>
             ) : (
               Object.entries(groupedRows).map(([component, componentRows]) => (
@@ -209,9 +202,7 @@ export default function BomSummaryPage() {
                     );
                   })}
                   {/* Spacer antar component */}
-                  <tr>
-                    <td colSpan={11} className="py-2"></td>
-                  </tr>
+                  <tr><td colSpan={11} className="py-2"></td></tr>
                 </React.Fragment>
               ))
             )}
