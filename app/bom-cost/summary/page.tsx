@@ -16,7 +16,7 @@ type Row = {
   tpl_percent: number;
   bp_2026: number;
   landed_idr_price: number;
-  cost_bearing: number;
+  cost_bearing: number | string; // Bisa string dari API, nanti convert ke number
 };
 
 export default function BomSummaryPage() {
@@ -54,20 +54,20 @@ export default function BomSummaryPage() {
         const data: Row[] = await res.json();
         setRows(data);
 
-        // Default: pilih supplier dengan cost_bearing termurah per component
+        // ======================
+        // DEFAULT: PILIH SUPPLIER TERMURAH
+        // ======================
         const defaultSelection: Record<string, string> = {};
         const groupedByComponent: Record<string, Row[]> = {};
 
-        // Kelompokkan rows per component
         data.forEach((r) => {
           if (!groupedByComponent[r.component]) groupedByComponent[r.component] = [];
           groupedByComponent[r.component].push(r);
         });
 
-        // Ambil supplier termurah per component
         for (const comp in groupedByComponent) {
           const cheapest = groupedByComponent[comp].reduce((prev, curr) =>
-            curr.cost_bearing < prev.cost_bearing ? curr : prev
+            Number(curr.cost_bearing) < Number(prev.cost_bearing) ? curr : prev
           );
           defaultSelection[comp] = cheapest.candidate_supplier;
         }
@@ -90,7 +90,7 @@ export default function BomSummaryPage() {
   const totalCost = useMemo(() => {
     return rows.reduce((sum, r) => {
       if (selectedSupplierMap[r.component] === r.candidate_supplier) {
-        return sum + r.cost_bearing;
+        return sum + Number(r.cost_bearing); // pastikan number
       }
       return sum;
     }, 0);
@@ -162,14 +162,14 @@ export default function BomSummaryPage() {
                   <tr key={i} className={isSelected ? "bg-yellow-100 font-semibold" : ""}>
                     <td className="border px-2">{r.component}</td>
                     <td className="border px-2">{r.candidate_supplier}</td>
-                    <td className="border px-2 text-right">{r.price.toLocaleString("id-ID")}</td>
+                    <td className="border px-2 text-right">{Number(r.price).toLocaleString("id-ID")}</td>
                     <td className="border px-2">{r.currency}</td>
                     <td className="border px-2">{r.term}</td>
                     <td className="border px-2 text-right">{r.landed_cost_percent}%</td>
                     <td className="border px-2 text-right">{r.tpl_percent}%</td>
-                    <td className="border px-2 text-right">{r.bp_2026.toLocaleString("id-ID")}</td>
-                    <td className="border px-2 text-right">{r.landed_idr_price.toLocaleString("id-ID")}</td>
-                    <td className="border px-2 text-right">{r.cost_bearing.toLocaleString("id-ID")}</td>
+                    <td className="border px-2 text-right">{Number(r.bp_2026).toLocaleString("id-ID")}</td>
+                    <td className="border px-2 text-right">{Number(r.landed_idr_price).toLocaleString("id-ID")}</td>
+                    <td className="border px-2 text-right">{Number(r.cost_bearing).toLocaleString("id-ID")}</td>
                     <td className="border px-2 text-center">
                       <input
                         type="radio"
@@ -183,7 +183,6 @@ export default function BomSummaryPage() {
               })
             )}
           </tbody>
-          {/* TOTAL */}
           <tfoot>
             <tr className="bg-yellow-300 font-bold">
               <td colSpan={10} className="border px-2 text-right">
