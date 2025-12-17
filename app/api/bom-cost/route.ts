@@ -27,17 +27,35 @@ export async function GET() {
   }
 }
 
-function parseNumber(value: string): number {
-  if (!value) return 0;
+// function parseNumber(value: string): number {
+//   if (!value) return 0;
 
-  return Number(
-    value
-      .replace(/\./g, "")   // hapus pemisah ribuan
-      .replace(",", ".")    // koma jadi desimal
-      .replace("%", "")     // hapus %
-      .trim()
-  ) || 0;
+//   return Number(
+//     value
+//       .replace(/\./g, "")   // hapus pemisah ribuan
+//       .replace(",", ".")    // koma jadi desimal
+//       .replace("%", "")     // hapus %
+//       .trim()
+//   ) || 0;
+// }
+
+function parseNumber(value: string | number | null | undefined): number {
+  if (value === null || value === undefined) return 0;
+
+  if (typeof value === "number") return value;
+
+  return (
+    Number(
+      value
+        .toString()
+        .replace(/\s/g, "")
+        .replace(/\./g, "")
+        .replace(",", ".")
+        .replace("%", "")
+    ) || 0
+  );
 }
+
 
 
 export async function POST(req: Request) {
