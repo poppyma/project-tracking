@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 
 type Project = {
   id: number;
@@ -18,6 +18,20 @@ type Row = {
   landed_idr_price: string | null;
   cost_bearing: string | null;
 };
+
+// ======================
+// Fungsi parseNumber
+// ======================
+function parseNumber(value: string | null): number {
+  if (!value) return 0;
+  return Number(
+    value
+      .replace(/\./g, "")   // hapus pemisah ribuan
+      .replace(",", ".")    // koma jadi desimal
+      .replace("%", "")     // hapus %
+      .trim()
+  ) || 0;
+}
 
 export default function BomSummaryPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -65,7 +79,7 @@ export default function BomSummaryPage() {
 
         for (const comp in groupedByComponent) {
           const cheapest = groupedByComponent[comp].reduce((prev, curr) =>
-            Number(curr.cost_bearing ?? Infinity) < Number(prev.cost_bearing ?? Infinity) ? curr : prev
+            parseNumber(curr.cost_bearing) < parseNumber(prev.cost_bearing) ? curr : prev
           );
           defaultSelection[comp] = cheapest.candidate_supplier;
         }
@@ -88,7 +102,7 @@ export default function BomSummaryPage() {
   const totalCost = useMemo(() => {
     return rows.reduce((sum, r) => {
       if (selectedSupplierMap[r.component] === r.candidate_supplier) {
-        return sum + Number(r.cost_bearing ?? 0);
+        return sum + parseNumber(r.cost_bearing);
       }
       return sum;
     }, 0);
@@ -115,6 +129,9 @@ export default function BomSummaryPage() {
     }, {});
   }, [rows]);
 
+  // ======================
+  // RENDER TABLE
+  // ======================
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-4">BOM Summary</h1>
@@ -166,33 +183,21 @@ export default function BomSummaryPage() {
               </tr>
             ) : (
               Object.entries(groupedRows).map(([component, componentRows]) => (
-                <>
+                <React.Fragment key={component}>
                   {componentRows.map((r, i) => {
                     const isSelected = selectedSupplierMap[r.component] === r.candidate_supplier;
                     return (
                       <tr key={i} className={isSelected ? "bg-yellow-100 font-semibold" : ""}>
                         <td className="border px-2">{r.component}</td>
                         <td className="border px-2">{r.candidate_supplier}</td>
-                        <td className="border px-2 text-right">
-                          {r.price !== null && r.price !== "" ? Number(r.price).toLocaleString("id-ID") : "-"}
-                        </td>
+                        <td className="border px-2 text-right">{r.price ? parseNumber(r.price).toLocaleString("id-ID") : "-"}</td>
                         <td className="border px-2">{r.currency}</td>
                         <td className="border px-2">{r.term}</td>
-                        <td className="border px-2 text-right">
-                          {r.landed_cost_percent !== null && r.landed_cost_percent !== "" ? Number(r.landed_cost_percent) + "%" : "-"}
-                        </td>
-                        <td className="border px-2 text-right">
-                          {r.tpl_percent !== null && r.tpl_percent !== "" ? Number(r.tpl_percent) + "%" : "-"}
-                        </td>
-                        <td className="border px-2 text-right">
-                          {r.bp_2026 !== null && r.bp_2026 !== "" ? Number(r.bp_2026).toLocaleString("id-ID") : "-"}
-                        </td>
-                        <td className="border px-2 text-right">
-                          {r.landed_idr_price !== null && r.landed_idr_price !== "" ? Number(r.landed_idr_price).toLocaleString("id-ID") : "-"}
-                        </td>
-                        <td className="border px-2 text-right">
-                          {r.cost_bearing !== null && r.cost_bearing !== "" ? Number(r.cost_bearing).toLocaleString("id-ID") : "-"}
-                        </td>
+                        <td className="border px-2 text-right">{r.landed_cost_percent ? parseNumber(r.landed_cost_percent) + "%" : "-"}</td>
+                        <td className="border px-2 text-right">{r.tpl_percent ? parseNumber(r.tpl_percent) + "%" : "-"}</td>
+                        <td className="border px-2 text-right">{r.bp_2026 ? parseNumber(r.bp_2026).toLocaleString("id-ID") : "-"}</td>
+                        <td className="border px-2 text-right">{r.landed_idr_price ? parseNumber(r.landed_idr_price).toLocaleString("id-ID") : "-"}</td>
+                        <td className="border px-2 text-right">{r.cost_bearing ? parseNumber(r.cost_bearing).toLocaleString("id-ID") : "-"}</td>
                         <td className="border px-2 text-center">
                           <input
                             type="radio"
@@ -204,11 +209,11 @@ export default function BomSummaryPage() {
                       </tr>
                     );
                   })}
-                  {/* Spacer row antar component */}
+                  {/* Spacer antar component */}
                   <tr>
                     <td colSpan={11} className="py-2"></td>
                   </tr>
-                </>
+                </React.Fragment>
               ))
             )}
           </tbody>
