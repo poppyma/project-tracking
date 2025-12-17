@@ -48,13 +48,10 @@ export default function BomSummaryPage() {
   }, []);
 
   // ======================
-  // Load BOM data
+  // Load BOM data per project
   // ======================
   useEffect(() => {
-    if (!projectId) {
-      setRows([]);
-      return;
-    }
+    if (!projectId) return;
 
     async function load() {
       setLoading(true);
@@ -62,7 +59,7 @@ export default function BomSummaryPage() {
         const res = await fetch(`/api/bom-cost-summary?project_id=${projectId}`, { cache: "no-store" });
         const data: Row[] = await res.json();
 
-        // Map default supplier termurah per component
+        // DEFAULT: pilih supplier termurah
         const defaultSelection: Record<string, string> = {};
         const groupedByComponent: Record<string, Row[]> = {};
 
@@ -82,7 +79,6 @@ export default function BomSummaryPage() {
         setSelectedSupplierMap(defaultSelection);
       } catch (err) {
         console.error(err);
-        setRows([]);
       } finally {
         setLoading(false);
       }
@@ -141,7 +137,12 @@ export default function BomSummaryPage() {
       </select>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto relative">
+        {loading && (
+          <div className="absolute top-0 left-0 w-full bg-white bg-opacity-50 text-center py-1 text-gray-600">
+            Loading data project...
+          </div>
+        )}
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
@@ -159,13 +160,11 @@ export default function BomSummaryPage() {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {rows.length === 0 ? (
               <tr>
-                <td colSpan={11} className="border text-center py-4">Loading...</td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={11} className="border text-center py-4 text-gray-500">Tidak ada data</td>
+                <td colSpan={11} className="border text-center py-4 text-gray-500">
+                  Tidak ada data
+                </td>
               </tr>
             ) : (
               Object.entries(groupedRows).map(([component, componentRows]) => (
