@@ -90,6 +90,13 @@ export default function BomSummaryClient() {
       .catch(console.error);
   }, []);
 
+  useEffect(() => {
+    const savedProjectId = localStorage.getItem("bom_project_id");
+    if (savedProjectId) {
+      setProjectId(savedProjectId);
+    }
+  }, []);
+
   /* ===== LOAD BOM SUMMARY ===== */
   useEffect(() => {
     if (!projectId) {
@@ -162,7 +169,12 @@ export default function BomSummaryClient() {
       <select
         className="border px-3 py-2 mb-4"
         value={projectId}
-        onChange={(e) => setProjectId(e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+          setProjectId(value);
+          localStorage.setItem("bom_project_id", value);
+        }}
+
       >
         <option value="">-- Pilih Project --</option>
         {projects.map((p) => (
