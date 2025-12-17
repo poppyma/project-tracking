@@ -43,13 +43,16 @@ function formatTrimDecimal(value: string | null) {
   return num.toString().replace(".", ",");
 }
 
-function formatID(value: number | null) {
-  if (value === null || isNaN(value)) return "-";
+function formatIDString(value: string | null) {
+  if (!value) return "-";
+
+  // ubah "1202,6" → number 1202.6
+  const num = Number(value.replace(/\./g, "").replace(",", "."));
+  if (isNaN(num)) return value;
 
   return new Intl.NumberFormat("id-ID", {
-    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
-  }).format(value);
+  }).format(num);
 }
 
 
@@ -228,7 +231,7 @@ export default function BomSummaryClient() {
                           {formatTrimDecimal(r.landed_idr_price)}
                         </td>
                         <td className="border px-2 text-right">
-                          {formatID(parseNumber(r.cost_bearing))}
+                          {formatIDString(r.cost_bearing)}
                         </td>
                         <td className="border px-2 text-center">
                           <input
@@ -260,10 +263,13 @@ export default function BomSummaryClient() {
                 TOTAL COST BEARING
               </td>
               <td className="border px-2 text-right">
-                {formatID(totalCost)}
+                {new Intl.NumberFormat("id-ID", {
+                  maximumFractionDigits: 2,
+                }).format(totalCost)}
               </td>
             </tr>
           </tfoot>
+
         </table>
       </div>
     </div>
