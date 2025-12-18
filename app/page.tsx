@@ -347,18 +347,8 @@ async function saveEditProject() {
     productLine: form.productLine,
     anualVolume: form.anualVolume,
     estSop: form.estSop,
-
-    materials: materials.map((m: any) => ({
-      id: m.id,                 // ✅ INI KUNCI UTAMA
-      name: m.name,
-      component: m.component,
-      qty: m.bom_qty ?? m.qty,
-      uom: m.UoM ?? m.uom,
-      supplier: m.supplier,
-    })),
+    materials,
   };
-
-  console.log("PATCH PAYLOAD MATERIALS:", payload.materials);
 
   const res = await fetch(`/api/projects?id=${editProject.id}`, {
     method: "PATCH",
@@ -376,7 +366,6 @@ async function saveEditProject() {
   setEditProject(null);
   alert("Project berhasil diedit!");
 }
-
 
 
 function addMaterial() {
