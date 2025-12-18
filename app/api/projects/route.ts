@@ -264,7 +264,11 @@ export async function PATCH(req: Request) {
     );
 
     const oldIds = oldRes.rows.map(r => r.id);
-    const newIds = materials.filter(m => m.id).map(m => m.id);
+    //const newIds = materials.filter(m => m.id).map(m => m.id);
+    const newIds = materials
+  .map(m => Number(m.id))
+  .filter(id => Number.isInteger(id) && id > 0);
+
 
     /* ---------- DELETE REMOVED MATERIALS ---------- */
     const removedIds = oldIds.filter(id => !newIds.includes(id));
