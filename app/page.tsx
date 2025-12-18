@@ -417,6 +417,14 @@ function addMaterial() {
         supplier: m.supplier || "",
       }))
     );
+
+     // 🔥 PENTING: restore checkbox state
+    setStatuses((prev) => ({
+      ...prev,
+      [editProject.id]: (editProject.materials || []).map((m) =>
+        normalizeStatusArray(m.status)
+      ),
+    }));
   }
 }, [editProject]);
 
