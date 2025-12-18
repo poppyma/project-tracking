@@ -579,7 +579,7 @@ async function deleteRemark(id: number) {
   }
 }
 
-async function deleteAttachment(attachmentId: number, materialId: number) {
+async function deleteAttachment(attachmentId: number, materialId?: number) {
   if (!window.confirm("Yakin ingin menghapus attachment ini?")) return;
 
   const res = await fetch("/api/uploads", {
@@ -588,28 +588,43 @@ async function deleteAttachment(attachmentId: number, materialId: number) {
     body: JSON.stringify({ id: attachmentId }),
   });
 
+  const data = await res.json();
+
   if (!res.ok) {
-    alert("Gagal menghapus attachment");
+    alert(data?.error || "Gagal menghapus attachment");
     return;
   }
 
-  // 🔥 UPDATE STATE TANPA RELOAD
-  setProject((prev) => {
-    if (!prev) return prev;
+  // 🔥 UPDATE MODAL ITEMS
+  setAttachmentsModal((prev) => ({
+    ...prev,
+    items: prev.items?.filter((a: any) => a.id !== attachmentId),
+  }));
 
-    return {
-      ...prev,
-      materials: prev.materials.map((m) =>
-        m.id === materialId
-          ? {
-              ...m,
-              attachments: m.attachments?.filter((a) => a.id !== attachmentId),
-            }
-          : m
-      ),
-    };
-  });
+  // 🔥 UPDATE PROJECT DETAIL
+  if (materialId) {
+    setProject((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        materials: prev.materials.map((m) =>
+          m.id === materialId
+            ? {
+                ...m,
+                attachments: m.attachments?.filter(
+                  (a) => a.id !== attachmentId
+                ),
+              }
+            : m
+        ),
+      };
+    });
+  }
+
+  // ✅ ALERT BERHASIL
+  alert("Attachment berhasil dihapus");
 }
+
 
 
 async function startEditRemark(id: number, text: string) {
