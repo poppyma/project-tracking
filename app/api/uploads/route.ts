@@ -92,4 +92,28 @@
     }
   }
 
+  export async function DELETE(req: Request) {
+  try {
+    await initTables();
+    const { id } = await req.json();
+
+    if (!id) {
+      return NextResponse.json({ error: "ID missing" }, { status: 400 });
+    }
+
+    const res = await query(
+      `DELETE FROM uploads WHERE id = $1 RETURNING id`,
+      [id]
+    );
+
+    if (res.rowCount === 0) {
+      return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, id });
+  } catch (err: any) {
+    console.error(err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
   

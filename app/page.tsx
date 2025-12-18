@@ -579,6 +579,39 @@ async function deleteRemark(id: number) {
   }
 }
 
+async function deleteAttachment(attachmentId: number, materialId: number) {
+  if (!window.confirm("Yakin ingin menghapus attachment ini?")) return;
+
+  const res = await fetch("/api/uploads", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: attachmentId }),
+  });
+
+  if (!res.ok) {
+    alert("Gagal menghapus attachment");
+    return;
+  }
+
+  // 🔥 UPDATE STATE TANPA RELOAD
+  setProject((prev) => {
+    if (!prev) return prev;
+
+    return {
+      ...prev,
+      materials: prev.materials.map((m) =>
+        m.id === materialId
+          ? {
+              ...m,
+              attachments: m.attachments?.filter((a) => a.id !== attachmentId),
+            }
+          : m
+      ),
+    };
+  });
+}
+
+
 async function startEditRemark(id: number, text: string) {
   setRemarksModal((s) => ({ ...s, editingId: id, editingText: text }));
 }
@@ -632,6 +665,53 @@ function toggleStatus(projectId: number, materialIndex: number, statusIndex: num
     return;
   }
   setConfirm({ open: true, projectId, materialIndex, statusIndex, materialId: mat.id });
+}
+
+
+async function confirmToggleStatus() {
+  if (!confirm.open) return;
+
+  const { projectId, materialIndex, statusIndex, materialId } = confirm;
+
+  const res = await fetch("/api/projects", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      materialId,
+      statusIndex,
+      value: true,
+    }),
+  });
+
+  if (!res.ok) {
+    alert("Gagal update status");
+    return;
+  }
+
+  const data = await res.json();
+
+  // 🔥 UPDATE STATE PROJECT LANGSUNG
+  setProjects((prev) =>
+    prev.map((p) =>
+      p.id !== projectId
+        ? p
+        : {
+            ...p,
+            percent: data.projectPercent, // ✅ UPDATE PROJECT PERCENT
+            materials: p.materials.map((m, i) =>
+              i !== materialIndex
+                ? m
+                : {
+                    ...m,
+                    status: data.status,
+                    percent: data.materialPercent,
+                  }
+            ),
+          }
+    )
+  );
+
+  setConfirm({ open: false });
 }
 
 async function confirmYes() {
@@ -1807,6 +1887,12 @@ const handleSaveProject = () => {
                           onClick={() => downloadFile(a.path, a.filename)}
                         >
                           Download
+                        </button>
+                        <button
+                          className="btn danger"
+                          onClick={() => deleteAttachment(a.id, a.materialId)}
+                        >
+                          Delete
                         </button>
                       </div>
                     </div>
