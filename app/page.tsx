@@ -579,30 +579,51 @@ async function deleteRemark(id: number) {
   }
 }
 
-async function deleteAttachment(attachmentId: number, materialId?: number) {
-  if (!window.confirm("Yakin ingin menghapus attachment ini?")) return;
+async function deleteAttachment(attachmentId: number) {
+  if (!window.confirm("Yakin ingin menghapus file ini?")) return;
 
-  const res = await fetch("/api/uploads", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id: attachmentId }),
-  });
+  try {
+    const res = await fetch("/api/attachments", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: attachmentId }),
+    });
 
-  const data = await res.json();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || "Gagal delete");
 
-  if (!res.ok) {
-    alert(data?.error || "Gagal menghapus attachment");
-    return;
-  }
+    const { attachmentId: deletedId, materialId } = data;
 
-  // 🔥 UPDATE MODAL ITEMS
-  setAttachmentsModal((prev) => ({
-    ...prev,
-    items: prev.items?.filter((a: any) => a.id !== attachmentId),
-  }));
+    /* =========================
+       UPDATE ATTACHMENT MODAL
+    ========================= */
+    setAttachmentsModal((prev) => ({
+      ...prev,
+      items: (prev.items || []).filter((a: any) => a.id !== deletedId),
+    }));
 
-  // 🔥 UPDATE PROJECT DETAIL
-  if (materialId) {
+    /* =========================
+       UPDATE PROJECTS (LIST)
+    ========================= */
+    setProjects((prev) =>
+      prev.map((p) => ({
+        ...p,
+        materials: p.materials.map((m) =>
+          m.id === materialId
+            ? {
+                ...m,
+                attachments: (m.attachments || []).filter(
+                  (a: any) => a.id !== deletedId
+                ),
+              }
+            : m
+        ),
+      }))
+    );
+
+    /* =========================
+       UPDATE PROJECT DETAIL
+    ========================= */
     setProject((prev) => {
       if (!prev) return prev;
       return {
@@ -611,18 +632,21 @@ async function deleteAttachment(attachmentId: number, materialId?: number) {
           m.id === materialId
             ? {
                 ...m,
-                attachments: m.attachments?.filter(
-                  (a) => a.id !== attachmentId
+                attachments: (m.attachments || []).filter(
+                  (a: any) => a.id !== deletedId
                 ),
               }
             : m
         ),
       };
     });
-  }
 
-  // ✅ ALERT BERHASIL
-  alert("Attachment berhasil dihapus");
+    alert("Attachment berhasil dihapus ✅");
+
+  } catch (err) {
+    console.error(err);
+    alert("Gagal menghapus attachment");
+  }
 }
 
 
