@@ -101,19 +101,33 @@
       return NextResponse.json({ error: "ID missing" }, { status: 400 });
     }
 
-    const res = await query(
-      `DELETE FROM uploads WHERE id = $1 RETURNING id`,
+    // ambil material_id dulu
+    const get = await query(
+      `SELECT material_id FROM uploads WHERE id = $1`,
       [id]
     );
 
-    if (res.rowCount === 0) {
+    if (get.rowCount === 0) {
       return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, id });
+    const materialId = get.rows[0].material_id;
+
+    await query(
+      `DELETE FROM uploads WHERE id = $1`,
+      [id]
+    );
+
+    return NextResponse.json({
+      success: true,
+      attachmentId: id,
+      materialId
+    });
+
   } catch (err: any) {
     console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
   
