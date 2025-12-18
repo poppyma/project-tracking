@@ -579,51 +579,30 @@ async function deleteRemark(id: number) {
   }
 }
 
-async function deleteAttachment(attachmentId: number) {
-  if (!window.confirm("Yakin ingin menghapus file ini?")) return;
+async function deleteAttachment(attachmentId: number, materialId?: number) {
+  if (!window.confirm("Yakin ingin menghapus attachment ini?")) return;
 
-  try {
-    const res = await fetch("/api/attachments", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: attachmentId }),
-    });
+  const res = await fetch("/api/uploads", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: attachmentId }),
+  });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || "Gagal delete");
+  const data = await res.json();
 
-    const { attachmentId: deletedId, materialId } = data;
+  if (!res.ok) {
+    alert(data?.error || "Gagal menghapus attachment");
+    return;
+  }
 
-    /* =========================
-       UPDATE ATTACHMENT MODAL
-    ========================= */
-    setAttachmentsModal((prev) => ({
-      ...prev,
-      items: (prev.items || []).filter((a: any) => a.id !== deletedId),
-    }));
+  // 🔥 UPDATE MODAL ITEMS
+  setAttachmentsModal((prev) => ({
+    ...prev,
+    items: prev.items?.filter((a: any) => a.id !== attachmentId),
+  }));
 
-    /* =========================
-       UPDATE PROJECTS (LIST)
-    ========================= */
-    setProjects((prev) =>
-      prev.map((p) => ({
-        ...p,
-        materials: p.materials.map((m) =>
-          m.id === materialId
-            ? {
-                ...m,
-                attachments: (m.attachments || []).filter(
-                  (a: any) => a.id !== deletedId
-                ),
-              }
-            : m
-        ),
-      }))
-    );
-
-    /* =========================
-       UPDATE PROJECT DETAIL
-    ========================= */
+  // 🔥 UPDATE PROJECT DETAIL
+  if (materialId) {
     setProject((prev) => {
       if (!prev) return prev;
       return {
@@ -632,21 +611,18 @@ async function deleteAttachment(attachmentId: number) {
           m.id === materialId
             ? {
                 ...m,
-                attachments: (m.attachments || []).filter(
-                  (a: any) => a.id !== deletedId
+                attachments: m.attachments?.filter(
+                  (a) => a.id !== attachmentId
                 ),
               }
             : m
         ),
       };
     });
-
-    alert("Attachment berhasil dihapus ✅");
-
-  } catch (err) {
-    console.error(err);
-    alert("Gagal menghapus attachment");
   }
+
+  // ✅ ALERT BERHASIL
+  alert("Attachment berhasil dihapus");
 }
 
 
@@ -1929,7 +1905,7 @@ const handleSaveProject = () => {
                         </button>
                         <button
                           className="btn danger"
-                          onClick={() => deleteAttachment(a.id)}
+                          onClick={() => deleteAttachment(a.id, a.materialId)}
                         >
                           Delete
                         </button>
