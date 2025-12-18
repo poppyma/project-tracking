@@ -1929,7 +1929,7 @@ const handleSaveProject = () => {
                         </button>
                         <button
                           className="btn danger"
-                          onClick={() => deleteAttachment(a.id, a.materialId)}
+                          onClick={() => deleteAttachment(a.id)}
                         >
                           Delete
                         </button>
