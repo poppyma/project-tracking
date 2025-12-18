@@ -337,10 +337,33 @@ body {
 .status-hover-popup { background:#fff; border:1px solid var(--border); border-radius:8px; box-shadow:0 18px 40px rgba(2,6,23,0.08); z-index: 13000; padding:8px; min-width:200px; max-width:320px; }
 
 /* Upload modal */
-.upload-modal { width:780px; max-width:calc(100% - 48px); background: #fff; border-radius:10px; padding:20px; box-shadow:0 30px 80px rgba(8,26,50,0.18); border:1px solid rgba(4,18,38,0.04); }
+/*.upload-modal { width:780px; max-width:calc(100% - 48px); background: #fff; border-radius:10px; padding:20px; box-shadow:0 30px 80px rgba(8,26,50,0.18); border:1px solid rgba(4,18,38,0.04); }*/
+
+.upload-modal {
+  width: 780px;
+  max-width: calc(100% - 48px);
+  max-height: 90vh;              /* ⬅️ WAJIB */
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 30px 80px rgba(8,26,50,0.18);
+  border: 1px solid rgba(4,18,38,0.04);
+
+  display: flex;                 /* ⬅️ WAJIB */
+  flex-direction: column;        /* ⬅️ WAJIB */
+  overflow: hidden;              /* ⬅️ WAJIB */
+}
+
 .drop-area { border: 2px dashed #cfcfcf; border-radius:8px; min-height:220px; display:flex; align-items:center; justify-content:center; }
 .browse-btn { background:var(--blue); color:#fff; padding:10px 18px; border-radius:8px; display:inline-block; margin-top:8px; }
-.file-list { margin-top:8px; display:flex; flex-direction:column; gap:8px; }
+/*.file-list { margin-top:8px; display:flex; flex-direction:column; gap:8px; }*/
+.file-list {
+  max-height: 240px;   /* atur sesuai selera */
+  overflow-y: auto;
+  margin-top: 8px;
+  padding-right: 4px;
+}
+
 .file-item { display:flex; align-items:center; justify-content:space-between; padding:10px; border:1px solid var(--border); border-radius:8px; background:#fff; }
 .upload-actions { display:flex; justify-content:flex-end; gap:12px; margin-top:14px; }
 
