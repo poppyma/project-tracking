@@ -300,6 +300,7 @@ async function handleSave() {
       estSop: form.estSop,
       materials,
     };
+    
 
     const res = await fetch('/api/projects', {
       method: 'POST',
@@ -408,15 +409,27 @@ function addMaterial() {
       estSop: editProject.estSop || "",
     });
 
+    // setMaterials(
+    //   (editProject.materials || []).map((m) => ({
+    //     material: m.name,
+    //     component: m.component || "",
+    //     qty: String(m.bom_qty ?? ""),
+    //     uom: m.UoM || "",
+    //     supplier: m.supplier || "",
+    //   }))
+    // );
+
     setMaterials(
-      (editProject.materials || []).map((m) => ({
-        material: m.name,
-        component: m.component || "",
-        qty: String(m.bom_qty ?? ""),
-        uom: m.UoM || "",
-        supplier: m.supplier || "",
-      }))
-    );
+  (editProject.materials || []).map((m) => ({
+    id: m.id,                 // ✅ PENTING
+    material: m.name,
+    component: m.component || "",
+    qty: String(m.bom_qty ?? ""),
+    uom: m.UoM || "",
+    supplier: m.supplier || "",
+  }))
+);
+
 
      // 🔥 PENTING: restore checkbox state
     setStatuses((prev) => ({
