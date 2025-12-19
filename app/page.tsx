@@ -683,22 +683,18 @@ return sortConfig.direction === "asc" ? "▲" : "▼";
 };
 
 
-function toggleStatus(
-  projectId: number,
-  materialIndex: number,
-  statusIndex: number
-) {
-  const proj = projects.find((p) => p.id === projectId);
+function toggleStatus(projectId: number, materialIndex: number, statusIndex: number) {
+  const proj = projects.find(p => p.id === projectId);
   const mat = proj?.materials?.[materialIndex];
   if (!mat) return;
 
   const currentChecks =
-    (statuses[projectId] && statuses[projectId][materialIndex]) ||
-    (mat.status && Array.isArray(mat.status)
+    statuses[projectId]?.[materialIndex] ??
+    (Array.isArray(mat.status)
       ? mat.status.map((v: any) => Boolean(v))
       : Array(STATUS_COUNT).fill(false));
 
-  const currentValue = currentChecks[statusIndex]; // ✅ INI KUNCINYA
+  const nextValue = !currentChecks[statusIndex]; // 🔥 toggle
 
   setConfirm({
     open: true,
@@ -706,9 +702,10 @@ function toggleStatus(
     materialIndex,
     statusIndex,
     materialId: mat.id,
-    nextValue: !currentValue, // ✅ toggle benar
+    nextValue
   });
 }
+
 
 
 
@@ -770,72 +767,44 @@ async function confirmYes() {
     confirm.nextValue == null
   ) return;
 
-  setLoadingProgress(5);
-
   try {
-    const res = await fetch("/api/projects", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch('/api/projects', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         materialId: confirm.materialId,
         statusIndex: confirm.statusIndex,
-        value: confirm.nextValue, // ✅ FIX UTAMA
-      }),
+        value: confirm.nextValue // 🔥 INI KUNCI
+      })
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || "Failed to update");
+    if (!res.ok) throw new Error(data?.error);
 
-    // =========================
-    // UPDATE STATUS (FRONTEND)
-    // =========================
-    setStatuses((s) => {
-      const copy = { ...s };
-      const matArr = copy[confirm.projectId!]
-        ? copy[confirm.projectId!].map((r) => [...r])
-        : [];
+    // ✅ update local state
+    setStatuses(prev => {
+      const copy = { ...prev };
+      const matArr = copy[confirm.projectId!]?.map(r => [...r]) ?? [];
 
       if (!matArr[confirm.materialIndex!]) {
-        matArr[confirm.materialIndex!] =
-          Array(STATUS_COUNT).fill(false);
+        matArr[confirm.materialIndex!] = Array(STATUS_COUNT).fill(false);
       }
 
       matArr[confirm.materialIndex!][confirm.statusIndex!] =
-        Boolean(confirm.nextValue);
+        confirm.nextValue!;
 
       copy[confirm.projectId!] = matArr;
       return copy;
     });
 
-    // =========================
-    // UPDATE PROJECT LIST
-    // =========================
-    setProjects((p) =>
-      p.map((pr) => {
-        if (pr.id !== data.projectId) return pr;
-
-        return {
-          ...pr,
-          percent: data.projectPercent,
-          materials: [...pr.materials].sort(
-            (a, b) => a.order_index - b.order_index
-          ),
-        };
-      })
-    );
-
-    setLoadingProgress(100);
-    setTimeout(() => {
-      setConfirm({ open: false });
-      setLoadingProgress(0);
-    }, 250);
+    setConfirm({ open: false });
   } catch (err) {
     console.error(err);
-    alert("Gagal memperbarui status");
+    alert("Gagal update status");
     setConfirm({ open: false });
-    setLoadingProgress(0);
   }
 }
+
 
 function confirmNo() { setConfirm({ open: false }); }
 
