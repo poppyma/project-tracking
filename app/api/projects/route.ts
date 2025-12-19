@@ -220,11 +220,15 @@ export async function PATCH(req: Request) {
 
       return NextResponse.json({
         success: true,
-        materialId,
-        status: statusArr,
-        materialPercent,
+        projectId: cur.rows[0].project_id,
+        material: {
+          id: materialId,
+          status: statusArr,
+          percent: materialPercent,
+        },
         projectPercent
       });
+
     }
 
     /* =====================================================
