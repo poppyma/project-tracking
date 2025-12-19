@@ -723,7 +723,9 @@ async function confirmToggleStatus() {
     body: JSON.stringify({
       materialId,
       statusIndex,
-      value: true,
+      //value: true,
+      value: confirm.nextValue
+
     }),
   });
 
@@ -759,69 +761,77 @@ async function confirmToggleStatus() {
 }
 
 async function confirmYes() {
-  if (!confirm.open || confirm.materialId == null || confirm.statusIndex == null || confirm.projectId == null) return;
-  setLoadingProgress(5);
-  try {
-    const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: true }) });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || 'Failed to update');
+  if (
+    !confirm.open ||
+    confirm.materialId == null ||
+    confirm.statusIndex == null ||
+    confirm.projectId == null ||
+    confirm.materialIndex == null ||
+    confirm.nextValue == null
+  ) return;
 
-    const serverMat = data.material; 
+  setLoadingProgress(5);
+
+  try {
+    const res = await fetch("/api/projects", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        materialId: confirm.materialId,
+        statusIndex: confirm.statusIndex,
+        value: confirm.nextValue, // ✅ FIX UTAMA
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || "Failed to update");
+
+    // =========================
+    // UPDATE STATUS (FRONTEND)
+    // =========================
     setStatuses((s) => {
       const copy = { ...s };
-      const matArr = copy[confirm.projectId!] ? copy[confirm.projectId!].map((r) => [...r]) : [];
-      if (!matArr[confirm.materialIndex!]) matArr[confirm.materialIndex!] = Array(STATUS_COUNT).fill(false);
-      if (serverMat && Array.isArray(serverMat.status)) {
-        matArr[confirm.materialIndex!] = serverMat.status.map((v: any) => Boolean(v));
-      } else {
-        matArr[confirm.materialIndex!][confirm.statusIndex!] = true;
+      const matArr = copy[confirm.projectId!]
+        ? copy[confirm.projectId!].map((r) => [...r])
+        : [];
+
+      if (!matArr[confirm.materialIndex!]) {
+        matArr[confirm.materialIndex!] =
+          Array(STATUS_COUNT).fill(false);
       }
+
+      matArr[confirm.materialIndex!][confirm.statusIndex!] =
+        Boolean(confirm.nextValue);
+
       copy[confirm.projectId!] = matArr;
       return copy;
     });
 
-    setProjects((p) => p.map((pr) => {
-      if (pr.id !== data.projectId) return pr;
+    // =========================
+    // UPDATE PROJECT LIST
+    // =========================
+    setProjects((p) =>
+      p.map((pr) => {
+        if (pr.id !== data.projectId) return pr;
 
-      const updatedMaterials = pr.materials.map((m) => {
-        if (!serverMat) return m;
-        if (m.id === serverMat.id) {
-          return { ...m, percent: serverMat.percent, status: serverMat.status };
-        }
-        return m;
-      });
-
-      return {
-        ...pr,
-        percent: data.projectPercent,
-        // ⬅️ FIX: materials harus selalu disort ulang setelah update
-        materials: [...updatedMaterials].sort((a, b) => a.order_index - b.order_index)
-      };
-    }));
-
-    // 🔥 Update project detail page juga
-    setProject((prev) => {
-      if (!prev || prev.id !== data.projectId) return prev;
-
-      const updatedMaterials = prev.materials.map((m) => {
-        if (m.id === serverMat.id) {
-          return { ...m, percent: serverMat.percent, status: serverMat.status };
-        }
-        return m;
-      });
-
-      return {
-        ...prev,
-        percent: data.projectPercent,
-        materials: [...updatedMaterials].sort((a, b) => a.order_index - b.order_index),
-      };
-    });
+        return {
+          ...pr,
+          percent: data.projectPercent,
+          materials: [...pr.materials].sort(
+            (a, b) => a.order_index - b.order_index
+          ),
+        };
+      })
+    );
 
     setLoadingProgress(100);
-    setTimeout(() => { setConfirm({ open: false }); setLoadingProgress(0); }, 250);
+    setTimeout(() => {
+      setConfirm({ open: false });
+      setLoadingProgress(0);
+    }, 250);
   } catch (err) {
     console.error(err);
-    alert('Gagal memperbarui status');
+    alert("Gagal memperbarui status");
     setConfirm({ open: false });
     setLoadingProgress(0);
   }
