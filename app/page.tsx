@@ -683,18 +683,22 @@ return sortConfig.direction === "asc" ? "▲" : "▼";
 };
 
 
-function toggleStatus(projectId: number, materialIndex: number, statusIndex: number) {
-  const proj = projects.find(p => p.id === projectId);
+function toggleStatus(
+  projectId: number,
+  materialIndex: number,
+  statusIndex: number
+) {
+  const proj = projects.find((p) => p.id === projectId);
   const mat = proj?.materials?.[materialIndex];
   if (!mat) return;
 
   const currentChecks =
-    statuses[projectId]?.[materialIndex] ??
-    (Array.isArray(mat.status)
+    (statuses[projectId] && statuses[projectId][materialIndex]) ||
+    (mat.status && Array.isArray(mat.status)
       ? mat.status.map((v: any) => Boolean(v))
       : Array(STATUS_COUNT).fill(false));
 
-  const nextValue = !currentChecks[statusIndex]; // 🔥 toggle
+  const currentValue = currentChecks[statusIndex]; // ✅ INI KUNCINYA
 
   setConfirm({
     open: true,
@@ -702,10 +706,9 @@ function toggleStatus(projectId: number, materialIndex: number, statusIndex: num
     materialIndex,
     statusIndex,
     materialId: mat.id,
-    nextValue
+    nextValue: !currentValue, // ✅ toggle benar
   });
 }
-
 
 
 
@@ -758,53 +761,73 @@ async function confirmToggleStatus() {
 }
 
 async function confirmYes() {
-  if (
-    !confirm.open ||
-    confirm.materialId == null ||
-    confirm.statusIndex == null ||
-    confirm.projectId == null ||
-    confirm.materialIndex == null ||
-    confirm.nextValue == null
-  ) return;
-
+  if (!confirm.open || confirm.materialId == null || confirm.statusIndex == null || confirm.projectId == null) return;
+  setLoadingProgress(5);
   try {
-    const res = await fetch('/api/projects', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        materialId: confirm.materialId,
-        statusIndex: confirm.statusIndex,
-        value: confirm.nextValue // 🔥 INI KUNCI
-      })
-    });
-
+    const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: true }) });
     const data = await res.json();
-    if (!res.ok) throw new Error(data?.error);
+    if (!res.ok) throw new Error(data?.error || 'Failed to update');
 
-    // ✅ update local state
-    setStatuses(prev => {
-      const copy = { ...prev };
-      const matArr = copy[confirm.projectId!]?.map(r => [...r]) ?? [];
-
-      if (!matArr[confirm.materialIndex!]) {
-        matArr[confirm.materialIndex!] = Array(STATUS_COUNT).fill(false);
+    const serverMat = data.material; 
+    setStatuses((s) => {
+      const copy = { ...s };
+      const matArr = copy[confirm.projectId!] ? copy[confirm.projectId!].map((r) => [...r]) : [];
+      if (!matArr[confirm.materialIndex!]) matArr[confirm.materialIndex!] = Array(STATUS_COUNT).fill(false);
+      if (serverMat && Array.isArray(serverMat.status)) {
+        matArr[confirm.materialIndex!] = serverMat.status.map((v: any) => Boolean(v));
+      } else {
+        matArr[confirm.materialIndex!][confirm.statusIndex!] = true;
       }
-
-      matArr[confirm.materialIndex!][confirm.statusIndex!] =
-        confirm.nextValue!;
-
       copy[confirm.projectId!] = matArr;
       return copy;
     });
 
-    setConfirm({ open: false });
+    setProjects((p) => p.map((pr) => {
+      if (pr.id !== data.projectId) return pr;
+
+      const updatedMaterials = pr.materials.map((m) => {
+        if (!serverMat) return m;
+        if (m.id === serverMat.id) {
+          return { ...m, percent: serverMat.percent, status: serverMat.status };
+        }
+        return m;
+      });
+
+      return {
+        ...pr,
+        percent: data.projectPercent,
+        // ⬅️ FIX: materials harus selalu disort ulang setelah update
+        materials: [...updatedMaterials].sort((a, b) => a.order_index - b.order_index)
+      };
+    }));
+
+    // 🔥 Update project detail page juga
+    setProject((prev) => {
+      if (!prev || prev.id !== data.projectId) return prev;
+
+      const updatedMaterials = prev.materials.map((m) => {
+        if (m.id === serverMat.id) {
+          return { ...m, percent: serverMat.percent, status: serverMat.status };
+        }
+        return m;
+      });
+
+      return {
+        ...prev,
+        percent: data.projectPercent,
+        materials: [...updatedMaterials].sort((a, b) => a.order_index - b.order_index),
+      };
+    });
+
+    setLoadingProgress(100);
+    setTimeout(() => { setConfirm({ open: false }); setLoadingProgress(0); }, 250);
   } catch (err) {
     console.error(err);
-    alert("Gagal update status");
+    alert('Gagal memperbarui status');
     setConfirm({ open: false });
+    setLoadingProgress(0);
   }
 }
-
 
 function confirmNo() { setConfirm({ open: false }); }
 
