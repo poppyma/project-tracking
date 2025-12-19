@@ -656,7 +656,19 @@ async function saveEditRemark() {
 }
 
 // confirmation state for marking a status complete
-const [confirm, setConfirm] = useState<{ open: boolean; projectId?: number; materialIndex?: number; statusIndex?: number; materialId?: number }>({ open: false });
+//const [confirm, setConfirm] = useState<{ open: boolean; projectId?: number; materialIndex?: number; statusIndex?: number; materialId?: number, nextValue: boolean}>({ open: false });
+
+const [confirm, setConfirm] = useState<{
+  open: boolean;
+  projectId?: number;
+  materialIndex?: number;
+  statusIndex?: number;
+  materialId?: number;
+  nextValue?: boolean; // ⬅️ HARUS OPTIONAL
+}>({
+  open: false,
+});
+
 const [loadingProgress, setLoadingProgress] = useState(0);
 
 // Upload modal state for per-cell uploads in the detail grid
@@ -671,16 +683,33 @@ return sortConfig.direction === "asc" ? "▲" : "▼";
 };
 
 
-function toggleStatus(projectId: number, materialIndex: number, statusIndex: number) {
+function toggleStatus(
+  projectId: number,
+  materialIndex: number,
+  statusIndex: number
+) {
   const proj = projects.find((p) => p.id === projectId);
   const mat = proj?.materials?.[materialIndex];
   if (!mat) return;
-  const currentChecks = (statuses[projectId] && statuses[projectId][materialIndex]) || (mat.status && Array.isArray(mat.status) ? mat.status.map((v:any)=>Boolean(v)) : Array(STATUS_COUNT).fill(false));
-  if (currentChecks[statusIndex]) {
-    return;
-  }
-  setConfirm({ open: true, projectId, materialIndex, statusIndex, materialId: mat.id });
+
+  const currentChecks =
+    (statuses[projectId] && statuses[projectId][materialIndex]) ||
+    (mat.status && Array.isArray(mat.status)
+      ? mat.status.map((v: any) => Boolean(v))
+      : Array(STATUS_COUNT).fill(false));
+
+  const currentValue = currentChecks[statusIndex]; // ✅ INI KUNCINYA
+
+  setConfirm({
+    open: true,
+    projectId,
+    materialIndex,
+    statusIndex,
+    materialId: mat.id,
+    nextValue: !currentValue, // ✅ toggle benar
+  });
 }
+
 
 
 async function confirmToggleStatus() {
