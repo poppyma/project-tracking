@@ -1391,6 +1391,12 @@ const handleSaveProject = () => {
                             )}
                           </div>
                         </td>
+
+                        {/* COMPONENT */}
+                        <td style={{ textAlign: "left" }}>
+                          {m.component || "-"}
+                        </td>
+                        
                         {checks.map((c, si) => (
                           <td key={si}>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
