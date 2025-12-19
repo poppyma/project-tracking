@@ -1374,7 +1374,6 @@ const handleSaveProject = () => {
                         <td style={{ textAlign: 'left' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
                             <div style={{ fontWeight: 700 }}>{m.name}</div>
-                            <div style={{ fontWeight: 700 }}>{m.component}</div>
                             {(m as any).attachments && (m as any).attachments.length > 0 && (
                               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                 {(m as any).attachments.map((a: any) => (
