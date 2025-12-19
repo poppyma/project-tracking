@@ -1462,7 +1462,7 @@ const handleSaveProject = () => {
                 </td> */}
 
                 <td style={{ textAlign: "left" }}>
-  {editProject && editProject.id === selectedProjectId ? (
+  {editProject && editProject.id === proj.id ? (
     <select
       value={m.name}
       onChange={(e) => {
@@ -1470,7 +1470,7 @@ const handleSaveProject = () => {
 
         setProjects((prev) =>
           prev.map((p) =>
-            p.id !== selectedProjectId
+            p.id !== proj.id
               ? p
               : {
                   ...p,
@@ -1502,6 +1502,7 @@ const handleSaveProject = () => {
     <strong>{m.name}</strong>
   )}
 </td>
+
 
 
 
