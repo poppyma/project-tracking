@@ -326,7 +326,36 @@ export async function PATCH(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true });
+    /* ---------- 🔥 RECALCULATE PROJECT PERCENT (INI KUNCI) ---------- */
+const mats = await query(
+  `SELECT COALESCE(percent,0) AS percent
+   FROM materials
+   WHERE project_id=$1`,
+  [projectId]
+);
+
+const rowCount = mats.rowCount ?? 0;
+
+let projectPercent = 0;
+if (rowCount > 0) {
+  const total = mats.rows.reduce(
+    (sum: number, r: any) => sum + Number(r.percent || 0),
+    0
+  );
+  projectPercent = Math.round(total / rowCount);
+}
+
+await query(
+  `UPDATE projects SET percent=$1 WHERE id=$2`,
+  [projectPercent, projectId]
+);
+
+return NextResponse.json({
+  success: true,
+  projectId,
+  projectPercent
+});
+
 
   } catch (err: any) {
     console.error(err);
