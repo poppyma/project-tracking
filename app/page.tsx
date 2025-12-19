@@ -703,7 +703,7 @@ function toggleStatus(projectId: number, materialIndex: number, statusIndex: num
     materialIndex,
     statusIndex,
     materialId: mat.id,
-    nextValue: nextValue, // ⬅️ penting
+    nextValue, // ⬅️ penting
   });
 }
 
@@ -759,71 +759,69 @@ async function confirmToggleStatus() {
 }
 
 async function confirmYes() {
-  if (!confirm.open || confirm.materialId == null || confirm.statusIndex == null || confirm.projectId == null) return;
-  setLoadingProgress(5);
-  try {
-    const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: confirm.nextValue }) });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || 'Failed to update');
+  if (
+    !confirm.open ||
+    confirm.materialId == null ||
+    confirm.statusIndex == null ||
+    confirm.projectId == null ||
+    confirm.materialIndex == null
+  ) return;
 
-    const serverMat = data.material; 
-    setStatuses((s) => {
-      const copy = { ...s };
-      const matArr = copy[confirm.projectId!] ? copy[confirm.projectId!].map((r) => [...r]) : [];
-      if (!matArr[confirm.materialIndex!]) matArr[confirm.materialIndex!] = Array(STATUS_COUNT).fill(false);
-      if (serverMat && Array.isArray(serverMat.status)) {
-        matArr[confirm.materialIndex!] = serverMat.status.map((v: any) => Boolean(v));
-      } else {
-        matArr[confirm.materialIndex!][confirm.statusIndex!] = true;
-      }
-      copy[confirm.projectId!] = matArr;
+  try {
+    const res = await fetch("/api/projects", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        materialId: confirm.materialId,
+        statusIndex: confirm.statusIndex,
+        value: confirm.nextValue, // ✅ TRUE / FALSE
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || "Gagal update status");
+
+    const serverMat = data.material;
+
+    // 🔥 UPDATE STATUS STATE
+    setStatuses((prev) => {
+      const copy = { ...prev };
+      const rows = copy[confirm.projectId!] ?? [];
+      const row = rows[confirm.materialIndex!] ?? Array(STATUS_COUNT).fill(false);
+
+      row[confirm.statusIndex!] = confirm.nextValue!; // ✅ BISA TRUE / FALSE
+      rows[confirm.materialIndex!] = row;
+      copy[confirm.projectId!] = rows;
+
       return copy;
     });
 
-    setProjects((p) => p.map((pr) => {
-      if (pr.id !== data.projectId) return pr;
+    // 🔥 UPDATE PROJECT & MATERIAL PERCENT
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id !== confirm.projectId
+          ? p
+          : {
+              ...p,
+              percent: data.projectPercent,
+              materials: p.materials.map((m) =>
+                m.id === confirm.materialId
+                  ? {
+                      ...m,
+                      percent: serverMat.percent,
+                      status: serverMat.status,
+                    }
+                  : m
+              ),
+            }
+      )
+    );
 
-      const updatedMaterials = pr.materials.map((m) => {
-        if (!serverMat) return m;
-        if (m.id === serverMat.id) {
-          return { ...m, percent: serverMat.percent, status: serverMat.status };
-        }
-        return m;
-      });
-
-      return {
-        ...pr,
-        percent: data.projectPercent,
-        // ⬅️ FIX: materials harus selalu disort ulang setelah update
-        materials: [...updatedMaterials].sort((a, b) => a.order_index - b.order_index)
-      };
-    }));
-
-    // 🔥 Update project detail page juga
-    setProject((prev) => {
-      if (!prev || prev.id !== data.projectId) return prev;
-
-      const updatedMaterials = prev.materials.map((m) => {
-        if (m.id === serverMat.id) {
-          return { ...m, percent: serverMat.percent, status: serverMat.status };
-        }
-        return m;
-      });
-
-      return {
-        ...prev,
-        percent: data.projectPercent,
-        materials: [...updatedMaterials].sort((a, b) => a.order_index - b.order_index),
-      };
-    });
-
-    setLoadingProgress(100);
-    setTimeout(() => { setConfirm({ open: false }); setLoadingProgress(0); }, 250);
   } catch (err) {
     console.error(err);
-    alert('Gagal memperbarui status');
+    alert("Gagal memperbarui status");
+  } finally {
     setConfirm({ open: false });
-    setLoadingProgress(0);
   }
 }
 
