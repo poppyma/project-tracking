@@ -1462,7 +1462,7 @@ const handleSaveProject = () => {
                 </td> */}
 
                 <td style={{ textAlign: "left" }}>
-  {editProject ? (
+  {editProject && editProject.id === selectedProjectId ? (
     <select
       value={m.name}
       onChange={(e) => {
@@ -1485,7 +1485,7 @@ const handleSaveProject = () => {
         padding: "6px 8px",
         borderRadius: 6,
         border: "1px solid #ccc",
-        minWidth: 140,
+        minWidth: 150,
       }}
     >
       <option value="" disabled>
@@ -1502,6 +1502,7 @@ const handleSaveProject = () => {
     <strong>{m.name}</strong>
   )}
 </td>
+
 
 
                 <td style={{ textAlign: "left" }}>
