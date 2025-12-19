@@ -1280,6 +1280,7 @@ const handleSaveProject = () => {
         <thead>
           <tr>
             <th>Material</th>
+            <th>Component</th>
             <th>Sourching</th>
             <th>Quotation</th>
             <th>PO Sample</th>
@@ -1350,7 +1351,7 @@ const handleSaveProject = () => {
             <tbody>
               {selectedProjectId == null ? (
                 <tr>
-                  <td colSpan={11} className="table-empty">Pilih project untuk melihat detail material</td>
+                  <td colSpan={12} className="table-empty">Pilih project untuk melihat detail material</td>
                 </tr>
               ) : (
                 (() => {
@@ -1358,7 +1359,7 @@ const handleSaveProject = () => {
                   if (!proj || proj.materials.length === 0) {
                     return (
                       <tr>
-                        <td colSpan={11} className="table-empty">No materials for selected project</td>
+                        <td colSpan={12} className="table-empty">No materials for selected project</td>
                       </tr>
                     );
                   }
@@ -1373,6 +1374,7 @@ const handleSaveProject = () => {
                         <td style={{ textAlign: 'left' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
                             <div style={{ fontWeight: 700 }}>{m.name}</div>
+                            <div style={{ fontWeight: 700 }}>{m.component}</div>
                             {(m as any).attachments && (m as any).attachments.length > 0 && (
                               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                 {(m as any).attachments.map((a: any) => (
