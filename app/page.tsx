@@ -1348,7 +1348,7 @@ const handleSaveProject = () => {
                 <th></th>
               </tr>
             </thead>
-            <tbody>
+    <tbody>
   {selectedProjectId == null ? (
     <tr>
       <td colSpan={12} className="table-empty">
@@ -1375,13 +1375,17 @@ const handleSaveProject = () => {
 
       return (
         <>
-          {/* ===================== */}
-          {/* UPLOAD / REMARK (1x) */}
-          {/* ===================== */}
+          {/* ================================================= */}
+          {/* UPLOAD / REMARK — HANYA SATU BARIS (GLOBAL) */}
+          {/* ================================================= */}
           <tr>
-            <td></td> {/* Material */}
-            <td></td> {/* Component */}
+            {/* Material */}
+            <td></td>
 
+            {/* Component */}
+            <td></td>
+
+            {/* Status columns */}
             {Array.from({ length: STATUS_COUNT }).map((_, si) => (
               <td key={si}>
                 <div
@@ -1399,12 +1403,13 @@ const handleSaveProject = () => {
               </td>
             ))}
 
-            <td></td> {/* Status % */}
+            {/* Status % */}
+            <td></td>
           </tr>
 
-          {/* ===================== */}
+          {/* ================================================= */}
           {/* MATERIAL ROWS */}
-          {/* ===================== */}
+          {/* ================================================= */}
           {proj.materials.map((m, mi) => {
             const checks =
               projectStatuses[mi] ||
@@ -1416,8 +1421,8 @@ const handleSaveProject = () => {
             return (
               <tr key={m.id ?? mi}>
                 {/* MATERIAL */}
-                <td style={{ textAlign: "left" }}>
-                  <strong>{m.name}</strong>
+                <td style={{ textAlign: "left", fontWeight: 600 }}>
+                  {m.name}
                 </td>
 
                 {/* COMPONENT */}
@@ -1425,7 +1430,7 @@ const handleSaveProject = () => {
                   {m.component || "-"}
                 </td>
 
-                {/* STATUS */}
+                {/* STATUS CHECK */}
                 {checks.map((c, si) => (
                   <td key={si}>
                     <button
@@ -1453,6 +1458,7 @@ const handleSaveProject = () => {
     })()
   )}
 </tbody>
+
 
           </table>
         </div>
