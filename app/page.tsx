@@ -683,7 +683,11 @@ return sortConfig.direction === "asc" ? "▲" : "▼";
 };
 
 
-function toggleStatus(projectId: number, materialIndex: number, statusIndex: number) {
+function toggleStatus(
+  projectId: number,
+  materialIndex: number,
+  statusIndex: number
+) {
   const proj = projects.find((p) => p.id === projectId);
   const mat = proj?.materials?.[materialIndex];
   if (!mat) return;
@@ -691,11 +695,10 @@ function toggleStatus(projectId: number, materialIndex: number, statusIndex: num
   const currentChecks =
     (statuses[projectId] && statuses[projectId][materialIndex]) ||
     (mat.status && Array.isArray(mat.status)
-      ? mat.status.map((v:any)=>Boolean(v))
+      ? mat.status.map((v: any) => Boolean(v))
       : Array(STATUS_COUNT).fill(false));
 
-  // 🔥 TOGGLE VALUE
-  const nextValue = !currentChecks[statusIndex];
+  const currentValue = currentChecks[statusIndex]; // ✅ INI KUNCINYA
 
   setConfirm({
     open: true,
@@ -703,10 +706,9 @@ function toggleStatus(projectId: number, materialIndex: number, statusIndex: num
     materialIndex,
     statusIndex,
     materialId: mat.id,
-    nextValue: nextValue, // ⬅️ penting
+    nextValue: !currentValue, // ✅ toggle benar
   });
 }
-
 
 
 
@@ -762,7 +764,7 @@ async function confirmYes() {
   if (!confirm.open || confirm.materialId == null || confirm.statusIndex == null || confirm.projectId == null) return;
   setLoadingProgress(5);
   try {
-    const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: confirm.nextValue }) });
+    const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: true }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || 'Failed to update');
 
