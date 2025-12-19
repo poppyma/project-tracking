@@ -1457,9 +1457,52 @@ const handleSaveProject = () => {
 
             return (
               <tr key={m.id ?? mi}>
-                <td style={{ textAlign: "left" }}>
+                {/* <td style={{ textAlign: "left" }}>
                   <strong>{m.name}</strong>
-                </td>
+                </td> */}
+
+                <td style={{ textAlign: "left" }}>
+  {editProject ? (
+    <select
+      value={m.name}
+      onChange={(e) => {
+        const newValue = e.target.value;
+
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id !== selectedProjectId
+              ? p
+              : {
+                  ...p,
+                  materials: p.materials.map((mat, idx) =>
+                    idx === mi ? { ...mat, name: newValue } : mat
+                  ),
+                }
+          )
+        );
+      }}
+      style={{
+        padding: "6px 8px",
+        borderRadius: 6,
+        border: "1px solid #ccc",
+        minWidth: 140,
+      }}
+    >
+      <option value="" disabled>
+        Pilih material
+      </option>
+
+      {options.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+    </select>
+  ) : (
+    <strong>{m.name}</strong>
+  )}
+</td>
+
 
                 <td style={{ textAlign: "left" }}>
                   {m.component || "-"}
