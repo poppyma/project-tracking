@@ -1376,16 +1376,12 @@ const handleSaveProject = () => {
       return (
         <>
           {/* ===================== */}
-          {/* ROW: UPLOAD / REMARK */}
+          {/* UPLOAD / REMARK (1x) */}
           {/* ===================== */}
           <tr>
-            {/* MATERIAL (kosong) */}
-            <td></td>
+            <td></td> {/* Material */}
+            <td></td> {/* Component */}
 
-            {/* COMPONENT (kosong) */}
-            <td></td>
-
-            {/* STATUS COLUMNS */}
             {Array.from({ length: STATUS_COUNT }).map((_, si) => (
               <td key={si}>
                 <div
@@ -1396,25 +1392,18 @@ const handleSaveProject = () => {
                     gap: 8,
                   }}
                 >
-                  <button className="upload-btn">
-                    ⬆ Upload
-                  </button>
-
+                  <button className="upload-btn">⬆ Upload</button>
                   <div style={{ fontSize: 12 }}>📎 0</div>
-
-                  <button className="remark-btn">
-                    📝 Remark
-                  </button>
+                  <button className="remark-btn">📝 Remark</button>
                 </div>
               </td>
             ))}
 
-            {/* STATUS % (kosong) */}
-            <td></td>
+            <td></td> {/* Status % */}
           </tr>
 
           {/* ===================== */}
-          {/* ROWS: MATERIAL DATA */}
+          {/* MATERIAL ROWS */}
           {/* ===================== */}
           {proj.materials.map((m, mi) => {
             const checks =
@@ -1428,46 +1417,7 @@ const handleSaveProject = () => {
               <tr key={m.id ?? mi}>
                 {/* MATERIAL */}
                 <td style={{ textAlign: "left" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 6,
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <div style={{ fontWeight: 700 }}>
-                      {m.name}
-                    </div>
-
-                    {(m as any).attachments &&
-                      (m as any).attachments.length > 0 && (
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 8,
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          {(m as any).attachments.map(
-                            (a: any) => (
-                              <a
-                                key={a.id ?? a.filename}
-                                href={a.path}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  fontSize: 12,
-                                  color: "var(--blue)",
-                                }}
-                              >
-                                🔗 {a.filename}
-                              </a>
-                            )
-                          )}
-                        </div>
-                      )}
-                  </div>
+                  <strong>{m.name}</strong>
                 </td>
 
                 {/* COMPONENT */}
@@ -1475,7 +1425,7 @@ const handleSaveProject = () => {
                   {m.component || "-"}
                 </td>
 
-                {/* STATUS CHECKS */}
+                {/* STATUS */}
                 {checks.map((c, si) => (
                   <td key={si}>
                     <button
@@ -1485,25 +1435,14 @@ const handleSaveProject = () => {
                       className={`status-check ${
                         c ? "checked" : ""
                       }`}
-                      title={
-                        c
-                          ? "Completed"
-                          : "Mark as done"
-                      }
                     >
                       {c ? "✓" : ""}
                     </button>
                   </td>
                 ))}
 
-                {/* STATUS % */}
-                <td
-                  className="status-percent"
-                  onMouseEnter={(e) =>
-                    showHover(proj.id, mi, e)
-                  }
-                  onMouseLeave={hideHover}
-                >
+                {/* PERCENT */}
+                <td className="status-percent">
                   {percent}%
                 </td>
               </tr>
