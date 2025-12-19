@@ -1295,7 +1295,7 @@ const handleSaveProject = () => {
           <tr>
             <th></th>
 
-{/* {Array.from({ length: STATUS_COUNT }).map((_, i) => (
+{Array.from({ length: STATUS_COUNT }).map((_, i) => (
   <th key={i} style={{ fontWeight: 600 }}>
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
       <button
@@ -1343,123 +1343,81 @@ const handleSaveProject = () => {
       )}
     </div>
   </th>
-))} */}
+))}
 
                 <th></th>
               </tr>
             </thead>
-    <tbody>
-  {selectedProjectId == null ? (
-    <tr>
-      <td colSpan={12} className="table-empty">
-        Pilih project untuk melihat detail material
-      </td>
-    </tr>
-  ) : (
-    (() => {
-      const proj = projects.find((p) => p.id === selectedProjectId);
+            <tbody>
+              {selectedProjectId == null ? (
+                <tr>
+                  <td colSpan={12} className="table-empty">Pilih project untuk melihat detail material</td>
+                </tr>
+              ) : (
+                (() => {
+                  const proj = projects.find((p) => p.id === selectedProjectId);
+                  if (!proj || proj.materials.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={12} className="table-empty">No materials for selected project</td>
+                      </tr>
+                    );
+                  }
 
-      if (!proj || proj.materials.length === 0) {
-        return (
-          <tr>
-            <td colSpan={12} className="table-empty">
-              No materials for selected project
-            </td>
-          </tr>
-        );
-      }
+                  const projectStatuses = statuses[proj.id] ?? proj.materials.map(() => Array(STATUS_COUNT).fill(false));
 
-      const projectStatuses =
-        statuses[proj.id] ??
-        proj.materials.map(() => Array(STATUS_COUNT).fill(false));
+                  return proj.materials.map((m, mi) => {
+                    const checks = projectStatuses[mi] || Array(STATUS_COUNT).fill(false);
+                    const percent = computeMaterialPercentFromChecks(checks);
+                    return (
+                      <tr key={m.id ?? mi}>
+                        <td style={{ textAlign: 'left' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
+                            <div style={{ fontWeight: 700 }}>{m.name}</div>
+                            {(m as any).attachments && (m as any).attachments.length > 0 && (
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                {(m as any).attachments.map((a: any) => (
+                                  <a
+                                    href={a.path}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ fontSize: 12, color: 'var(--blue)' }}
+                                  >
+                                    🔗 {a.filename}
+                                  </a>
 
-      return (
-        <>
-          {/* ================================================= */}
-          {/* UPLOAD / REMARK — HANYA SATU BARIS (GLOBAL) */}
-          {/* ================================================= */}
-          <tr>
-            {/* Material */}
-            <td></td>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </td>
 
-            {/* Component */}
-            <td></td>
+                        {/* COMPONENT */}
+                        <td style={{ textAlign: "left" }}>
+                          {m.component || "-"}
+                        </td>
+                        
+                        {checks.map((c, si) => (
+                          <td key={si}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                              <button
+                                onClick={() => toggleStatus(proj.id, mi, si)}
+                                className={`status-check ${c ? 'checked' : ''}`}
+                                title={c ? 'Completed' : 'Mark as done'}
+                              >
+                                {c ? '✓' : ''}
+                              </button>
 
-            {/* Status columns */}
-            {Array.from({ length: STATUS_COUNT }).map((_, si) => (
-              <td key={si}>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <button className="upload-btn">⬆ Upload</button>
-                  <div style={{ fontSize: 12 }}>📎 0</div>
-                  <button className="remark-btn">📝 Remark</button>
-                </div>
-              </td>
-            ))}
-
-            {/* Status % */}
-            <td></td>
-          </tr>
-
-          {/* ================================================= */}
-          {/* MATERIAL ROWS */}
-          {/* ================================================= */}
-          {proj.materials.map((m, mi) => {
-            const checks =
-              projectStatuses[mi] ||
-              Array(STATUS_COUNT).fill(false);
-
-            const percent =
-              computeMaterialPercentFromChecks(checks);
-
-            return (
-              <tr key={m.id ?? mi}>
-                {/* MATERIAL */}
-                <td style={{ textAlign: "left", fontWeight: 600 }}>
-                  {m.name}
-                </td>
-
-                {/* COMPONENT */}
-                <td style={{ textAlign: "left" }}>
-                  {m.component || "-"}
-                </td>
-
-                {/* STATUS CHECK */}
-                {checks.map((c, si) => (
-                  <td key={si}>
-                    <button
-                      onClick={() =>
-                        toggleStatus(proj.id, mi, si)
-                      }
-                      className={`status-check ${
-                        c ? "checked" : ""
-                      }`}
-                    >
-                      {c ? "✓" : ""}
-                    </button>
-                  </td>
-                ))}
-
-                {/* PERCENT */}
-                <td className="status-percent">
-                  {percent}%
-                </td>
-              </tr>
-            );
-          })}
-        </>
-      );
-    })()
-  )}
-</tbody>
-
-
+                            </div>
+                          </td>
+                        ))}
+                        <td className="status-percent" onMouseEnter={(e)=>showHover(proj.id, mi, e)} onMouseLeave={hideHover}>{percent}%</td>
+                      </tr>
+                    );
+                  });
+                })()
+              )}
+            </tbody>
           </table>
         </div>
       </div>
