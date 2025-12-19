@@ -1476,10 +1476,14 @@ const handleSaveProject = () => {
               <div style={{ width: 180 }} className="form-row">
                 <label className="form-label">Est SOP Plan</label>
                 <input
-                  className={`input ${errors.estSop ? "input-error" : ""}`}
-                  value={form.estSop}
-                  onChange={(e) => setForm({ ...form, estSop: e.target.value })}
+                  type="date"
+                  value={form.estSop || ""}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, estSop: e.target.value }))
+                  }
+                  className="input"
                 />
+
                 {errors.estSop && <span className="error-text">{errors.estSop}</span>}
               </div>
             </div>
@@ -1705,10 +1709,12 @@ const handleSaveProject = () => {
         <div className="space-y-2">
           <label className="font-semibold block">EST SOP</label>
           <input
+            type="date"
             className="input w-full border rounded px-3 py-2"
             value={form.estSop}
             onChange={(e) => setForm({ ...form, estSop: e.target.value })}
           />
+
         </div>
 
       </div>
