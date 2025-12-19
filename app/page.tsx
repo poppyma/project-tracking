@@ -1765,30 +1765,43 @@ const handleSaveProject = () => {
         </tbody>
       </table>
 
+      <button
+        className="add-btn mt-3"
+        onClick={() =>
+          setMaterials(prev => [
+            ...prev,
+            { material: "", component: "", qty: "", uom: "", supplier: "" }
+          ])
+        }
+      >
+        + Add Material
+      </button>
+
+
       {/* ACTION BUTTONS */}
       <div className="mt-8 flex justify-end gap-4">
         <button
-  onClick={() => {
-    setShowEditModal(false);
-    setEditProject(null);
+          onClick={() => {
+            setShowEditModal(false);
+            setEditProject(null);
 
-    // reset form biar tidak kebawa ke Add nanti
-    setForm({
-      name: "",
-      customer: "",
-      application: "",
-      productLine: "",
-      anualVolume: "",
-      estSop: "",
-    });
+            // reset form biar tidak kebawa ke Add nanti
+            setForm({
+              name: "",
+              customer: "",
+              application: "",
+              productLine: "",
+              anualVolume: "",
+              estSop: "",
+            });
 
-    setMaterials([
-      { material: "", component: "", qty: "", uom: "", supplier: "" }
-    ]);
-  }}
->
-  Cancel
-</button>
+            setMaterials([
+              { material: "", component: "", qty: "", uom: "", supplier: "" }
+            ]);
+          }}
+        >
+          Cancel
+        </button>
 
 
         <button className="btn" onClick={saveEditProject}>
