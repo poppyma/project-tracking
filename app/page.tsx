@@ -767,8 +767,6 @@ async function confirmYes() {
     confirm.materialIndex == null
   ) return;
 
-  setLoadingProgress(10);
-
   try {
     const res = await fetch("/api/projects", {
       method: "PATCH",
@@ -781,20 +779,33 @@ async function confirmYes() {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || "Update failed");
+    if (!res.ok) throw new Error(data?.error || "Gagal update status");
 
     const serverMat = data.material;
 
-    // 🔥 UPDATE PROJECT LIST
+    // 🔥 UPDATE STATUS STATE
+    setStatuses((prev) => {
+      const copy = { ...prev };
+      const rows = copy[confirm.projectId!] ?? [];
+      const row = rows[confirm.materialIndex!] ?? Array(STATUS_COUNT).fill(false);
+
+      row[confirm.statusIndex!] = confirm.nextValue!; // ✅ BISA TRUE / FALSE
+      rows[confirm.materialIndex!] = row;
+      copy[confirm.projectId!] = rows;
+
+      return copy;
+    });
+
+    // 🔥 UPDATE PROJECT & MATERIAL PERCENT
     setProjects((prev) =>
       prev.map((p) =>
-        p.id !== data.projectId
+        p.id !== confirm.projectId
           ? p
           : {
               ...p,
               percent: data.projectPercent,
               materials: p.materials.map((m) =>
-                m.id === serverMat.id
+                m.id === confirm.materialId
                   ? {
                       ...m,
                       percent: serverMat.percent,
@@ -806,37 +817,13 @@ async function confirmYes() {
       )
     );
 
-    // 🔥 UPDATE DETAIL PAGE (JIKA ADA)
-    setProject((prev) =>
-      prev && prev.id === data.projectId
-        ? {
-            ...prev,
-            percent: data.projectPercent,
-            materials: prev.materials.map((m) =>
-              m.id === serverMat.id
-                ? {
-                    ...m,
-                    percent: serverMat.percent,
-                    status: serverMat.status,
-                  }
-                : m
-            ),
-          }
-        : prev
-    );
-
-    setLoadingProgress(100);
   } catch (err) {
     console.error(err);
-    alert("Gagal update status");
+    alert("Gagal memperbarui status");
   } finally {
-    setTimeout(() => {
-      setConfirm({ open: false });
-      setLoadingProgress(0); // ✅ BALIKKAN LOADING
-    }, 300);
+    setConfirm({ open: false });
   }
 }
-
 
 function confirmNo() { setConfirm({ open: false }); }
 
