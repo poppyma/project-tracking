@@ -1295,7 +1295,7 @@ const handleSaveProject = () => {
           <tr>
             <th></th>
 
-{Array.from({ length: STATUS_COUNT }).map((_, i) => (
+{/* {Array.from({ length: STATUS_COUNT }).map((_, i) => (
   <th key={i} style={{ fontWeight: 600 }}>
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
       <button
@@ -1343,7 +1343,7 @@ const handleSaveProject = () => {
       )}
     </div>
   </th>
-))}
+))} */}
 
                 <th></th>
               </tr>
