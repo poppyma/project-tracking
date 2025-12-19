@@ -1278,146 +1278,220 @@ const handleSaveProject = () => {
     <div style={{ overflowX: 'auto' }}>
       <table className="status-grid" style={{ minWidth: 1000 }}>
         <thead>
+  <tr>
+    <th>Material</th>
+    <th>Component</th>
+    <th>Sourching</th>
+    <th>Quotation</th>
+    <th>PO Sample</th>
+    <th>Sample Received</th>
+    <th>Trial Proses & Report</th>
+    <th>MOC Release</th>
+    <th>PPAP & PSW</th>
+    <th>PO Maspro</th>
+    <th>Item Receive</th>
+    <th>Status (%)</th>
+  </tr>
+</thead>
+
+           <tbody>
+  {selectedProjectId == null ? (
+    <tr>
+      <td colSpan={12} className="table-empty">
+        Pilih project untuk melihat detail material
+      </td>
+    </tr>
+  ) : (
+    (() => {
+      const proj = projects.find((p) => p.id === selectedProjectId);
+
+      if (!proj || proj.materials.length === 0) {
+        return (
           <tr>
-            <th>Material</th>
-            <th>Component</th>
-            <th>Sourching</th>
-            <th>Quotation</th>
-            <th>PO Sample</th>
-            <th>Sample Received</th>
-            <th>Trial Proses & Report</th>
-            <th>MOC Release</th>
-            <th>PPAP & PSW</th>
-            <th>PO Maspro</th>
-            <th>Item Receive</th>
-            <th>Status (%)</th>
+            <td colSpan={12} className="table-empty">
+              No materials for selected project
+            </td>
           </tr>
+        );
+      }
+
+      const projectStatuses =
+        statuses[proj.id] ??
+        proj.materials.map(() => Array(STATUS_COUNT).fill(false));
+
+      return (
+        <>
+          {/* ===================== */}
+          {/* BARIS UPLOAD (1x) */}
+          {/* ===================== */}
           <tr>
-            <th></th>
+            <td></td> {/* Material */}
+            <td></td> {/* Component */}
 
-{Array.from({ length: STATUS_COUNT }).map((_, i) => (
-  <th key={i} style={{ fontWeight: 600 }}>
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-      <button
-        className="upload-btn"
-        onClick={async (e) => {
-          e.stopPropagation();
-          if (!selectedProjectId) {
-            alert('Pilih project terlebih dahulu');
-            return;
-          }
-          setLoadingIndex(i); 
-          try {
-            await openUpload(selectedProjectId, undefined, undefined, i); 
-          } finally {
-            setLoadingIndex(null); 
-          }
-        }}
-        aria-label={`Upload column ${i}`}
-        disabled={loadingIndex === i} 
-      >
-        {loadingIndex === i ? "Uploading…" : "⬆ Upload"}
-      </button>
+            {Array.from({ length: STATUS_COUNT }).map((_, i) => (
+              <td key={i}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <button
+                    className="upload-btn"
+                    disabled={loadingIndex === i}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
 
-      <button
-        className="attach-btn"
-        onClick={(e) => { e.stopPropagation(); if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; } openAttachments(i); }}
-        aria-label={`Attachments column ${i}`}
-      >
-        📎 {projectUploads.filter((u) => Number(u && (u as any).status_index) === i).length}
-      </button>
+                      if (!selectedProjectId) {
+                        alert("Pilih project terlebih dahulu");
+                        return;
+                      }
 
-      <button
-        className="remark-btn"
-        onClick={(e) => { e.stopPropagation(); if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; } setRemarkModal({ open: true, statusIndex: i, text: '' }); }}
-        aria-label={`Remark column ${i}`}
-      >
-        📝 Remark
-      </button>
+                      setLoadingIndex(i);
+                      try {
+                        await openUpload(
+                          selectedProjectId,
+                          undefined,
+                          undefined,
+                          i
+                        );
+                      } finally {
+                        setLoadingIndex(null);
+                      }
+                    }}
+                  >
+                    {loadingIndex === i
+                      ? "Uploading…"
+                      : "⬆ Upload"}
+                  </button>
 
-      {remarksMap && remarksMap[i] && remarksMap[i].length > 0 && (
-        <div onClick={(e) => { e.stopPropagation(); openRemarks(i); }} style={{ marginTop: 6, maxWidth: 160, textAlign: 'center', cursor: 'pointer' }}>
-          <div style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{remarksMap[i][0].text}</div>
-          <div style={{ fontSize: 10, color: 'var(--muted)' }}>{new Date(remarksMap[i][0].created_at).toLocaleString()}</div>
-        </div>
-      )}
-    </div>
-  </th>
-))}
+                  <button
+                    className="attach-btn"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openAttachments(i);
+                    }}
+                  >
+                    📎{" "}
+                    {
+                      projectUploads.filter(
+                        (u) =>
+                          Number((u as any)?.status_index) === i
+                      ).length
+                    }
+                  </button>
 
-                <th></th>
+                  <button
+                    className="remark-btn"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setRemarkModal({
+                        open: true,
+                        statusIndex: i,
+                        text: "",
+                      });
+                    }}
+                  >
+                    📝 Remark
+                  </button>
+
+                  {remarksMap?.[i]?.length > 0 && (
+                    <div
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openRemarks(i);
+                      }}
+                      style={{
+                        marginTop: 6,
+                        maxWidth: 160,
+                        textAlign: "center",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "var(--muted)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {remarksMap[i][0].text}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "var(--muted)",
+                        }}
+                      >
+                        {new Date(
+                          remarksMap[i][0].created_at
+                        ).toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </td>
+            ))}
+
+            <td></td> {/* Status (%) */}
+          </tr>
+
+          {/* ===================== */}
+          {/* MATERIAL ROWS */}
+          {/* ===================== */}
+          {proj.materials.map((m, mi) => {
+            const checks =
+              projectStatuses[mi] ??
+              Array(STATUS_COUNT).fill(false);
+
+            const percent =
+              computeMaterialPercentFromChecks(checks);
+
+            return (
+              <tr key={m.id ?? mi}>
+                <td style={{ textAlign: "left" }}>
+                  <strong>{m.name}</strong>
+                </td>
+
+                <td style={{ textAlign: "left" }}>
+                  {m.component || "-"}
+                </td>
+
+                {checks.map((c, si) => (
+                  <td key={si}>
+                    <button
+                      onClick={() =>
+                        toggleStatus(proj.id, mi, si)
+                      }
+                      className={`status-check ${
+                        c ? "checked" : ""
+                      }`}
+                    >
+                      {c ? "✓" : ""}
+                    </button>
+                  </td>
+                ))}
+
+                <td className="status-percent">
+                  {percent}%
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {selectedProjectId == null ? (
-                <tr>
-                  <td colSpan={12} className="table-empty">Pilih project untuk melihat detail material</td>
-                </tr>
-              ) : (
-                (() => {
-                  const proj = projects.find((p) => p.id === selectedProjectId);
-                  if (!proj || proj.materials.length === 0) {
-                    return (
-                      <tr>
-                        <td colSpan={12} className="table-empty">No materials for selected project</td>
-                      </tr>
-                    );
-                  }
+            );
+          })}
+        </>
+      );
+    })()
+  )}
+</tbody>
 
-                  const projectStatuses = statuses[proj.id] ?? proj.materials.map(() => Array(STATUS_COUNT).fill(false));
-
-                  return proj.materials.map((m, mi) => {
-                    const checks = projectStatuses[mi] || Array(STATUS_COUNT).fill(false);
-                    const percent = computeMaterialPercentFromChecks(checks);
-                    return (
-                      <tr key={m.id ?? mi}>
-                        <td style={{ textAlign: 'left' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
-                            <div style={{ fontWeight: 700 }}>{m.name}</div>
-                            {(m as any).attachments && (m as any).attachments.length > 0 && (
-                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                {(m as any).attachments.map((a: any) => (
-                                  <a
-                                    href={a.path}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ fontSize: 12, color: 'var(--blue)' }}
-                                  >
-                                    🔗 {a.filename}
-                                  </a>
-
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* COMPONENT */}
-                        <td style={{ textAlign: "left" }}>
-                          {m.component || "-"}
-                        </td>
-                        
-                        {checks.map((c, si) => (
-                          <td key={si}>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                              <button
-                                onClick={() => toggleStatus(proj.id, mi, si)}
-                                className={`status-check ${c ? 'checked' : ''}`}
-                                title={c ? 'Completed' : 'Mark as done'}
-                              >
-                                {c ? '✓' : ''}
-                              </button>
-
-                            </div>
-                          </td>
-                        ))}
-                        <td className="status-percent" onMouseEnter={(e)=>showHover(proj.id, mi, e)} onMouseLeave={hideHover}>{percent}%</td>
-                      </tr>
-                    );
-                  });
-                })()
-              )}
-            </tbody>
           </table>
         </div>
       </div>
