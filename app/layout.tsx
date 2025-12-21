@@ -9,6 +9,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [dataMasterOpen, setDataMasterOpen] = useState(true);
   const [bomOpen, setBomOpen] = useState(true);
 
   return (
@@ -34,16 +35,61 @@ export default function RootLayout({
               <nav className="flex flex-col gap-2">
 
                 {/* DATA MASTER */}
-                <Link
-                  href="/data-master"
-                  className="flex items-center gap-4 py-3 px-4 rounded-xl hover:bg-white/10"
+                <button
+                  onClick={() => setDataMasterOpen(!dataMasterOpen)}
+                  className="flex items-center justify-between py-3 px-4 rounded-xl hover:bg-white/10"
                 >
-                  <img
-                    src="/database.png"   // ganti icon kalau mau
-                    className="w-7 h-7"
-                  />
-                  <span className="font-semibold">Data Master</span>
-                </Link>
+                  <div className="flex items-center gap-4">
+                    <img src="/database.png" className="w-7 h-7" />
+                    <span className="font-semibold">Data Master</span>
+                  </div>
+
+                  <svg
+                    className={`w-4 h-4 transition-transform ${
+                      dataMasterOpen ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* DATA MASTER SUB MENU */}
+                {dataMasterOpen && (
+                  <div className="ml-10 border-l border-white/20 pl-4 flex flex-col gap-1">
+                    <Link
+                      href="/data-master/ipd"
+                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                    >
+                      Input IPD
+                    </Link>
+
+                    <Link
+                      href="/data-master/supplier"
+                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                    >
+                      Input Supplier
+                    </Link>
+
+                    <Link
+                      href="/data-master/price"
+                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                    >
+                      Input Price
+                    </Link>
+
+                    <Link
+                      href="/data-master/summary"
+                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                    >
+                      Data Summary
+                    </Link>
+                  </div>
+                )}
+
 
 
                 {/* TRACKING */}
