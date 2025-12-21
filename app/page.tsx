@@ -764,7 +764,7 @@ async function confirmYes() {
   if (!confirm.open || confirm.materialId == null || confirm.statusIndex == null || confirm.projectId == null) return;
   setLoadingProgress(5);
   try {
-    const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: true }) });
+    const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: confirm.nextValue }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || 'Failed to update');
 
@@ -776,7 +776,7 @@ async function confirmYes() {
       if (serverMat && Array.isArray(serverMat.status)) {
         matArr[confirm.materialIndex!] = serverMat.status.map((v: any) => Boolean(v));
       } else {
-        matArr[confirm.materialIndex!][confirm.statusIndex!] = true;
+        matArr[confirm.materialIndex!][confirm.statusIndex!] = Boolean(confirm.nextValue);
       }
       copy[confirm.projectId!] = matArr;
       return copy;
@@ -1730,7 +1730,7 @@ const handleSaveProject = () => {
               <h3 style={{ margin: 0 }}>Confirmation</h3>
               <button style={{ marginLeft: 'auto', background: 'transparent', border: 'none', fontSize: 20 }} onClick={confirmNo}>✕</button>
             </div>
-            <div className="confirm-body">Apakah Anda yakin ingin menandai sebagai selesai?</div>
+            <div className="confirm-body">{confirm.nextValue ? 'Apakah Anda yakin ingin menandai sebagai selesai?' : 'Apakah Anda yakin ingin membatalkan tanda selesai?'}</div>
             <div className="confirm-actions">
               <button className="btn secondary" onClick={confirmNo}>Tidak</button>
               <button className="btn" onClick={confirmYes}>Ya</button>
