@@ -1,39 +1,67 @@
 "use client";
+    // optimistic UI update: apply the toggle locally immediately
+    const prevStatuses = structuredClone(statuses);
+    const prevProjects = structuredClone(projects);
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from 'next/navigation';
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
+    // ensure we have statuses for this project
+    setStatuses((s) => {
+      const copy: any = { ...s };
+      const matArr = copy[confirm.projectId!] ? copy[confirm.projectId!].map((r: any) => [...r]) : [];
+      if (!matArr[confirm.materialIndex!]) matArr[confirm.materialIndex!] = Array(STATUS_COUNT).fill(false);
+      matArr[confirm.materialIndex!][confirm.statusIndex!] = Boolean(confirm.nextValue);
+      copy[confirm.projectId!] = matArr;
+      return copy;
+    });
 
-type Material = {
-  id: number;
-  name: string;
+    // update project/material percents locally
+    setProjects((ps) => {
+      const copy = ps.map((pr) => ({ ...pr, materials: pr.materials.map((m) => ({ ...m })) }));
+      const prIndex = copy.findIndex((x) => x.id === confirm.projectId);
+      if (prIndex !== -1) {
+        const mat = copy[prIndex].materials[confirm.materialIndex!];
+        if (mat) {
+          const checks = (statuses[confirm.projectId!] && statuses[confirm.projectId!][confirm.materialIndex!]) || (mat.status && Array.isArray(mat.status) ? mat.status.map((v:any)=>Boolean(v)) : Array(STATUS_COUNT).fill(false));
+          // apply toggle locally to compute percent
+          checks[confirm.statusIndex!] = Boolean(confirm.nextValue);
+          const newPercent = computeMaterialPercentFromChecks(checks);
+          copy[prIndex].materials[confirm.materialIndex!] = { ...mat, percent: newPercent, status: checks } as any;
+          // recalc project percent
+          const total = copy[prIndex].materials.reduce((acc, mm: any) => acc + (mm.percent || 0), 0);
+          copy[prIndex].percent = Math.round(total / Math.max(1, copy[prIndex].materials.length));
+        }
+      }
+      return copy;
+    });
 
-  component: string;
-  bom_qty: number;
-  UoM: string;
-  supplier: string;
+    const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: confirm.materialId, statusIndex: confirm.statusIndex, value: confirm.nextValue }) });
+    const data = await res.json();
+    if (!res.ok) {
+      // revert optimistic update
+      setStatuses(prevStatuses);
+      setProjects(prevProjects);
+      throw new Error(data?.error || 'Failed to update');
+    }
 
-  percent: number;
-  status: boolean[];
-  attachments: any[];
-  order_index: number;
-};
-
-type Attachment = { id: number; filename: string; path: string; size?: number; mime?: string; created_at?: string };
-type MaterialExt = Material & { attachments?: Attachment[] };
-
-type Project = {
-  id: number;
-  name: string;
-  customer: string;
-  application: string;
-  productLine: string;
-  anualVolume: string;
-  estSop: string;
-  materials: Material[];
-  percent?: number;
+    const serverMat = data.material; 
+    // reconcile with server response
+    if (serverMat) {
+      setStatuses((s) => {
+        const copy = { ...s } as any;
+        const matArr = copy[confirm.projectId!] ? copy[confirm.projectId!].map((r: any) => [...r]) : [];
+        matArr[confirm.materialIndex!] = (serverMat.status || []).map((v: any) => Boolean(v));
+        copy[confirm.projectId!] = matArr;
+        return copy;
+      });
+      setProjects((p) => p.map((pr) => {
+        if (pr.id !== data.projectId) return pr;
+        const updatedMaterials = pr.materials.map((m) => {
+          if (m.id === serverMat.id) {
+            return { ...m, percent: serverMat.percent, status: serverMat.status };
+          }
+          return m;
+        });
+        return { ...pr, percent: data.projectPercent, materials: [...updatedMaterials].sort((a, b) => (a as any).order_index - (b as any).order_index) } as any;
+      }));
 };
 
 export default function Home() {
