@@ -33,6 +33,19 @@ export default function RootLayout({
               {/* NAV */}
               <nav className="flex flex-col gap-2">
 
+                {/* DATA MASTER */}
+                <Link
+                  href="/data-master"
+                  className="flex items-center gap-4 py-3 px-4 rounded-xl hover:bg-white/10"
+                >
+                  <img
+                    src="/database.png"   // ganti icon kalau mau
+                    className="w-7 h-7"
+                  />
+                  <span className="font-semibold">Data Master</span>
+                </Link>
+
+
                 {/* TRACKING */}
                 <Link
                   href="/"
