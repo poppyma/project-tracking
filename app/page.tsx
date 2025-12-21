@@ -700,6 +700,79 @@ function toggleStatus(
 
   const currentValue = currentChecks[statusIndex]; // ✅ INI KUNCINYA
 
+  // If the checkbox is currently checked and user clicked it, allow immediate uncheck
+  // (no extra confirmation) to make it easy to revert a previous confirmation.
+  if (currentValue === true) {
+    // optimistic UI update
+    const prevStatuses = structuredClone(statuses);
+    const prevProjects = structuredClone(projects);
+
+    setStatuses((s) => {
+      const copy: any = { ...s };
+      const matArr = copy[projectId] ? copy[projectId].map((r: any) => [...r]) : [];
+      if (!matArr[materialIndex]) matArr[materialIndex] = Array(STATUS_COUNT).fill(false);
+      matArr[materialIndex][statusIndex] = false;
+      copy[projectId] = matArr;
+      return copy;
+    });
+
+    setProjects((ps) => {
+      const copy = ps.map((pr) => ({ ...pr, materials: pr.materials.map((m) => ({ ...m })) }));
+      const prIndex = copy.findIndex((x) => x.id === projectId);
+      if (prIndex !== -1) {
+        const mat2 = copy[prIndex].materials[materialIndex];
+        if (mat2) {
+          const checks = (statuses[projectId] && statuses[projectId][materialIndex]) || (mat2.status && Array.isArray(mat2.status) ? mat2.status.map((v:any)=>Boolean(v)) : Array(STATUS_COUNT).fill(false));
+          checks[statusIndex] = false;
+          const newPercent = computeMaterialPercentFromChecks(checks);
+          copy[prIndex].materials[materialIndex] = { ...mat2, percent: newPercent, status: checks } as any;
+          const total = copy[prIndex].materials.reduce((acc, mm: any) => acc + (mm.percent || 0), 0);
+          copy[prIndex].percent = Math.round(total / Math.max(1, copy[prIndex].materials.length));
+        }
+      }
+      return copy;
+    });
+
+    (async () => {
+      try {
+        const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materialId: mat.id, statusIndex, value: false }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Failed to update');
+
+        // reconcile with server
+        const serverMat = data.material;
+        if (serverMat) {
+          setStatuses((s) => {
+            const copy = { ...s } as any;
+            const matArr = copy[projectId] ? copy[projectId].map((r: any) => [...r]) : [];
+            matArr[materialIndex] = (serverMat.status || []).map((v: any) => Boolean(v));
+            copy[projectId] = matArr;
+            return copy;
+          });
+          setProjects((p) => p.map((pr) => {
+            if (pr.id !== data.projectId) return pr;
+            const updatedMaterials = pr.materials.map((m) => {
+              if (m.id === serverMat.id) {
+                return { ...m, percent: serverMat.percent, status: serverMat.status };
+              }
+              return m;
+            });
+            return { ...pr, percent: data.projectPercent, materials: [...updatedMaterials].sort((a, b) => (a as any).order_index - (b as any).order_index) } as any;
+          }));
+        }
+      } catch (err) {
+        // revert on error
+        setStatuses(prevStatuses);
+        setProjects(prevProjects);
+        console.error('Failed to uncheck', err);
+        alert('Gagal membatalkan status');
+      }
+    })();
+
+    return;
+  }
+
+  // otherwise, open confirmation modal for marking as done
   setConfirm({
     open: true,
     projectId,
