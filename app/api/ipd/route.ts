@@ -24,8 +24,8 @@ export async function GET() {
     );
 
     return NextResponse.json(result.rows);
-  } catch (err: any) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { error: "Failed to fetch IPD data" },
       { status: 500 }
@@ -72,8 +72,8 @@ export async function POST(req: Request) {
     );
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { error: "Failed to insert IPD data" },
       { status: 500 }
