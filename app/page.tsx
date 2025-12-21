@@ -1793,10 +1793,19 @@ const handleSaveProject = () => {
           {materials.map((m, i) => (
             <tr key={i}>
               <td className="border p-1">
-                <input className="input w-full" 
+             
+                <select
+                  className="input w-full"
                   value={m.material}
-                  onChange={(e)=>updateMaterial(i,"material",e.target.value)}
-                />
+                  onChange={(e) => updateMaterial(i, "material", e.target.value)}
+                >
+                  <option value="">Select</option>
+                  {options.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </td>
               <td className="border p-1">
                 <input className="input w-full"
