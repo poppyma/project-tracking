@@ -294,18 +294,18 @@ body {
   border: 1px solid #d1d5db;
   background: #ffffff;
   color: transparent;
+  cursor: pointer; /* ⬅️ penting */
   transition: all .12s ease-in-out;
 }
+
 .status-check.checked {
-  background: var(--blue); /* blue when confirmed */
+  background: var(--blue);
   color: #fff;
   border-color: var(--blue);
+  cursor: pointer; /* ⬅️ WAJIB tetap pointer */
+  opacity: 1;
 }
-.status-check.checked {
-  cursor: default;
-  pointer-events: none;
-  opacity: 0.98;
-}
+
 .status-check.small { width:20px; height:20px; }
 
 .status-percent { font-weight:700; }
