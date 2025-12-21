@@ -712,53 +712,7 @@ function toggleStatus(
 
 
 
-async function confirmToggleStatus() {
-  if (!confirm.open) return;
-
-  const { projectId, materialIndex, statusIndex, materialId } = confirm;
-
-  const res = await fetch("/api/projects", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      materialId,
-      statusIndex,
-      //value: true,
-      value: confirm.nextValue
-
-    }),
-  });
-
-  if (!res.ok) {
-    alert("Gagal update status");
-    return;
-  }
-
-  const data = await res.json();
-
-  // 🔥 UPDATE STATE PROJECT LANGSUNG
-  setProjects((prev) =>
-    prev.map((p) =>
-      p.id !== projectId
-        ? p
-        : {
-            ...p,
-            percent: data.projectPercent, // ✅ UPDATE PROJECT PERCENT
-            materials: p.materials.map((m, i) =>
-              i !== materialIndex
-                ? m
-                : {
-                    ...m,
-                    status: data.status,
-                    percent: data.materialPercent,
-                  }
-            ),
-          }
-    )
-  );
-
-  setConfirm({ open: false });
-}
+// (removed old/unused confirmToggleStatus to avoid conflicting update paths)
 
 async function confirmYes() {
   if (!confirm.open || confirm.materialId == null || confirm.statusIndex == null || confirm.projectId == null) return;
@@ -818,6 +772,12 @@ async function confirmYes() {
         materials: [...updatedMaterials].sort((a, b) => a.order_index - b.order_index),
       };
     });
+    // reload projects from server to ensure consistent state
+    try {
+      await reloadProjects();
+    } catch (e) {
+      // ignore reload errors
+    }
 
     setLoadingProgress(100);
     setTimeout(() => { setConfirm({ open: false }); setLoadingProgress(0); }, 250);
