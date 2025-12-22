@@ -18,8 +18,9 @@ type PriceRow = {
   id: string;
   supplier_name: string;
   supplier_code: string;
-  start_date: string;
-  end_date: string | null;
+  ipd_quotation: string;
+  ipd_siis: string;
+  description: string;
   price: string;
 };
 
@@ -37,6 +38,12 @@ export default function InputPricePage() {
     supplier_id: "",
     start_date: "",
     end_date: "",
+    ipd_quotation: "",
+    ipd_siis: "",
+    description: "",
+    steel_spec: "",
+    material_source: "",
+    tube_route: "",
     price: "",
   });
 
@@ -84,8 +91,21 @@ export default function InputPricePage() {
       return;
     }
 
-    alert("Price berhasil disimpan");
-    setForm({ supplier_id: "", start_date: "", end_date: "", price: "" });
+    alert("Quotation berhasil disimpan");
+
+    setForm({
+      supplier_id: "",
+      start_date: "",
+      end_date: "",
+      ipd_quotation: "",
+      ipd_siis: "",
+      description: "",
+      steel_spec: "",
+      material_source: "",
+      tube_route: "",
+      price: "",
+    });
+
     setSelectedSupplier(null);
     loadPrices();
     setLoading(false);
@@ -97,11 +117,11 @@ export default function InputPricePage() {
   return (
     <div className="space-y-4 text-xs">
 
-      <h1 className="font-semibold">Input Price</h1>
+      <h1 className="font-semibold">Input Price Quotation</h1>
 
-      {/* SUPPLIER SELECT */}
+      {/* SUPPLIER */}
       <select
-        className="input-dense w-64"
+        className="input-dense w-72"
         value={form.supplier_id}
         onChange={(e) => {
           const supplier = suppliers.find(s => s.id === e.target.value);
@@ -117,57 +137,75 @@ export default function InputPricePage() {
         ))}
       </select>
 
-      {/* SUPPLIER DETAIL */}
+      {/* DETAIL SUPPLIER + DATE (DISIMPAN, TIDAK MASUK TABEL) */}
       {selectedSupplier && (
-        <div className="grid grid-cols-2 gap-2 border rounded p-3 bg-gray-50">
-          <div>
-            <b>Supplier Name</b>
-            <div>{selectedSupplier.supplier_name}</div>
+        <div className="border rounded p-3 bg-gray-50 space-y-2">
+
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <b>Supplier</b>
+              <div>{selectedSupplier.supplier_name}</div>
+            </div>
+            <div>
+              <b>Supplier Code</b>
+              <div>{selectedSupplier.supplier_code}</div>
+            </div>
+            <div>
+              <b>Currency</b>
+              <div>{selectedSupplier.currency ?? "-"}</div>
+            </div>
           </div>
 
-          <div>
-            <b>Supplier Code</b>
-            <div>{selectedSupplier.supplier_code}</div>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="date"
+              className="input-dense"
+              value={form.start_date}
+              onChange={(e) =>
+                setForm({ ...form, start_date: e.target.value })
+              }
+            />
+            <input
+              type="date"
+              className="input-dense"
+              value={form.end_date}
+              onChange={(e) =>
+                setForm({ ...form, end_date: e.target.value })
+              }
+            />
           </div>
 
-          <div>
-            <b>Currency</b>
-            <div>{selectedSupplier.currency ?? "-"}</div>
-          </div>
-
-          <div>
-            <b>Incoterm</b>
-            <div>{selectedSupplier.incoterm ?? "-"}</div>
-          </div>
-
-          <div>
-            <b>TOP</b>
-            <div>{selectedSupplier.top ?? "-"}</div>
-          </div>
         </div>
       )}
 
-      {/* INPUT PRICE */}
+      {/* QUOTATION INPUT */}
       <div className="grid grid-cols-4 gap-2">
-        <input
-          type="date"
-          className="input-dense"
-          value={form.start_date}
-          onChange={(e) => setForm({ ...form, start_date: e.target.value })}
-        />
-
-        <input
-          type="date"
-          className="input-dense"
-          value={form.end_date}
-          onChange={(e) => setForm({ ...form, end_date: e.target.value })}
-        />
+        {[
+          ["IPD Quotation", "ipd_quotation"],
+          ["IPD SIIS", "ipd_siis"],
+          ["Description", "description"],
+          ["Steel Spec", "steel_spec"],
+          ["Material Source", "material_source"],
+          ["Tube Route", "tube_route"],
+        ].map(([label, key]) => (
+          <input
+            key={key}
+            className="input-dense"
+            placeholder={label}
+            value={(form as any)[key]}
+            onChange={(e) =>
+              setForm({ ...form, [key]: e.target.value })
+            }
+          />
+        ))}
 
         <input
           className="input-dense"
           placeholder="Price"
           value={form.price}
-          onChange={(e) => setForm({ ...form, price: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, price: e.target.value })
+          }
         />
 
         <button
@@ -179,25 +217,23 @@ export default function InputPricePage() {
         </button>
       </div>
 
-      {/* TABLE */}
+      {/* TABLE (TANPA START & END DATE) */}
       <table className="w-full border">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border px-2 py-1">Supplier</th>
-            <th className="border px-2 py-1">Code</th>
-            <th className="border px-2 py-1">Start</th>
-            <th className="border px-2 py-1">End</th>
-            <th className="border px-2 py-1">Price</th>
+            <th>Supplier</th>
+            <th>IPD SIIS</th>
+            <th>Description</th>
+            <th>Price</th>
           </tr>
         </thead>
         <tbody>
           {prices.map(p => (
             <tr key={p.id}>
-              <td className="border px-2 py-1">{p.supplier_name}</td>
-              <td className="border px-2 py-1">{p.supplier_code}</td>
-              <td className="border px-2 py-1">{p.start_date}</td>
-              <td className="border px-2 py-1">{p.end_date ?? "-"}</td>
-              <td className="border px-2 py-1">{p.price}</td>
+              <td>{p.supplier_name}</td>
+              <td>{p.ipd_siis}</td>
+              <td>{p.description}</td>
+              <td>{p.price}</td>
             </tr>
           ))}
         </tbody>
