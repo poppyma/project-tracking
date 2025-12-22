@@ -12,7 +12,6 @@ type IPD = {
 };
 
 const PAGE_SIZE = 50;
-
 const FB_TYPES = ["DGBB", "HBU-1"];
 const COMMODITIES = ["Cage", "Ring", "Balls", "Seal", "Shield"];
 
@@ -38,9 +37,14 @@ export default function InputIPDPage() {
 
   /* ================= LOAD DATA ================= */
   async function loadData() {
-    const res = await fetch("/api/ipd");
-    const json = await res.json();
-    setData(json);
+    try {
+      const res = await fetch("/api/ipd");
+      if (!res.ok) throw new Error();
+      const json = await res.json();
+      setData(json);
+    } catch {
+      alert("Gagal mengambil data IPD");
+    }
   }
 
   useEffect(() => {
@@ -51,7 +55,7 @@ export default function InputIPDPage() {
     setPage(0);
   }, [search, filterFb, filterCommodity]);
 
-  /* ================= SAVE ================= */
+  /* ================= SAVE / UPDATE ================= */
   async function handleSubmit() {
     if (!form.ipd_siis) {
       alert("IPD SIIS wajib diisi");
@@ -60,24 +64,27 @@ export default function InputIPDPage() {
 
     setLoading(true);
 
-    const url = editId ? `/api/ipd/${editId}` : "/api/ipd";
-    const method = editId ? "PUT" : "POST";
+    try {
+      const url = editId ? `/api/ipd/${editId}` : "/api/ipd";
+      const method = editId ? "PUT" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    setLoading(false);
+      if (!res.ok) throw new Error();
 
-    if (!res.ok) {
-      alert("Gagal menyimpan data");
-      return;
+      alert(editId ? "Data IPD berhasil diupdate" : "Data IPD berhasil disimpan");
+
+      resetForm();
+      loadData();
+    } catch {
+      alert("Gagal menyimpan data IPD");
+    } finally {
+      setLoading(false);
     }
-
-    resetForm();
-    loadData();
   }
 
   function resetForm() {
@@ -96,18 +103,35 @@ export default function InputIPDPage() {
   async function handleDelete(id: string) {
     if (!confirm("Yakin hapus data ini?")) return;
 
-    await fetch(`/api/ipd/${id}`, { method: "DELETE" });
-    loadData();
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/ipd/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+
+      alert("Data IPD berhasil dihapus");
+      loadData();
+    } catch {
+      alert("Gagal menghapus data IPD");
+    } finally {
+      setLoading(false);
+    }
   }
 
   /* ================= EDIT ================= */
   function handleEdit(row: IPD) {
-    setForm(row);
+    setForm({
+      ipd_siis: row.ipd_siis,
+      description: row.description,
+      fb_type: row.fb_type,
+      commodity: row.commodity,
+      ipd_quotation: row.ipd_quotation,
+    });
     setEditId(row.id);
     setShowForm(true);
   }
 
-  /* ================= FILTER DATA ================= */
+  /* ================= FILTER ================= */
   const filtered = data.filter((row) => {
     const matchSearch =
       row.ipd_siis.toLowerCase().includes(search.toLowerCase()) ||
@@ -120,7 +144,6 @@ export default function InputIPDPage() {
   });
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-
   const pagedData = filtered.slice(
     page * PAGE_SIZE,
     page * PAGE_SIZE + PAGE_SIZE
@@ -134,8 +157,12 @@ export default function InputIPDPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-sm font-semibold">IPD Master</h1>
         <button
-          onClick={() => setShowForm((v) => !v)}
-          className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
+          onClick={() => {
+            setShowForm((v) => !v);
+            setEditId(null);
+          }}
+          className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white disabled:opacity-50"
+          disabled={loading}
         >
           {showForm ? "Close" : "+ Add IPD"}
         </button>
@@ -148,12 +175,14 @@ export default function InputIPDPage() {
           placeholder="Search IPD / Description"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          disabled={loading}
         />
 
         <select
           className="input-dense w-32"
           value={filterFb}
           onChange={(e) => setFilterFb(e.target.value)}
+          disabled={loading}
         >
           <option value="">All FB</option>
           {FB_TYPES.map((f) => (
@@ -165,6 +194,7 @@ export default function InputIPDPage() {
           className="input-dense w-40"
           value={filterCommodity}
           onChange={(e) => setFilterCommodity(e.target.value)}
+          disabled={loading}
         >
           <option value="">All Commodity</option>
           {COMMODITIES.map((c) => (
@@ -181,13 +211,19 @@ export default function InputIPDPage() {
             className="input-dense"
             placeholder="IPD SIIS"
             value={form.ipd_siis}
-            onChange={(e) => setForm({ ...form, ipd_siis: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, ipd_siis: e.target.value })
+            }
+            disabled={loading}
           />
 
           <select
             className="input-dense"
             value={form.fb_type}
-            onChange={(e) => setForm({ ...form, fb_type: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, fb_type: e.target.value })
+            }
+            disabled={loading}
           >
             <option value="">FB Type</option>
             {FB_TYPES.map((f) => (
@@ -199,13 +235,19 @@ export default function InputIPDPage() {
             className="input-dense"
             placeholder="Description"
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, description: e.target.value })
+            }
+            disabled={loading}
           />
 
           <select
             className="input-dense"
             value={form.commodity}
-            onChange={(e) => setForm({ ...form, commodity: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, commodity: e.target.value })
+            }
+            disabled={loading}
           >
             <option value="">Commodity</option>
             {COMMODITIES.map((c) => (
@@ -220,21 +262,28 @@ export default function InputIPDPage() {
             onChange={(e) =>
               setForm({ ...form, ipd_quotation: e.target.value })
             }
+            disabled={loading}
           />
 
           <div className="col-span-2 flex justify-end gap-2">
             <button
               onClick={resetForm}
               className="px-3 py-1 border rounded"
+              disabled={loading}
             >
               Cancel
             </button>
+
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="px-4 py-1 bg-blue-600 text-white rounded"
+              className="px-4 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
             >
-              {editId ? "Update" : "Save"}
+              {loading
+                ? "Saving..."
+                : editId
+                ? "Update"
+                : "Save"}
             </button>
           </div>
         </div>
@@ -263,10 +312,16 @@ export default function InputIPDPage() {
                 <td className="border px-2 py-1">{r.commodity}</td>
                 <td className="border px-2 py-1">{r.ipd_quotation}</td>
                 <td className="border px-2 py-1 space-x-2">
-                  <button onClick={() => handleEdit(r)}>Edit</button>
+                  <button
+                    onClick={() => handleEdit(r)}
+                    disabled={loading}
+                  >
+                    Edit
+                  </button>
                   <button
                     onClick={() => handleDelete(r.id)}
                     className="text-red-600"
+                    disabled={loading}
                   >
                     Delete
                   </button>
@@ -282,11 +337,14 @@ export default function InputIPDPage() {
             Page {page + 1} of {totalPages || 1}
           </span>
           <div className="space-x-2">
-            <button disabled={page === 0} onClick={() => setPage(page - 1)}>
+            <button
+              disabled={page === 0 || loading}
+              onClick={() => setPage(page - 1)}
+            >
               Prev
             </button>
             <button
-              disabled={page >= totalPages - 1}
+              disabled={page >= totalPages - 1 || loading}
               onClick={() => setPage(page + 1)}
             >
               Next
