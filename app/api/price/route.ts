@@ -3,7 +3,6 @@ import { query } from "@/lib/db";
 
 /* =========================
    GET → data price by supplier
-   Quarter dihitung dari start_date
 ========================= */
 export async function GET(req: Request) {
   try {
@@ -25,15 +24,16 @@ export async function GET(req: Request) {
         p.material_source,
         p.tube_route,
         p.price,
-        p.year,
+        p.start_date,
+        p.end_date,
 
-        -- QUARTER (TIDAK DISIMPAN DI DB)
-        CASE
-          WHEN EXTRACT(MONTH FROM p.start_date) BETWEEN 1 AND 3 THEN 'Q1'
-          WHEN EXTRACT(MONTH FROM p.start_date) BETWEEN 4 AND 6 THEN 'Q2'
-          WHEN EXTRACT(MONTH FROM p.start_date) BETWEEN 7 AND 9 THEN 'Q3'
-          ELSE 'Q4'
-        END AS quarter,
+        -- 🔥 HITUNG QUARTER DARI START_DATE
+        CONCAT(
+          'Q',
+          EXTRACT(QUARTER FROM p.start_date),
+          '-',
+          EXTRACT(YEAR FROM p.start_date)
+        ) AS quarter,
 
         s.supplier_code,
         s.supplier_name,
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
       FROM price_input p
       JOIN supplier_master s ON s.id = p.supplier_id
       WHERE p.supplier_id = $1
-      ORDER BY p.start_date DESC
+      ORDER BY p.created_at DESC
       `,
       [supplier_id]
     );
@@ -51,16 +51,12 @@ export async function GET(req: Request) {
     return NextResponse.json(result.rows);
   } catch (err) {
     console.error("GET PRICE ERROR:", err);
-    return NextResponse.json(
-      { error: "Failed to load price data" },
-      { status: 500 }
-    );
+    return NextResponse.json([], { status: 500 });
   }
 }
 
 /* =========================
    POST → insert price
-   TANPA quarter
 ========================= */
 export async function POST(req: Request) {
   try {
@@ -70,7 +66,6 @@ export async function POST(req: Request) {
       supplier_id,
       start_date,
       end_date,
-      year,
       ipd_quotation,
       ipd_siis,
       description,
@@ -82,9 +77,9 @@ export async function POST(req: Request) {
 
     const finalPrice = Number(price);
 
-    if (!supplier_id || !start_date || !year || isNaN(finalPrice)) {
+    if (!supplier_id || !start_date || isNaN(finalPrice)) {
       return NextResponse.json(
-        { error: "Data wajib belum lengkap / price tidak valid" },
+        { error: "Supplier, Start Date & Price wajib diisi" },
         { status: 400 }
       );
     }
@@ -96,7 +91,6 @@ export async function POST(req: Request) {
         supplier_id,
         start_date,
         end_date,
-        year,
         ipd_quotation,
         ipd_siis,
         description,
@@ -106,13 +100,12 @@ export async function POST(req: Request) {
         price
       )
       VALUES
-      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
       `,
       [
         supplier_id,
         start_date,
         end_date || null,
-        year,
         ipd_quotation || null,
         ipd_siis || null,
         description || null,

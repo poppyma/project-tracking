@@ -23,21 +23,11 @@ type PriceRow = {
   material_source: string;
   tube_route: string;
   price: string;
-  quarter: string;
-  year: number;
 };
 
 /* =========================
    UTILS
 ========================= */
-function getQuarter(date: string) {
-  const m = new Date(date).getMonth() + 1;
-  if (m <= 3) return "Q1";
-  if (m <= 6) return "Q2";
-  if (m <= 9) return "Q3";
-  return "Q4";
-}
-
 export default function PricePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
@@ -98,9 +88,6 @@ export default function PricePage() {
     return;
   }
 
-  const quarter = getQuarter(startDate);
-  const year = new Date(startDate).getFullYear();
-
   const res = await fetch("/api/price", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -108,9 +95,12 @@ export default function PricePage() {
       supplier_id: selectedSupplier.id,
       start_date: startDate,
       end_date: endDate || null,
-      quarter,
-      year,
-      ...form,
+      ipd_quotation: form.ipd_quotation || null,
+      ipd_siis: form.ipd_siis || null,
+      description: form.description || null,
+      steel_spec: form.steel_spec || null,
+      material_source: form.material_source || null,
+      tube_route: form.tube_route || null,
       price: Number(form.price),
     }),
   });
@@ -134,6 +124,7 @@ export default function PricePage() {
   setShowForm(false);
   await loadPrice(selectedSupplier.id);
 }
+
 
 
   return (
@@ -222,9 +213,11 @@ export default function PricePage() {
     ) : (
       rows.map((r) => (
         <tr key={r.id}>
-          <td className="border px-2 py-1">{r.quarter}</td>
           <td className="border px-2 py-1">{r.ipd_siis}</td>
           <td className="border px-2 py-1">{r.description}</td>
+          <td className="border px-2 py-1">{r.steel_spec}</td>
+          <td className="border px-2 py-1">{r.material_source}</td>
+          <td className="border px-2 py-1">{r.tube_route}</td>
           <td className="border px-2 py-1">{r.price}</td>
         </tr>
       ))
