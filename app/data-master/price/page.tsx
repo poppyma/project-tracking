@@ -3,41 +3,74 @@
 import { useEffect, useState } from "react";
 
 function getQuarter(date: string) {
-  const m = new Date(date).getMonth() + 1;
-  return `Q${Math.ceil(m / 3)}-${new Date(date).getFullYear()}`;
+  const d = new Date(date);
+  return `Q${Math.ceil((d.getMonth() + 1) / 3)}-${d.getFullYear()}`;
 }
 
-export default function ViewPricePage() {
+export default function PricePage() {
   const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [supplierId, setSupplierId] = useState("");
+  const [supplier, setSupplier] = useState<any>(null);
   const [rows, setRows] = useState<any[]>([]);
-  const [header, setHeader] = useState<any>(null);
 
+  const [form, setForm] = useState({
+    supplier_id: "",
+    start_date: "",
+    end_date: "",
+    ipd_quotation: "",
+    ipd_siis: "",
+    description: "",
+    steel_spec: "",
+    material_source: "",
+    tube_route: "",
+    price: "",
+  });
+
+  // load supplier
   useEffect(() => {
     fetch("/api/supplier")
       .then(res => res.json())
       .then(setSuppliers);
   }, []);
 
-  useEffect(() => {
-    if (!supplierId) return;
+  // load table data
+  const loadTable = async (supplier_id: string) => {
+    const res = await fetch(`/api/price/view?supplier_id=${supplier_id}`);
+    const data = await res.json();
+    setRows(data);
+  };
 
-    fetch(`/api/price/view?supplier_id=${supplierId}`)
-      .then(res => res.json())
-      .then(data => {
-        setRows(data);
-        setHeader(data[0]);
-      });
-  }, [supplierId]);
+  const save = async () => {
+    const res = await fetch("/api/price", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...form,
+        price: Number(form.price),
+      }),
+    });
+
+    if (!res.ok) {
+      alert("Gagal simpan data");
+      return;
+    }
+
+    alert("Data berhasil disimpan");
+    loadTable(form.supplier_id);
+  };
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-xl font-semibold">View Price</h1>
+    <div className="p-6 space-y-6">
+      <h1 className="text-xl font-semibold">Input & View Price</h1>
 
-      {/* Supplier selector */}
+      {/* SUPPLIER SELECT */}
       <select
-        className="border p-2 w-full max-w-md"
-        onChange={e => setSupplierId(e.target.value)}
+        className="border p-2 w-full max-w-lg"
+        onChange={(e) => {
+          const s = suppliers.find(x => x.id === e.target.value);
+          setSupplier(s);
+          setForm({ ...form, supplier_id: s.id });
+          loadTable(s.id);
+        }}
       >
         <option value="">Select Supplier</option>
         {suppliers.map(s => (
@@ -47,17 +80,73 @@ export default function ViewPricePage() {
         ))}
       </select>
 
-      {/* HEADER INFO */}
-      {header && (
+      {/* SUPPLIER INFO */}
+      {supplier && (
         <div className="grid grid-cols-2 gap-2 text-sm border p-4 bg-gray-50">
-          <div><b>Supplier Code</b> : {header.supplier_code}</div>
-          <div><b>Supplier Name</b> : {header.supplier_name}</div>
-          <div><b>Currency</b> : {header.currency}</div>
-          <div><b>Incoterm</b> : {header.incoterm}</div>
-          <div><b>Term of Payment</b> : {header.top}</div>
-          <div><b>Start Date</b> : {header.start_date}</div>
-          <div><b>End Date</b> : {header.end_date}</div>
-          <div><b>Quarter</b> : {getQuarter(header.start_date)}</div>
+          <div><b>Supplier Code</b> : {supplier.supplier_code}</div>
+          <div><b>Supplier Name</b> : {supplier.supplier_name}</div>
+          <div><b>Currency</b> : {supplier.currency}</div>
+          <div><b>Incoterm</b> : {supplier.incoterm}</div>
+          <div><b>Term of Payment</b> : {supplier.top}</div>
+
+          <div>
+            <b>Start Date</b> :
+            <input
+              type="date"
+              className="border ml-2"
+              onChange={(e) =>
+                setForm({ ...form, start_date: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <b>End Date</b> :
+            <input
+              type="date"
+              className="border ml-2"
+              onChange={(e) =>
+                setForm({ ...form, end_date: e.target.value })
+              }
+            />
+          </div>
+
+          {form.start_date && (
+            <div><b>Quarter</b> : {getQuarter(form.start_date)}</div>
+          )}
+        </div>
+      )}
+
+      {/* INPUT PRICE */}
+      {supplier && (
+        <div className="grid grid-cols-2 gap-3 border p-4">
+          <input className="border p-2" placeholder="IPD Quotation"
+            onChange={e => setForm({ ...form, ipd_quotation: e.target.value })} />
+
+          <input className="border p-2" placeholder="IPD SIIS"
+            onChange={e => setForm({ ...form, ipd_siis: e.target.value })} />
+
+          <input className="border p-2 col-span-2" placeholder="Description"
+            onChange={e => setForm({ ...form, description: e.target.value })} />
+
+          <input className="border p-2" placeholder="Steel Spec"
+            onChange={e => setForm({ ...form, steel_spec: e.target.value })} />
+
+          <input className="border p-2" placeholder="Material Source"
+            onChange={e => setForm({ ...form, material_source: e.target.value })} />
+
+          <input className="border p-2" placeholder="Tube Route"
+            onChange={e => setForm({ ...form, tube_route: e.target.value })} />
+
+          <input className="border p-2" type="number" placeholder="Price"
+            onChange={e => setForm({ ...form, price: e.target.value })} />
+
+          <button
+            onClick={save}
+            className="bg-black text-white px-4 py-2 rounded col-span-2"
+          >
+            Save
+          </button>
         </div>
       )}
 
@@ -78,7 +167,7 @@ export default function ViewPricePage() {
           <tbody>
             {rows.map((r, i) => (
               <tr key={r.id}>
-                <td className="border px-2 text-center">{i + 1}</td>
+                <td className="border px-2">{i + 1}</td>
                 <td className="border px-2">{r.ipd_siis}</td>
                 <td className="border px-2">{r.description}</td>
                 <td className="border px-2">{r.steel_spec}</td>
