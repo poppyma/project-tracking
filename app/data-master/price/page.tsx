@@ -150,11 +150,12 @@ export default function PricePage() {
       {/* SUPPLIER DETAIL */}
       {selectedSupplier && (
         <div className="border p-2 bg-gray-50">
+          <div>Supplier Code: {selectedSupplier.supplier_code}</div>
           <div>Currency: {selectedSupplier.currency}</div>
           <div>Incoterm: {selectedSupplier.incoterm}</div>
           <div>TOP: {selectedSupplier.top}</div>
 
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex">
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
           </div>
@@ -196,7 +197,6 @@ export default function PricePage() {
       <table className="w-full border text-xs">
   <thead className="bg-gray-100">
     <tr>
-      <th className="border px-2 py-1">IPD Quotation</th>
       <th className="border px-2 py-1">IPD SIIS</th>
       <th className="border px-2 py-1">Description</th>
       <th className="border px-2 py-1">Steel Spec</th>
