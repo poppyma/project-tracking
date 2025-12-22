@@ -6,9 +6,16 @@ type Supplier = {
   id: string;
   supplier_code: string;
   supplier_name: string;
+  currency: string;
+  incoterm: string;
+  top: number;
 };
 
 type PriceRow = {
+  header_id: string;
+  start_date: string;
+  end_date: string;
+  quarter: string;
   detail_id: string;
   ipd_quotation: string;
   ipd_siis: string;
@@ -17,66 +24,78 @@ type PriceRow = {
   material_source: string;
   tube_route: string;
   price: string;
-  start_date: string;
-  end_date: string;
-  quarter: string;
 };
 
-export default function PricePage() {
+export default function ViewPricePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [selectedSupplier, setSelectedSupplier] = useState("");
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [quarters, setQuarters] = useState<string[]>([]);
-  const [selectedQuarter, setSelectedQuarter] = useState("");
+  const [selectedQuarter, setSelectedQuarter] = useState<string>("");
   const [rows, setRows] = useState<PriceRow[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Load suppliers
+  // Load supplier list
   useEffect(() => {
     fetch("/api/supplier")
-      .then(r => r.json())
+      .then((r) => r.json())
       .then(setSuppliers);
   }, []);
 
-  // Load quarters when supplier changes
+  // Load available quarters when supplier changes
   useEffect(() => {
     if (!selectedSupplier) {
       setQuarters([]);
       setSelectedQuarter("");
+      setRows([]);
       return;
     }
 
-    fetch(`/api/price/quarters?supplier_id=${selectedSupplier}`)
-      .then(r => r.json())
-      .then(setQuarters);
+    fetch(`/api/price?list_quarter=true&supplier_id=${selectedSupplier.id}`)
+      .then((r) => r.json())
+      .then((data: string[]) => {
+        setQuarters(data);
+        setSelectedQuarter(""); // reset selected quarter
+        setRows([]); // reset table
+      });
   }, [selectedSupplier]);
 
-  async function loadPrice() {
-    if (!selectedSupplier || !selectedQuarter) return;
+  // Fetch price data
+  async function fetchPrice() {
+    if (!selectedSupplier) return;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        supplier_id: selectedSupplier.id,
+      });
+      if (selectedQuarter) params.append("quarter", selectedQuarter);
 
-    const res = await fetch(
-      `/api/price?supplier_id=${selectedSupplier}&quarter=${encodeURIComponent(selectedQuarter)}`
-    );
-    const data = await res.json();
-    setRows(data);
-  }
-
-  function formatDate(dateStr: string) {
-    if (!dateStr) return "";
-    return dateStr.split("T")[0];
+      const res = await fetch(`/api/price?${params.toString()}`);
+      const data = await res.json();
+      setRows(data);
+    } catch (err) {
+      console.error(err);
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 text-xs">
       <h1 className="text-2xl font-bold">View Price</h1>
 
+      {/* Supplier Dropdown */}
       <div className="flex gap-2">
-        {/* Supplier Dropdown */}
         <select
-          value={selectedSupplier}
-          onChange={e => setSelectedSupplier(e.target.value)}
           className="border px-2 py-1"
+          onChange={(e) =>
+            setSelectedSupplier(
+              suppliers.find((s) => s.id === e.target.value) || null
+            )
+          }
         >
           <option value="">-- Select Supplier --</option>
-          {suppliers.map(s => (
+          {suppliers.map((s) => (
             <option key={s.id} value={s.id}>
               {s.supplier_code} - {s.supplier_name}
             </option>
@@ -85,13 +104,13 @@ export default function PricePage() {
 
         {/* Quarter Dropdown */}
         <select
-          value={selectedQuarter}
-          onChange={e => setSelectedQuarter(e.target.value)}
           className="border px-2 py-1"
-          disabled={!quarters.length}
+          value={selectedQuarter}
+          onChange={(e) => setSelectedQuarter(e.target.value)}
+          disabled={quarters.length === 0}
         >
           <option value="">-- Select Quarter --</option>
-          {quarters.map(q => (
+          {quarters.map((q) => (
             <option key={q} value={q}>
               {q}
             </option>
@@ -99,26 +118,27 @@ export default function PricePage() {
         </select>
 
         <button
-          onClick={loadPrice}
-          className="px-3 py-1 bg-blue-600 text-white rounded"
+          className="bg-blue-600 text-white px-3 py-1"
+          onClick={fetchPrice}
+          disabled={!selectedSupplier || loading}
         >
-          View Price
+          {loading ? "Loading..." : "View Price"}
         </button>
       </div>
 
       {/* Table */}
-      <table className="w-full border text-xs mt-2">
+      <table className="w-full border text-xs">
         <thead className="bg-gray-100">
           <tr>
+            <th className="border px-2 py-1">Start Date</th>
+            <th className="border px-2 py-1">End Date</th>
+            <th className="border px-2 py-1">Quarter</th>
             <th className="border px-2 py-1">IPD SIIS</th>
             <th className="border px-2 py-1">Description</th>
             <th className="border px-2 py-1">Steel Spec</th>
             <th className="border px-2 py-1">Material Source</th>
             <th className="border px-2 py-1">Tube Route</th>
             <th className="border px-2 py-1">Price</th>
-            <th className="border px-2 py-1">Start Date</th>
-            <th className="border px-2 py-1">End Date</th>
-            <th className="border px-2 py-1">Quarter</th>
           </tr>
         </thead>
         <tbody>
@@ -129,17 +149,17 @@ export default function PricePage() {
               </td>
             </tr>
           ) : (
-            rows.map(r => (
+            rows.map((r) => (
               <tr key={r.detail_id}>
+                <td className="border px-2 py-1">{r.start_date}</td>
+                <td className="border px-2 py-1">{r.end_date}</td>
+                <td className="border px-2 py-1">{r.quarter}</td>
                 <td className="border px-2 py-1">{r.ipd_siis}</td>
                 <td className="border px-2 py-1">{r.description}</td>
                 <td className="border px-2 py-1">{r.steel_spec}</td>
                 <td className="border px-2 py-1">{r.material_source}</td>
                 <td className="border px-2 py-1">{r.tube_route}</td>
                 <td className="border px-2 py-1">{r.price}</td>
-                <td className="border px-2 py-1">{formatDate(r.start_date)}</td>
-                <td className="border px-2 py-1">{formatDate(r.end_date)}</td>
-                <td className="border px-2 py-1">{r.quarter}</td>
               </tr>
             ))
           )}
