@@ -271,11 +271,11 @@ export default function InputIPDPage() {
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-1">IPD</th>
+              <th className="border px-2 py-1">IPD SIIS</th>
               <th className="border px-2 py-1">Description</th>
-              <th className="border px-2 py-1">FB</th>
-              <th className="border px-2 py-1">Commodity</th>
-              <th className="border px-2 py-1">Quotation</th>
+              <th className="border px-2 py-1">FB Type</th>
+              <th className="border px-2 py-1">Comodity</th>
+              <th className="border px-2 py-1">IPD Quotation</th>
               <th className="border px-2 py-1 text-center">Action</th>
             </tr>
           </thead>
