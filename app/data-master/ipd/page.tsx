@@ -24,9 +24,6 @@ export default function InputIPDPage() {
     ipd_quotation: "",
   });
 
-  /* =========================
-     Load Data
-  ========================= */
   async function loadData() {
     const res = await fetch("/api/ipd");
     const json = await res.json();
@@ -37,9 +34,6 @@ export default function InputIPDPage() {
     loadData();
   }, []);
 
-  /* =========================
-     Submit Form
-  ========================= */
   async function handleSubmit() {
     if (!form.ipd_siis) {
       alert("IPD SIIS wajib diisi");
@@ -73,106 +67,127 @@ export default function InputIPDPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
 
-      {/* TITLE */}
-      <h1 className="text-2xl font-bold">Input IPD</h1>
+      {/* ================= INPUT CARD ================= */}
+      <div className="bg-white rounded-xl border shadow-sm p-6 space-y-6">
 
-      {/* FORM */}
-      <div className="grid grid-cols-5 gap-4">
-        <input
-          className="input"
-          placeholder="IPD SIIS"
-          value={form.ipd_siis}
-          onChange={(e) =>
-            setForm({ ...form, ipd_siis: e.target.value })
-          }
-        />
+        <div>
+          <h1 className="text-xl font-semibold">IPD Master</h1>
+          <p className="text-sm text-gray-500">
+            Input master data IPD yang akan digunakan pada proses quotation
+          </p>
+        </div>
 
-        <input
-          className="input"
-          placeholder="Description"
-          value={form.description}
-          onChange={(e) =>
-            setForm({ ...form, description: e.target.value })
-          }
-        />
+        <div className="grid grid-cols-2 gap-6">
 
-        <input
-          className="input"
-          placeholder="FB Type"
-          value={form.fb_type}
-          onChange={(e) =>
-            setForm({ ...form, fb_type: e.target.value })
-          }
-        />
+          <div>
+            <label className="label">IPD SIIS</label>
+            <input
+              className="input"
+              value={form.ipd_siis}
+              onChange={(e) =>
+                setForm({ ...form, ipd_siis: e.target.value })
+              }
+            />
+          </div>
 
-        <input
-          className="input"
-          placeholder="Commodity"
-          value={form.commodity}
-          onChange={(e) =>
-            setForm({ ...form, commodity: e.target.value })
-          }
-        />
+          <div>
+            <label className="label">FB Type</label>
+            <input
+              className="input"
+              value={form.fb_type}
+              onChange={(e) =>
+                setForm({ ...form, fb_type: e.target.value })
+              }
+            />
+          </div>
 
-        <input
-          className="input"
-          placeholder="IPD Quotation"
-          value={form.ipd_quotation}
-          onChange={(e) =>
-            setForm({ ...form, ipd_quotation: e.target.value })
-          }
-        />
+          <div>
+            <label className="label">Description</label>
+            <input
+              className="input"
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="label">Commodity</label>
+            <input
+              className="input"
+              value={form.commodity}
+              onChange={(e) =>
+                setForm({ ...form, commodity: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="col-span-2">
+            <label className="label">IPD Quotation</label>
+            <input
+              className="input"
+              value={form.ipd_quotation}
+              onChange={(e) =>
+                setForm({ ...form, ipd_quotation: e.target.value })
+              }
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-8 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? "Saving..." : "Save IPD"}
+          </button>
+        </div>
       </div>
 
-      {/* SAVE BUTTON */}
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className="px-6 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-      >
-        {loading ? "Saving..." : "Save"}
-      </button>
+      {/* ================= TABLE CARD ================= */}
+      <div className="bg-white rounded-xl border shadow-sm p-6 space-y-4">
 
-      {/* TABLE */}
-      <div className="overflow-x-auto">
-        <table className="w-full border text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border px-2 py-1">IPD SIIS</th>
-              <th className="border px-2 py-1">Description</th>
-              <th className="border px-2 py-1">FB Type</th>
-              <th className="border px-2 py-1">Commodity</th>
-              <th className="border px-2 py-1">IPD Quotation</th>
-            </tr>
-          </thead>
+        <h2 className="text-lg font-semibold">IPD List</h2>
 
-          <tbody>
-            {data.length === 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full border text-sm">
+            <thead className="bg-gray-100">
               <tr>
-                <td
-                  colSpan={5}
-                  className="text-center py-4 text-gray-400"
-                >
-                  No data
-                </td>
+                <th className="border px-3 py-2 text-left">IPD SIIS</th>
+                <th className="border px-3 py-2 text-left">Description</th>
+                <th className="border px-3 py-2 text-left">FB Type</th>
+                <th className="border px-3 py-2 text-left">Commodity</th>
+                <th className="border px-3 py-2 text-left">IPD Quotation</th>
               </tr>
-            )}
+            </thead>
 
-            {data.map((row) => (
-              <tr key={row.id}>
-                <td className="border px-2 py-1">{row.ipd_siis}</td>
-                <td className="border px-2 py-1">{row.description}</td>
-                <td className="border px-2 py-1">{row.fb_type}</td>
-                <td className="border px-2 py-1">{row.commodity}</td>
-                <td className="border px-2 py-1">{row.ipd_quotation}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            <tbody>
+              {data.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center py-6 text-gray-400">
+                    No data available
+                  </td>
+                </tr>
+              )}
+
+              {data.map((row) => (
+                <tr key={row.id} className="hover:bg-gray-50">
+                  <td className="border px-3 py-2">{row.ipd_siis}</td>
+                  <td className="border px-3 py-2">{row.description}</td>
+                  <td className="border px-3 py-2">{row.fb_type}</td>
+                  <td className="border px-3 py-2">{row.commodity}</td>
+                  <td className="border px-3 py-2">{row.ipd_quotation}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
       </div>
-
     </div>
   );
 }
