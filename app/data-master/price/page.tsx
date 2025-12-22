@@ -182,29 +182,36 @@ export default function PricePage() {
         </div>
       )}
 
-      {/* TABLE */}
-      {rows.length > 0 && (
-        <table className="w-full border">
-          <thead className="bg-gray-100">
-            <tr>
-              <th>Quarter</th>
-              <th>IPD SIIS</th>
-              <th>Description</th>
-              <th>Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(r => (
-              <tr key={r.id}>
-                <td>{r.quarter}</td>
-                <td>{r.ipd_siis}</td>
-                <td>{r.description}</td>
-                <td>{r.price}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <table className="w-full border text-xs">
+  <thead className="bg-gray-100">
+    <tr>
+      <th className="border px-2 py-1">Quarter</th>
+      <th className="border px-2 py-1">IPD SIIS</th>
+      <th className="border px-2 py-1">Description</th>
+      <th className="border px-2 py-1">Price</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {rows.length === 0 ? (
+      <tr>
+        <td colSpan={4} className="text-center py-3 text-gray-400">
+          No data
+        </td>
+      </tr>
+    ) : (
+      rows.map((r) => (
+        <tr key={r.id}>
+          <td className="border px-2 py-1">{r.quarter}</td>
+          <td className="border px-2 py-1">{r.ipd_siis}</td>
+          <td className="border px-2 py-1">{r.description}</td>
+          <td className="border px-2 py-1">{r.price}</td>
+        </tr>
+      ))
+    )}
+  </tbody>
+</table>
+
     </div>
   );
 }
