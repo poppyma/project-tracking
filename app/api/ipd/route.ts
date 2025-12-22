@@ -2,14 +2,13 @@ import { NextResponse } from "next/server";
 import { initTables, query } from "@/lib/db";
 
 /* =========================
-   GET → ambil data IPD
+   GET → ambil semua IPD
 ========================= */
 export async function GET() {
   try {
     await initTables();
 
-    const result = await query(
-      `
+    const result = await query(`
       SELECT
         id,
         ipd_siis,
@@ -20,8 +19,7 @@ export async function GET() {
         created_at
       FROM ipd_master
       ORDER BY created_at DESC
-      `
-    );
+    `);
 
     return NextResponse.json(result.rows);
   } catch (error) {
@@ -34,20 +32,19 @@ export async function GET() {
 }
 
 /* =========================
-   POST → simpan data IPD
+   POST → tambah IPD
 ========================= */
 export async function POST(req: Request) {
   try {
     await initTables();
 
-    const body = await req.json();
     const {
       ipd_siis,
       description,
       fb_type,
       commodity,
       ipd_quotation,
-    } = body;
+    } = await req.json();
 
     if (!ipd_siis) {
       return NextResponse.json(
@@ -62,13 +59,7 @@ export async function POST(req: Request) {
       (ipd_siis, description, fb_type, commodity, ipd_quotation)
       VALUES ($1, $2, $3, $4, $5)
       `,
-      [
-        ipd_siis,
-        description,
-        fb_type,
-        commodity,
-        ipd_quotation,
-      ]
+      [ipd_siis, description, fb_type, commodity, ipd_quotation]
     );
 
     return NextResponse.json({ success: true });
