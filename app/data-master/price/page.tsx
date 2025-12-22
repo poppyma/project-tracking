@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-/* =========================
-   TYPES
-========================= */
+/* ================= TYPES ================= */
+
 type Supplier = {
   id: string;
   supplier_code: string;
@@ -14,8 +13,13 @@ type Supplier = {
   top: number;
 };
 
-type PriceRow = {
-  id: string;
+type PriceHeaderForm = {
+  start_date: string;
+  end_date: string;
+  quarter: string;
+};
+
+type PriceDetailForm = {
   ipd_quotation: string;
   ipd_siis: string;
   description: string;
@@ -23,143 +27,112 @@ type PriceRow = {
   material_source: string;
   tube_route: string;
   price: string;
-  start_date: string;
-  end_date: string;
-  quarter: string;
 };
 
-/* =========================
-   UTILS
-========================= */
+/* ================= PAGE ================= */
+
 export default function PricePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState({
-    ipd_quotation: "",
-    ipd_siis: "",
-    description: "",
-    steel_spec: "",
-    material_source: "",
-    tube_route: "",
-    price: "",
+  const [header, setHeader] = useState<PriceHeaderForm>({
     start_date: "",
     end_date: "",
+    quarter: "",
   });
 
-  const [rows, setRows] = useState<PriceRow[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [details, setDetails] = useState<PriceDetailForm[]>([
+    {
+      ipd_quotation: "",
+      ipd_siis: "",
+      description: "",
+      steel_spec: "",
+      material_source: "",
+      tube_route: "",
+      price: "",
+    },
+  ]);
 
-  /* =========================
-     LOAD SUPPLIER
-  ========================= */
+  const [loading, setLoading] = useState(false);
+
+  /* ================= UTILS ================= */
+
+  function getQuarterLabel(dateStr: string) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    const q = Math.floor(d.getMonth() / 3) + 1;
+    return `Q${q}-${d.getFullYear()}`;
+  }
+
+  /* ================= LOAD SUPPLIER ================= */
+
   useEffect(() => {
     fetch("/api/supplier")
       .then((r) => r.json())
       .then(setSuppliers);
   }, []);
 
-  /* =========================
-     LOAD PRICE
-  ========================= */
-  async function loadPrice(supplierId: string) {
-    try {
-      const res = await fetch(`/api/price?supplier_id=${supplierId}`);
-      const json = await res.json();
+  /* ================= SAVE ================= */
 
-      if (!Array.isArray(json)) {
-        console.error("PRICE API ERROR:", json);
-        setRows([]);
-        return;
-      }
-
-      setRows(json);
-    } catch (err) {
-      console.error("LOAD PRICE ERROR:", err);
-      setRows([]);
-    }
-  }
-
-  function getQuarterLabel(dateStr: string) {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    const month = date.getMonth();
-    const year = date.getFullYear();
-    const quarter = Math.floor(month / 3) + 1;
-    return `Q${quarter} ${year}`;
-  }
-
-  /* =========================
-     SAVE
-  ========================= */
   async function handleSave() {
-    if (!selectedSupplier || !form.start_date || !form.price) {
-      alert("Supplier, Start Date & Price wajib diisi");
-      return;
-    }
+    if (!selectedSupplier) return alert("Supplier wajib dipilih");
+    if (!header.start_date || !header.end_date)
+      return alert("Start & End Date wajib diisi");
+
+    if (details.length === 0)
+      return alert("Minimal 1 IPD harus diisi");
 
     setLoading(true);
+
     try {
       const res = await fetch("/api/price", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           supplier_id: selectedSupplier.id,
-          start_date: form.start_date,
-          end_date: form.end_date || null,
-          ipd_quotation: form.ipd_quotation || null,
-          ipd_siis: form.ipd_siis || null,
-          description: form.description || null,
-          steel_spec: form.steel_spec || null,
-          material_source: form.material_source || null,
-          tube_route: form.tube_route || null,
-          price: Number(form.price),
+          header,
+          details,
         }),
       });
 
-      const result = await res.json();
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
 
-      if (!res.ok) {
-        alert(result.error || "Gagal simpan data");
-        return;
-      }
+      alert("Data berhasil disimpan");
 
-      alert("Data berhasil disimpan!");
-      setForm({
-        ipd_quotation: "",
-        ipd_siis: "",
-        description: "",
-        steel_spec: "",
-        material_source: "",
-        tube_route: "",
-        price: "",
-        start_date: "",
-        end_date: "",
-      });
-      setShowForm(false);
-      if (selectedSupplier) await loadPrice(selectedSupplier.id);
-    } catch (err) {
-      console.error(err);
-      alert("Terjadi kesalahan saat menyimpan data");
+      setHeader({ start_date: "", end_date: "", quarter: "" });
+      setDetails([
+        {
+          ipd_quotation: "",
+          ipd_siis: "",
+          description: "",
+          steel_spec: "",
+          material_source: "",
+          tube_route: "",
+          price: "",
+        },
+      ]);
+    } catch (e: any) {
+      alert(e.message || "Gagal simpan data");
     } finally {
       setLoading(false);
     }
   }
 
-  return (
-    <div className="space-y-4 text-xs p-4">
-      {/* Judul Halaman */}
-      <h1 className="text-2xl font-bold mb-4">View Price</h1>
+  /* ================= UI ================= */
 
-      {/* SUPPLIER SELECT */}
+  return (
+    <div className="p-4 space-y-4 text-xs">
+      <h1 className="text-2xl font-bold">Input Price</h1>
+
+      {/* SUPPLIER */}
       <select
         className="border px-2 py-1"
-        onChange={(e) => {
-          const s = suppliers.find((x) => x.id === e.target.value);
-          setSelectedSupplier(s || null);
-          if (s) loadPrice(s.id);
-        }}
+        onChange={(e) =>
+          setSelectedSupplier(
+            suppliers.find((s) => s.id === e.target.value) || null
+          )
+        }
       >
         <option value="">-- Select Supplier --</option>
         {suppliers.map((s) => (
@@ -169,118 +142,128 @@ export default function PricePage() {
         ))}
       </select>
 
-      {/* SUPPLIER DETAIL */}
+      {/* SUPPLIER INFO */}
       {selectedSupplier && (
-        <div className="border p-2 bg-gray-50 space-y-1">
-          <div>Supplier Code: {selectedSupplier.supplier_code}</div>
-          <div>Supplier Name: {selectedSupplier.supplier_name}</div>
-          <div>Currency: {selectedSupplier.currency}</div>
-          <div>Incoterm: {selectedSupplier.incoterm}</div>
-          <div>TOP: {selectedSupplier.top}</div>
+        <div className="border p-2 bg-gray-50">
+          <div>Supplier Code : {selectedSupplier.supplier_code}</div>
+          <div>Supplier Name : {selectedSupplier.supplier_name}</div>
+          <div>Currency : {selectedSupplier.currency}</div>
+          <div>Incoterm : {selectedSupplier.incoterm}</div>
+          <div>TOP : {selectedSupplier.top}</div>
         </div>
       )}
 
-      {/* ADD BUTTON */}
-      {selectedSupplier && (
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="px-3 py-1 bg-blue-600 text-white rounded"
-        >
-          + Add Price
-        </button>
-      )}
-
-      {/* FORM */}
-      {showForm && (
-        <div className="grid grid-cols-4 gap-2 border p-3">
-          {Object.entries(form)
-            .filter(([k]) => k !== "start_date" && k !== "end_date")
-            .map(([k, v]) => (
-              <input
-                key={k}
-                placeholder={k.replace("_", " ").toUpperCase()}
-                value={v}
-                onChange={(e) => setForm({ ...form, [k]: e.target.value })}
-                className="border px-2 py-1"
-              />
-            ))}
-
-          {/* Start & End Date */}
+      {/* HEADER */}
+      <div className="border p-3 grid grid-cols-3 gap-4 bg-gray-50">
+        <div>
+          <div>Start Date</div>
           <input
             type="date"
-            value={form.start_date}
-            onChange={(e) => setForm({ ...form, start_date: e.target.value })}
-            className="border px-2 py-1 text-xs h-7"
-            placeholder="Start Date"
+            className="border px-2 py-1 w-full"
+            value={header.start_date}
+            onChange={(e) =>
+              setHeader({
+                ...header,
+                start_date: e.target.value,
+                quarter: getQuarterLabel(e.target.value),
+              })
+            }
           />
+        </div>
+
+        <div>
+          <div>End Date</div>
           <input
             type="date"
-            value={form.end_date}
-            onChange={(e) => setForm({ ...form, end_date: e.target.value })}
-            className="border px-2 py-1 text-xs h-7"
-            placeholder="End Date"
+            className="border px-2 py-1 w-full"
+            value={header.end_date}
+            onChange={(e) =>
+              setHeader({ ...header, end_date: e.target.value })
+            }
           />
-
-          <div className="col-span-4 flex justify-end gap-2 mt-2">
-            <button onClick={() => setShowForm(false)}>Cancel</button>
-            <button
-              onClick={handleSave}
-              className="bg-blue-600 text-white px-4 py-1"
-              disabled={loading}
-            >
-              {loading ? "Saving..." : "Save"}
-            </button>
-          </div>
         </div>
-      )}
 
-      {/* DISPLAY START/END DATE & QUARTER */}
-      {rows.length > 0 && (
-        <div className="border p-2 bg-gray-50 mt-2 text-sm space-y-1">
-          {rows.map((r) => (
-            <div key={r.id} className="flex gap-4">
-              <div>Start Date: {r.start_date}</div>
-              <div>End Date: {r.end_date}</div>
-              <div>Quarter: {getQuarterLabel(r.end_date)}</div>
-            </div>
-          ))}
+        <div className="font-bold text-lg flex items-end">
+          {header.quarter}
         </div>
-      )}
+      </div>
 
-      {/* TABLE VIEW PRICE */}
-      <table className="w-full border text-xs">
-        <thead className="bg-gray-100">
+      {/* TABLE INPUT */}
+      <table className="w-full border">
+        <thead className="bg-yellow-200">
           <tr>
-            <th className="border px-2 py-1">IPD SIIS</th>
-            <th className="border px-2 py-1">Description</th>
-            <th className="border px-2 py-1">Steel Spec</th>
-            <th className="border px-2 py-1">Material Source</th>
-            <th className="border px-2 py-1">Tube Route</th>
-            <th className="border px-2 py-1">Price</th>
+            <th className="border">IPD Quotation</th>
+            <th className="border">IPD SIIS</th>
+            <th className="border">Description</th>
+            <th className="border">Steel Spec</th>
+            <th className="border">Material Source</th>
+            <th className="border">Tube Route</th>
+            <th className="border">Price</th>
+            <th className="border"></th>
           </tr>
         </thead>
 
         <tbody>
-          {rows.length === 0 ? (
-            <tr>
-              <td colSpan={6} className="text-center py-3 text-gray-400">
-                No data
+          {details.map((row, i) => (
+            <tr key={i}>
+              {Object.keys(row).map((key) => (
+                <td key={key} className="border">
+                  <input
+                    className="w-full px-1"
+                    value={row[key as keyof PriceDetailForm]}
+                    onChange={(e) => {
+                      const copy = [...details];
+                      copy[i][key as keyof PriceDetailForm] = e.target.value;
+                      setDetails(copy);
+                    }}
+                  />
+                </td>
+              ))}
+              <td className="border text-center">
+                <button
+                  onClick={() =>
+                    setDetails(details.filter((_, idx) => idx !== i))
+                  }
+                  className="text-red-600"
+                >
+                  ✕
+                </button>
               </td>
             </tr>
-          ) : (
-            rows.map((r) => (
-              <tr key={r.id}>
-                <td className="border px-2 py-1">{r.ipd_siis}</td>
-                <td className="border px-2 py-1">{r.description}</td>
-                <td className="border px-2 py-1">{r.steel_spec}</td>
-                <td className="border px-2 py-1">{r.material_source}</td>
-                <td className="border px-2 py-1">{r.tube_route}</td>
-                <td className="border px-2 py-1">{r.price}</td>
-              </tr>
-            ))
-          )}
+          ))}
         </tbody>
       </table>
+
+      <button
+        className="bg-green-600 text-white px-3 py-1"
+        onClick={() =>
+          setDetails([
+            ...details,
+            {
+              ipd_quotation: "",
+              ipd_siis: "",
+              description: "",
+              steel_spec: "",
+              material_source: "",
+              tube_route: "",
+              price: "",
+            },
+          ])
+        }
+      >
+        + Add IPD
+      </button>
+
+      {/* SAVE */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          className="bg-blue-600 text-white px-6 py-2"
+        >
+          {loading ? "Saving..." : "Save"}
+        </button>
+      </div>
     </div>
   );
 }

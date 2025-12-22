@@ -1,49 +1,104 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
-/* =========================
-   GET → data price by supplier
-========================= */
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { supplier_id, header, details } = body;
+
+    if (!supplier_id || !header?.start_date || !header?.end_date) {
+      return NextResponse.json(
+        { error: "Header tidak lengkap" },
+        { status: 400 }
+      );
+    }
+
+    /* INSERT HEADER */
+    const headerRes = await query(
+      `
+      INSERT INTO price_header
+      (supplier_id, start_date, end_date, quarter)
+      VALUES ($1,$2,$3,$4)
+      RETURNING id
+      `,
+      [
+        supplier_id,
+        header.start_date,
+        header.end_date,
+        header.quarter,
+      ]
+    );
+
+    const headerId = headerRes.rows[0].id;
+
+    /* INSERT DETAILS */
+    for (const d of details) {
+      await query(
+        `
+        INSERT INTO price_detail
+        (
+          header_id,
+          ipd_quotation,
+          ipd_siis,
+          description,
+          steel_spec,
+          material_source,
+          tube_route,
+          price
+        )
+        VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8)
+        `,
+        [
+          headerId,
+          d.ipd_quotation || null,
+          d.ipd_siis || null,
+          d.description || null,
+          d.steel_spec || null,
+          d.material_source || null,
+          d.tube_route || null,
+          Number(d.price),
+        ]
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("PRICE POST ERROR:", err);
+    return NextResponse.json(
+      { error: "Failed to save price" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const supplier_id = searchParams.get("supplier_id");
 
-    if (!supplier_id) {
-      return NextResponse.json([]);
-    }
+    if (!supplier_id) return NextResponse.json([]);
 
     const result = await query(
       `
       SELECT
-        p.id,
-        p.ipd_quotation,
-        p.ipd_siis,
-        p.description,
-        p.steel_spec,
-        p.material_source,
-        p.tube_route,
-        p.price,
-        p.start_date,
-        p.end_date,
+        h.id AS header_id,
+        h.start_date,
+        h.end_date,
+        h.quarter,
 
-        -- 🔥 HITUNG QUARTER DARI START_DATE
-        CONCAT(
-          'Q',
-          EXTRACT(QUARTER FROM p.start_date),
-          '-',
-          EXTRACT(YEAR FROM p.start_date)
-        ) AS quarter,
-
-        s.supplier_code,
-        s.supplier_name,
-        s.currency,
-        s.incoterm,
-        s.top
-      FROM price_input p
-      JOIN supplier_master s ON s.id = p.supplier_id
-      WHERE p.supplier_id = $1
-      ORDER BY p.created_at DESC
+        d.id AS detail_id,
+        d.ipd_quotation,
+        d.ipd_siis,
+        d.description,
+        d.steel_spec,
+        d.material_source,
+        d.tube_route,
+        d.price
+      FROM price_header h
+      JOIN price_detail d ON d.header_id = h.id
+      WHERE h.supplier_id = $1
+      ORDER BY h.start_date DESC, d.ipd_siis
       `,
       [supplier_id]
     );
@@ -52,76 +107,5 @@ export async function GET(req: Request) {
   } catch (err) {
     console.error("GET PRICE ERROR:", err);
     return NextResponse.json([], { status: 500 });
-  }
-}
-
-/* =========================
-   POST → insert price
-========================= */
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-
-    const {
-      supplier_id,
-      start_date,
-      end_date,
-      ipd_quotation,
-      ipd_siis,
-      description,
-      steel_spec,
-      material_source,
-      tube_route,
-      price,
-    } = body;
-
-    const finalPrice = Number(price);
-
-    if (!supplier_id || !start_date || isNaN(finalPrice)) {
-      return NextResponse.json(
-        { error: "Supplier, Start Date & Price wajib diisi" },
-        { status: 400 }
-      );
-    }
-
-    await query(
-      `
-      INSERT INTO price_input
-      (
-        supplier_id,
-        start_date,
-        end_date,
-        ipd_quotation,
-        ipd_siis,
-        description,
-        steel_spec,
-        material_source,
-        tube_route,
-        price
-      )
-      VALUES
-      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-      `,
-      [
-        supplier_id,
-        start_date,
-        end_date || null,
-        ipd_quotation || null,
-        ipd_siis || null,
-        description || null,
-        steel_spec || null,
-        material_source || null,
-        tube_route || null,
-        finalPrice,
-      ]
-    );
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("PRICE INSERT ERROR:", err);
-    return NextResponse.json(
-      { error: "Failed to save price" },
-      { status: 500 }
-    );
   }
 }
