@@ -13,6 +13,10 @@ export async function POST(req: Request) {
       );
     }
 
+    // Ambil YYYY-MM-DD saja supaya tidak ada T00:00:00.000Z
+    const startDateOnly = header.start_date.split("T")[0];
+    const endDateOnly = header.end_date ? header.end_date.split("T")[0] : null;
+
     /* INSERT HEADER */
     const headerRes = await query(
       `
@@ -23,8 +27,8 @@ export async function POST(req: Request) {
       `,
       [
         supplier_id,
-        header.start_date,
-        header.end_date,
+        startDateOnly,
+        endDateOnly,
         header.quarter,
       ]
     );
@@ -103,7 +107,14 @@ export async function GET(req: Request) {
       [supplier_id]
     );
 
-    return NextResponse.json(result.rows);
+    // Optional: format date di frontend
+    const rows = result.rows.map(r => ({
+      ...r,
+      start_date: r.start_date?.toISOString().split("T")[0],
+      end_date: r.end_date?.toISOString().split("T")[0],
+    }));
+
+    return NextResponse.json(rows);
   } catch (err) {
     console.error("GET PRICE ERROR:", err);
     return NextResponse.json([], { status: 500 });
