@@ -25,7 +25,7 @@ export default function InputPricePage() {
 
   /* ===== LOAD SUPPLIER MASTER ===== */
   useEffect(() => {
-    fetch("/api/supplier-master")
+    fetch("/api/supplier")
       .then((r) => r.json())
       .then(setSuppliers)
       .catch(console.error);
