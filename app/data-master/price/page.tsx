@@ -149,6 +149,11 @@ function getQuarterLabel(dateStr: string) {
 
   return (
     <div className="space-y-4 text-xs">
+        {/* Judul Halaman */}
+        <h1 className="text-2xl font-bold mb-4">
+          View Price
+        </h1>
+
 
       {/* SUPPLIER SELECT */}
       <select
