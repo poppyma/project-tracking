@@ -8,8 +8,7 @@ export async function GET() {
   try {
     await initTables();
 
-    const result = await query(
-      `
+    const result = await query(`
       SELECT
         id,
         supplier_code,
@@ -26,8 +25,7 @@ export async function GET() {
         created_at
       FROM supplier_master
       ORDER BY created_at DESC
-      `
-    );
+    `);
 
     return NextResponse.json(result.rows);
   } catch (error) {
@@ -40,7 +38,7 @@ export async function GET() {
 }
 
 /* =========================
-   POST → simpan Supplier
+   POST → insert Supplier
 ========================= */
 export async function POST(req: Request) {
   try {
@@ -84,8 +82,7 @@ export async function POST(req: Request) {
         top,
         forwarder
       )
-      VALUES
-      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
       `,
       [
         supplier_code,
