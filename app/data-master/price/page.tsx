@@ -171,6 +171,7 @@ function getQuarterLabel(dateStr: string) {
       {selectedSupplier && (
         <div className="border p-2 bg-gray-50">
           <div>Supplier Code: {selectedSupplier.supplier_code}</div>
+          <div>Supplier Name: {selectedSupplier.supplier_name}</div>
           <div>Currency: {selectedSupplier.currency}</div>
           <div>Incoterm: {selectedSupplier.incoterm}</div>
           <div>TOP: {selectedSupplier.top}</div>
