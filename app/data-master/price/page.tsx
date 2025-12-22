@@ -31,6 +31,7 @@ type PriceRow = {
 export default function PricePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -97,42 +98,52 @@ function getQuarterLabel(dateStr: string) {
     return;
   }
 
-  const res = await fetch("/api/price", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      supplier_id: selectedSupplier.id,
-      start_date: startDate,
-      end_date: endDate || null,
-      ipd_quotation: form.ipd_quotation || null,
-      ipd_siis: form.ipd_siis || null,
-      description: form.description || null,
-      steel_spec: form.steel_spec || null,
-      material_source: form.material_source || null,
-      tube_route: form.tube_route || null,
-      price: Number(form.price),
-    }),
-  });
+  setLoading(true); // mulai loading
+  try {
+    const res = await fetch("/api/price", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        supplier_id: selectedSupplier.id,
+        start_date: startDate,
+        end_date: endDate || null,
+        ipd_quotation: form.ipd_quotation || null,
+        ipd_siis: form.ipd_siis || null,
+        description: form.description || null,
+        steel_spec: form.steel_spec || null,
+        material_source: form.material_source || null,
+        tube_route: form.tube_route || null,
+        price: Number(form.price),
+      }),
+    });
 
-  if (!res.ok) {
-    const err = await res.json();
-    alert(err.error || "Gagal simpan data");
-    return;
+    const result = await res.json();
+
+    if (!res.ok) {
+      alert(result.error || "Gagal simpan data");
+      return;
+    }
+
+    alert("Data berhasil disimpan!");
+    setForm({
+      ipd_quotation: "",
+      ipd_siis: "",
+      description: "",
+      steel_spec: "",
+      material_source: "",
+      tube_route: "",
+      price: "",
+    });
+    setShowForm(false);
+    if (selectedSupplier) await loadPrice(selectedSupplier.id);
+  } catch (err) {
+    console.error(err);
+    alert("Terjadi kesalahan saat menyimpan data");
+  } finally {
+    setLoading(false); // selesai loading
   }
-
-  setForm({
-    ipd_quotation: "",
-    ipd_siis: "",
-    description: "",
-    steel_spec: "",
-    material_source: "",
-    tube_route: "",
-    price: "",
-  });
-
-  setShowForm(false);
-  await loadPrice(selectedSupplier.id);
 }
+
 
 
 
@@ -215,9 +226,14 @@ function getQuarterLabel(dateStr: string) {
 
           <div className="col-span-4 flex justify-end gap-2">
             <button onClick={() => setShowForm(false)}>Cancel</button>
-            <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-1">
-              Save
+            <button
+              onClick={handleSave}
+              className="bg-blue-600 text-white px-4 py-1"
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "Save"}
             </button>
+
           </div>
         </div>
       )}
