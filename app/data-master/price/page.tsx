@@ -2,46 +2,43 @@
 
 import { useEffect, useState } from "react";
 
+/* =====================
+   TYPE
+===================== */
 type PriceRow = {
   id: string;
   ipd: string;
   supplier_code: string;
-  description: string;
-  steel_spec: string;
-  material_source: string;
-  tube_route: string;
+  quarter: number;
+  year: number;
+  price: number;
   currency: string;
-  incoterm: string;
-  top: number | null;
-  start_date: string | null;
-  end_date: string | null;
-  price: string | null;
 };
 
 const PAGE_SIZE = 50;
 
-export default function InputPricePage() {
+/* =====================
+   PAGE
+===================== */
+export default function PricePage() {
   const [data, setData] = useState<PriceRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
 
   const [form, setForm] = useState({
     ipd: "",
     supplier_code: "",
-    description: "",
-    steel_spec: "",
-    material_source: "",
-    tube_route: "",
-    currency: "",
-    incoterm: "",
-    top: "",
-    start_date: "",
-    end_date: "",
+    quarter: "",
+    year: new Date().getFullYear().toString(),
     price: "",
+    currency: "",
   });
 
+  /* =====================
+     LOAD DATA
+  ===================== */
   async function loadData() {
     try {
       const res = await fetch("/api/price");
@@ -58,9 +55,18 @@ export default function InputPricePage() {
     loadData();
   }, []);
 
+  /* =====================
+     SUBMIT
+  ===================== */
   async function handleSubmit() {
-    if (!form.ipd || !form.supplier_code || !form.price || !form.start_date) {
-      alert("IPD, Supplier, Start Date, dan Price wajib diisi");
+    if (
+      !form.ipd ||
+      !form.supplier_code ||
+      !form.quarter ||
+      !form.year ||
+      !form.price
+    ) {
+      alert("IPD, Supplier, Quarter, Year, dan Price wajib diisi");
       return;
     }
 
@@ -71,15 +77,18 @@ export default function InputPricePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
-          top: form.top ? Number(form.top) : null,
+          ipd: form.ipd,
+          supplier_code: form.supplier_code,
+          quarter: Number(form.quarter),
+          year: Number(form.year),
+          price: Number(form.price),
+          currency: form.currency,
         }),
       });
 
       if (!res.ok) {
         const err = await res.json();
         alert(err?.error || "Gagal menyimpan price");
-        setLoading(false);
         return;
       }
 
@@ -88,7 +97,7 @@ export default function InputPricePage() {
       loadData();
     } catch (e) {
       console.error(e);
-      alert("Terjadi kesalahan saat menyimpan price");
+      alert("Terjadi kesalahan");
     } finally {
       setLoading(false);
     }
@@ -98,20 +107,17 @@ export default function InputPricePage() {
     setForm({
       ipd: "",
       supplier_code: "",
-      description: "",
-      steel_spec: "",
-      material_source: "",
-      tube_route: "",
-      currency: "",
-      incoterm: "",
-      top: "",
-      start_date: "",
-      end_date: "",
+      quarter: "",
+      year: new Date().getFullYear().toString(),
       price: "",
+      currency: "",
     });
     setShowForm(false);
   }
 
+  /* =====================
+     FILTER & PAGINATION
+  ===================== */
   const filtered = data.filter(
     (r) =>
       r.ipd.toLowerCase().includes(search.toLowerCase()) ||
@@ -123,12 +129,15 @@ export default function InputPricePage() {
     page * PAGE_SIZE + PAGE_SIZE
   );
 
+  /* =====================
+     RENDER
+  ===================== */
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
-        <h1 className="text-sm font-semibold">Update Price</h1>
+        <h1 className="text-sm font-semibold">Master Price (Quarter)</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
           className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
@@ -149,33 +158,70 @@ export default function InputPricePage() {
       {showForm && (
         <div className="bg-white border rounded p-3 grid grid-cols-4 gap-2 text-xs">
 
-          {[
-            ["IPD", "ipd"],
-            ["Supplier Code", "supplier_code"],
-            ["Description", "description"],
-            ["Steel Spec", "steel_spec"],
-            ["Material Source", "material_source"],
-            ["Tube Route", "tube_route"],
-            ["Currency", "currency"],
-            ["Incoterm", "incoterm"],
-            ["TOP", "top"],
-            ["Start Date", "start_date"],
-            ["End Date", "end_date"],
-            ["Price", "price"],
-          ].map(([label, key]) => (
-            <input
-              key={key}
-              className="input-dense"
-              placeholder={label}
-              value={(form as any)[key]}
-              onChange={(e) =>
-                setForm({ ...form, [key]: e.target.value })
-              }
-            />
-          ))}
+          <input
+            className="input-dense"
+            placeholder="IPD"
+            value={form.ipd}
+            onChange={(e) =>
+              setForm({ ...form, ipd: e.target.value })
+            }
+          />
 
-          <div className="col-span-4 flex justify-end gap-2">
-            <button onClick={resetForm} className="px-3 py-1 border rounded">
+          <input
+            className="input-dense"
+            placeholder="Supplier Code"
+            value={form.supplier_code}
+            onChange={(e) =>
+              setForm({ ...form, supplier_code: e.target.value })
+            }
+          />
+
+          <select
+            className="input-dense"
+            value={form.quarter}
+            onChange={(e) =>
+              setForm({ ...form, quarter: e.target.value })
+            }
+          >
+            <option value="">Quarter</option>
+            <option value="1">Q1</option>
+            <option value="2">Q2</option>
+            <option value="3">Q3</option>
+            <option value="4">Q4</option>
+          </select>
+
+          <input
+            className="input-dense"
+            placeholder="Year"
+            value={form.year}
+            onChange={(e) =>
+              setForm({ ...form, year: e.target.value })
+            }
+          />
+
+          <input
+            className="input-dense"
+            placeholder="Price"
+            value={form.price}
+            onChange={(e) =>
+              setForm({ ...form, price: e.target.value })
+            }
+          />
+
+          <input
+            className="input-dense"
+            placeholder="Currency"
+            value={form.currency}
+            onChange={(e) =>
+              setForm({ ...form, currency: e.target.value })
+            }
+          />
+
+          <div className="col-span-4 flex justify-end gap-2 pt-2">
+            <button
+              onClick={resetForm}
+              className="px-3 py-1 border rounded"
+            >
               Cancel
             </button>
             <button
@@ -196,23 +242,21 @@ export default function InputPricePage() {
             <tr>
               <th className="border px-2 py-1">IPD</th>
               <th className="border px-2 py-1">Supplier</th>
-              <th className="border px-2 py-1">Start</th>
-              <th className="border px-2 py-1">End</th>
+              <th className="border px-2 py-1">Year</th>
+              <th className="border px-2 py-1">Quarter</th>
               <th className="border px-2 py-1">Price</th>
+              <th className="border px-2 py-1">Currency</th>
             </tr>
           </thead>
           <tbody>
             {paged.map((r) => (
               <tr key={r.id}>
-                <td className="border px-2 py-1">{r.ipd ?? "-"}</td>
-                <td className="border px-2 py-1">{r.supplier_code ?? "-"}</td>
-                <td className="border px-2 py-1">
-                  {r.start_date ? new Date(r.start_date).toISOString().split("T")[0] : "-"}
-                </td>
-                <td className="border px-2 py-1">
-                  {r.end_date ? new Date(r.end_date).toISOString().split("T")[0] : "-"}
-                </td>
-                <td className="border px-2 py-1">{r.price ?? "-"}</td>
+                <td className="border px-2 py-1">{r.ipd}</td>
+                <td className="border px-2 py-1">{r.supplier_code}</td>
+                <td className="border px-2 py-1">{r.year}</td>
+                <td className="border px-2 py-1">Q{r.quarter}</td>
+                <td className="border px-2 py-1">{r.price}</td>
+                <td className="border px-2 py-1">{r.currency ?? "-"}</td>
               </tr>
             ))}
           </tbody>
