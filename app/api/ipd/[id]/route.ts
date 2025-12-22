@@ -6,12 +6,12 @@ import { initTables, query } from "@/lib/db";
 ========================= */
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await initTables();
 
-    const { id } = params;
+    const { id } = await context.params;
 
     const {
       ipd_siis,
@@ -57,12 +57,12 @@ export async function PUT(
 ========================= */
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await initTables();
 
-    const { id } = params;
+    const { id } = await context.params;
 
     await query(
       `
