@@ -9,13 +9,18 @@ export async function GET() {
         s.supplier_code,
         s.supplier_name,
         h.quarter,
-        COUNT(d.id) AS total_ipd
-      FROM price_header h
-      JOIN price_detail d ON d.header_id = h.id
-      JOIN supplier_master s ON s.id = h.supplier_id
+        COALESCE(COUNT(d.id), 0) AS total_ipd
+      FROM supplier_master s
+      LEFT JOIN price_header h
+        ON h.supplier_id = s.id
+      LEFT JOIN price_detail d
+        ON d.header_id = h.id
       GROUP BY
         s.supplier_code,
         s.supplier_name,
+        h.quarter
+      ORDER BY
+        s.supplier_code,
         h.quarter
       `
     );
