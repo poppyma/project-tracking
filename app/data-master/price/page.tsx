@@ -78,6 +78,15 @@ export default function PricePage() {
   }
 }
 
+function getQuarterLabel(dateStr: string) {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  const month = date.getMonth(); // 0 = Jan
+  const year = date.getFullYear();
+
+  const quarter = Math.floor(month / 3) + 1; // Q1-Q4
+  return `Q${quarter} ${year}`;
+}
 
   /* =========================
      SAVE
@@ -169,6 +178,13 @@ export default function PricePage() {
               onChange={(e) => setEndDate(e.target.value)}
               className="border px-2 py-1 text-xs h-7"
             />
+
+            {/* Tampilkan Quarter */}
+            {endDate && (
+              <span className="text-sm font-medium px-2 py-1 bg-gray-100 border rounded">
+                {getQuarterLabel(endDate)}
+              </span>
+            )}
           </div>
 
         </div>
