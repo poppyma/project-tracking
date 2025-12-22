@@ -12,10 +12,10 @@ type PriceRow = {
   tube_route: string;
   currency: string;
   incoterm: string;
-  top: number;
-  start_date: string;
-  end_date: string;
-  price: string;
+  top: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  price: string | null;
 };
 
 const PAGE_SIZE = 50;
@@ -43,8 +43,15 @@ export default function InputPricePage() {
   });
 
   async function loadData() {
-    const res = await fetch("/api/price");
-    setData(await res.json());
+    try {
+      const res = await fetch("/api/price");
+      if (!res.ok) throw new Error("Failed to fetch");
+      const json = await res.json();
+      setData(json);
+    } catch (e) {
+      console.error(e);
+      setData([]);
+    }
   }
 
   useEffect(() => {
@@ -59,25 +66,32 @@ export default function InputPricePage() {
 
     setLoading(true);
 
-    const res = await fetch("/api/price", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        top: form.top ? Number(form.top) : null,
-      }),
-    });
+    try {
+      const res = await fetch("/api/price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          top: form.top ? Number(form.top) : null,
+        }),
+      });
 
-    setLoading(false);
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err?.error || "Gagal menyimpan price");
+        setLoading(false);
+        return;
+      }
 
-    if (!res.ok) {
-      alert("Gagal menyimpan price");
-      return;
+      alert("Price berhasil disimpan");
+      resetForm();
+      loadData();
+    } catch (e) {
+      console.error(e);
+      alert("Terjadi kesalahan saat menyimpan price");
+    } finally {
+      setLoading(false);
     }
-
-    alert("Price berhasil disimpan");
-    resetForm();
-    loadData();
   }
 
   function resetForm() {
@@ -190,11 +204,11 @@ export default function InputPricePage() {
           <tbody>
             {paged.map((r) => (
               <tr key={r.id}>
-                <td className="border px-2 py-1">{r.ipd}</td>
-                <td className="border px-2 py-1">{r.supplier_code}</td>
-                <td className="border px-2 py-1">{r.start_date}</td>
-                <td className="border px-2 py-1">{r.end_date}</td>
-                <td className="border px-2 py-1">{r.price}</td>
+                <td className="border px-2 py-1">{r.ipd ?? "-"}</td>
+                <td className="border px-2 py-1">{r.supplier_code ?? "-"}</td>
+                <td className="border px-2 py-1">{r.start_date ?? "-"}</td>
+                <td className="border px-2 py-1">{r.end_date ?? "-"}</td>
+                <td className="border px-2 py-1">{r.price ?? "-"}</td>
               </tr>
             ))}
           </tbody>
