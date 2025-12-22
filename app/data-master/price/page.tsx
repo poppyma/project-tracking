@@ -206,8 +206,12 @@ export default function InputPricePage() {
               <tr key={r.id}>
                 <td className="border px-2 py-1">{r.ipd ?? "-"}</td>
                 <td className="border px-2 py-1">{r.supplier_code ?? "-"}</td>
-                <td className="border px-2 py-1">{r.start_date ?? "-"}</td>
-                <td className="border px-2 py-1">{r.end_date ?? "-"}</td>
+                <td className="border px-2 py-1">
+                  {r.start_date ? new Date(r.start_date).toISOString().split("T")[0] : "-"}
+                </td>
+                <td className="border px-2 py-1">
+                  {r.end_date ? new Date(r.end_date).toISOString().split("T")[0] : "-"}
+                </td>
                 <td className="border px-2 py-1">{r.price ?? "-"}</td>
               </tr>
             ))}
