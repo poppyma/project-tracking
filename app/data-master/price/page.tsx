@@ -9,7 +9,7 @@ type PriceRow = {
   steel_spec: string;
   material_source: string;
   tube_route: string;
-  price: number;
+  price: string;
 };
 
 const PAGE_SIZE = 50;
@@ -56,10 +56,7 @@ export default function InputPricePage() {
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        price: Number(form.price),
-      }),
+      body: JSON.stringify(form),
     });
 
     setLoading(false);
@@ -102,7 +99,7 @@ export default function InputPricePage() {
       steel_spec: row.steel_spec,
       material_source: row.material_source,
       tube_route: row.tube_route,
-      price: row.price.toString(),
+      price: row.price,
     });
     setEditId(row.id);
     setShowForm(true);
@@ -169,7 +166,7 @@ export default function InputPricePage() {
             value={form.tube_route}
             onChange={(e) => setForm({ ...form, tube_route: e.target.value })}
           />
-          <input className="input-dense" type="number" placeholder="Price"
+          <input className="input-dense" type="text" placeholder="Price (contoh: 1,234.56)"
             value={form.price}
             onChange={(e) => setForm({ ...form, price: e.target.value })}
           />

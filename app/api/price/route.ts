@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       price,
     } = body;
 
-    if (!ipd || price === undefined || price === null) {
+    if (!ipd || !price) {
       return NextResponse.json(
         { error: "IPD & Price wajib diisi" },
         { status: 400 }
