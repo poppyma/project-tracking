@@ -214,6 +214,15 @@ body {
   pointer-events: none;
 }
 
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+
 .modal {
   width: 860px;
   max-width: calc(100% - 48px);
