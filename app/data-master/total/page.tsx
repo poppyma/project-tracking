@@ -2,98 +2,80 @@
 
 import { useEffect, useState } from "react";
 
-/* ================= TYPES ================= */
-type TotalRow = {
-  supplier_id: string;
+type Row = {
   supplier_code: string;
   supplier_name: string;
   quarter: string;
   total_ipd: string;
 };
 
-export default function ViewTotalIPDPage() {
-  const [rows, setRows] = useState<TotalRow[]>([]);
-  const [loading, setLoading] = useState(false);
+const QUARTERS = [
+  "Q4-2025",
+  "Q1-2026",
+  "Q2-2026",
+  "Q3-2026",
+];
 
-  async function loadData() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/total");
-      const json = await res.json();
-      setRows(Array.isArray(json) ? json : []);
-    } catch {
-      setRows([]);
-    } finally {
-      setLoading(false);
-    }
-  }
+export default function ViewTotalIPDPage() {
+  const [rows, setRows] = useState<Row[]>([]);
 
   useEffect(() => {
-    loadData();
+    fetch("/api/total")
+      .then((r) => r.json())
+      .then(setRows);
   }, []);
 
-  /* UNIQUE SUPPLIER */
+  // ambil supplier unik
   const suppliers = Array.from(
     new Map(
       rows.map((r) => [
-        r.supplier_id,
-        {
-          supplier_code: r.supplier_code,
-          supplier_name: r.supplier_name,
-        },
+        r.supplier_code,
+        { supplier_code: r.supplier_code, supplier_name: r.supplier_name },
       ])
     ).values()
   );
 
-  /* UNIQUE QUARTER */
-  const quarters = Array.from(
-    new Set(rows.map((r) => r.quarter))
-  );
-
-  function getTotal(
-    supplierCode: string,
-    quarter: string
-  ) {
-    const row = rows.find(
+  function getValue(code: string, quarter: string) {
+    const found = rows.find(
       (r) =>
-        r.supplier_code === supplierCode &&
+        r.supplier_code === code &&
         r.quarter === quarter
     );
-    return row ? row.total_ipd : "0";
+    return found ? found.total_ipd : "0";
   }
 
   return (
-    <div className="p-4 space-y-4 text-xs">
-      <h1 className="text-2xl font-bold">
+    <div className="p-4 text-xs">
+      <h1 className="text-2xl font-bold mb-4">
         View Total Update IPD Price Summary by Supplier
       </h1>
 
-      {loading && <div>Loading...</div>}
+      <table className="w-full border">
+        <thead className="bg-gray-200">
+          <tr>
+            <th className="border px-2 py-1">No</th>
+            <th className="border px-2 py-1">Supplier Code</th>
+            <th className="border px-2 py-1">Supplier Name</th>
+            {QUARTERS.map((q) => (
+              <th key={q} className="border px-2 py-1">
+                {q}
+              </th>
+            ))}
+          </tr>
+        </thead>
 
-      {!loading && rows.length > 0 && (
-        <table className="w-full border mt-4">
-          <thead className="bg-gray-200">
+        <tbody>
+          {suppliers.length === 0 ? (
             <tr>
-              <th className="border px-2 py-1">No</th>
-              <th className="border px-2 py-1">
-                Supplier Code
-              </th>
-              <th className="border px-2 py-1">
-                Supplier Name
-              </th>
-              {quarters.map((q) => (
-                <th
-                  key={q}
-                  className="border px-2 py-1"
-                >
-                  Total IPD {q}
-                </th>
-              ))}
+              <td
+                colSpan={3 + QUARTERS.length}
+                className="border text-center py-4 text-gray-400"
+              >
+                No data
+              </td>
             </tr>
-          </thead>
-
-          <tbody>
-            {suppliers.map((s, i) => (
+          ) : (
+            suppliers.map((s, i) => (
               <tr key={s.supplier_code}>
                 <td className="border px-2 py-1 text-center">
                   {i + 1}
@@ -105,25 +87,19 @@ export default function ViewTotalIPDPage() {
                   {s.supplier_name}
                 </td>
 
-                {quarters.map((q) => (
+                {QUARTERS.map((q) => (
                   <td
                     key={q}
                     className="border px-2 py-1 text-center"
                   >
-                    {getTotal(s.supplier_code, q)}
+                    {getValue(s.supplier_code, q)}
                   </td>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {!loading && rows.length === 0 && (
-        <div className="text-gray-400">
-          No data
-        </div>
-      )}
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

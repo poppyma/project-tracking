@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
-/*
-GET /api/total
-*/
 export async function GET() {
   try {
     const result = await query(
       `
       SELECT
-        s.id AS supplier_id,
         s.supplier_code,
         s.supplier_name,
         h.quarter,
@@ -18,12 +14,8 @@ export async function GET() {
       JOIN price_detail d ON d.header_id = h.id
       JOIN supplier_master s ON s.id = h.supplier_id
       GROUP BY
-        s.id,
         s.supplier_code,
         s.supplier_name,
-        h.quarter
-      ORDER BY
-        s.supplier_code,
         h.quarter
       `
     );
