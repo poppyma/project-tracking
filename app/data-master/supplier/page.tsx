@@ -265,8 +265,9 @@ export default function InputSupplierPage() {
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-1">Code</th>
-              <th className="border px-2 py-1">Name</th>
+              <th className="border px-2 py-1">Supplier Code</th>
+              <th className="border px-2 py-1">Supplier Name</th>
+              <th className="border px-2 py-1">Address</th>
               <th className="border px-2 py-1">Country</th>
               <th className="border px-2 py-1">PIC</th>
               <th className="border px-2 py-1">Email</th>
@@ -284,6 +285,7 @@ export default function InputSupplierPage() {
               <tr key={r.id}>
                 <td className="border px-2 py-1">{r.supplier_code}</td>
                 <td className="border px-2 py-1">{r.supplier_name}</td>
+                <td className="border px-2 py-1">{r.address}</td>
                 <td className="border px-2 py-1">{r.country}</td>
                 <td className="border px-2 py-1">{r.pic}</td>
                 <td className="border px-2 py-1">{r.email}</td>
