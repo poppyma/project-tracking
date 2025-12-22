@@ -8,8 +8,7 @@ export async function GET() {
   try {
     await initTables();
 
-    const result = await query(
-      `
+    const result = await query(`
       SELECT
         id,
         ipd,
@@ -21,8 +20,7 @@ export async function GET() {
         created_at
       FROM price_master
       ORDER BY created_at DESC
-      `
-    );
+    `);
 
     return NextResponse.json(result.rows);
   } catch (error) {
@@ -35,7 +33,7 @@ export async function GET() {
 }
 
 /* =========================
-   POST → simpan Price
+   POST → insert Price
 ========================= */
 export async function POST(req: Request) {
   try {
