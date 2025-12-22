@@ -16,9 +16,15 @@ export async function GET() {
         steel_spec,
         material_source,
         tube_route,
+        supplier_code,
+        currency,
+        incoterm,
+        top,
+        start_date,
+        end_date,
         price,
         created_at
-      FROM price_master
+      FROM update_price
       ORDER BY created_at DESC
     `);
 
@@ -33,7 +39,7 @@ export async function GET() {
 }
 
 /* =========================
-   POST → insert Price
+   POST → simpan Price
 ========================= */
 export async function POST(req: Request) {
   try {
@@ -46,28 +52,40 @@ export async function POST(req: Request) {
       steel_spec,
       material_source,
       tube_route,
+      supplier_code,
+      currency,
+      incoterm,
+      top,
+      start_date,
+      end_date,
       price,
     } = body;
 
-    if (!ipd || !price) {
+    if (!ipd || !supplier_code || !price || !start_date) {
       return NextResponse.json(
-        { error: "IPD & Price wajib diisi" },
+        { error: "IPD, Supplier, Start Date, dan Price wajib diisi" },
         { status: 400 }
       );
     }
 
     await query(
       `
-      INSERT INTO price_master
+      INSERT INTO update_price
       (
         ipd,
         description,
         steel_spec,
         material_source,
         tube_route,
+        supplier_code,
+        currency,
+        incoterm,
+        top,
+        start_date,
+        end_date,
         price
       )
-      VALUES ($1,$2,$3,$4,$5,$6)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
       `,
       [
         ipd,
@@ -75,6 +93,12 @@ export async function POST(req: Request) {
         steel_spec,
         material_source,
         tube_route,
+        supplier_code,
+        currency,
+        incoterm,
+        top,
+        start_date,
+        end_date,
         price,
       ]
     );

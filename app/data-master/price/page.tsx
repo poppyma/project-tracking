@@ -5,10 +5,16 @@ import { useEffect, useState } from "react";
 type PriceRow = {
   id: string;
   ipd: string;
+  supplier_code: string;
   description: string;
   steel_spec: string;
   material_source: string;
   tube_route: string;
+  currency: string;
+  incoterm: string;
+  top: number;
+  start_date: string;
+  end_date: string;
   price: string;
 };
 
@@ -19,19 +25,23 @@ export default function InputPricePage() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   const [form, setForm] = useState({
     ipd: "",
+    supplier_code: "",
     description: "",
     steel_spec: "",
     material_source: "",
     tube_route: "",
+    currency: "",
+    incoterm: "",
+    top: "",
+    start_date: "",
+    end_date: "",
     price: "",
   });
 
-  /* ================= LOAD ================= */
   async function loadData() {
     const res = await fetch("/api/price");
     setData(await res.json());
@@ -41,22 +51,21 @@ export default function InputPricePage() {
     loadData();
   }, []);
 
-  /* ================= SAVE ================= */
   async function handleSubmit() {
-    if (!form.ipd || !form.price) {
-      alert("IPD & Price wajib diisi");
+    if (!form.ipd || !form.supplier_code || !form.price || !form.start_date) {
+      alert("IPD, Supplier, Start Date, dan Price wajib diisi");
       return;
     }
 
     setLoading(true);
 
-    const url = editId ? `/api/price/${editId}` : "/api/price";
-    const method = editId ? "PUT" : "POST";
-
-    const res = await fetch(url, {
-      method,
+    const res = await fetch("/api/price", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        top: form.top ? Number(form.top) : null,
+      }),
     });
 
     setLoading(false);
@@ -66,7 +75,7 @@ export default function InputPricePage() {
       return;
     }
 
-    alert(editId ? "Price berhasil diupdate" : "Price berhasil disimpan");
+    alert("Price berhasil disimpan");
     resetForm();
     loadData();
   }
@@ -74,57 +83,38 @@ export default function InputPricePage() {
   function resetForm() {
     setForm({
       ipd: "",
+      supplier_code: "",
       description: "",
       steel_spec: "",
       material_source: "",
       tube_route: "",
+      currency: "",
+      incoterm: "",
+      top: "",
+      start_date: "",
+      end_date: "",
       price: "",
     });
-    setEditId(null);
     setShowForm(false);
   }
 
-  /* ================= DELETE ================= */
-  async function handleDelete(id: string) {
-    if (!confirm("Yakin hapus data ini?")) return;
-
-    await fetch(`/api/price/${id}`, { method: "DELETE" });
-    loadData();
-  }
-
-  function handleEdit(row: PriceRow) {
-    setForm({
-      ipd: row.ipd,
-      description: row.description,
-      steel_spec: row.steel_spec,
-      material_source: row.material_source,
-      tube_route: row.tube_route,
-      price: row.price,
-    });
-    setEditId(row.id);
-    setShowForm(true);
-  }
-
-  /* ================= FILTER ================= */
   const filtered = data.filter(
     (r) =>
       r.ipd.toLowerCase().includes(search.toLowerCase()) ||
-      r.description.toLowerCase().includes(search.toLowerCase())
+      r.supplier_code.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const pagedData = filtered.slice(
+  const paged = filtered.slice(
     page * PAGE_SIZE,
     page * PAGE_SIZE + PAGE_SIZE
   );
 
-  /* ================= RENDER ================= */
   return (
     <div className="space-y-2">
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
-        <h1 className="text-sm font-semibold">Price Master</h1>
+        <h1 className="text-sm font-semibold">Update Price</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
           className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
@@ -136,42 +126,41 @@ export default function InputPricePage() {
       {/* SEARCH */}
       <input
         className="input-dense w-64 text-xs"
-        placeholder="Search IPD / Description"
+        placeholder="Search IPD / Supplier"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
 
       {/* FORM */}
       {showForm && (
-        <div className="bg-white border rounded p-3 grid grid-cols-3 gap-2 text-xs">
+        <div className="bg-white border rounded p-3 grid grid-cols-4 gap-2 text-xs">
 
-          <input className="input-dense" placeholder="IPD"
-            value={form.ipd}
-            onChange={(e) => setForm({ ...form, ipd: e.target.value })}
-          />
-          <input className="input-dense" placeholder="Description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-          <input className="input-dense" placeholder="Steel Spec"
-            value={form.steel_spec}
-            onChange={(e) => setForm({ ...form, steel_spec: e.target.value })}
-          />
+          {[
+            ["IPD", "ipd"],
+            ["Supplier Code", "supplier_code"],
+            ["Description", "description"],
+            ["Steel Spec", "steel_spec"],
+            ["Material Source", "material_source"],
+            ["Tube Route", "tube_route"],
+            ["Currency", "currency"],
+            ["Incoterm", "incoterm"],
+            ["TOP", "top"],
+            ["Start Date", "start_date"],
+            ["End Date", "end_date"],
+            ["Price", "price"],
+          ].map(([label, key]) => (
+            <input
+              key={key}
+              className="input-dense"
+              placeholder={label}
+              value={(form as any)[key]}
+              onChange={(e) =>
+                setForm({ ...form, [key]: e.target.value })
+              }
+            />
+          ))}
 
-          <input className="input-dense" placeholder="Material Source"
-            value={form.material_source}
-            onChange={(e) => setForm({ ...form, material_source: e.target.value })}
-          />
-          <input className="input-dense" placeholder="Tube Route"
-            value={form.tube_route}
-            onChange={(e) => setForm({ ...form, tube_route: e.target.value })}
-          />
-          <input className="input-dense" type="text" placeholder="Price (contoh: 1,234.56)"
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
-          />
-
-          <div className="col-span-3 flex justify-end gap-2">
+          <div className="col-span-4 flex justify-end gap-2">
             <button onClick={resetForm} className="px-3 py-1 border rounded">
               Cancel
             </button>
@@ -180,7 +169,7 @@ export default function InputPricePage() {
               disabled={loading}
               className="px-4 py-1 bg-blue-600 text-white rounded"
             >
-              {editId ? "Update" : "Save"}
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </div>
@@ -192,56 +181,26 @@ export default function InputPricePage() {
           <thead className="bg-gray-100">
             <tr>
               <th className="border px-2 py-1">IPD</th>
-              <th className="border px-2 py-1">Description</th>
-              <th className="border px-2 py-1">Steel Spec</th>
-              <th className="border px-2 py-1">Material Source</th>
-              <th className="border px-2 py-1">Tube Route</th>
+              <th className="border px-2 py-1">Supplier</th>
+              <th className="border px-2 py-1">Start</th>
+              <th className="border px-2 py-1">End</th>
               <th className="border px-2 py-1">Price</th>
-              <th className="border px-2 py-1">Action</th>
             </tr>
           </thead>
-
           <tbody>
-            {pagedData.map((r) => (
+            {paged.map((r) => (
               <tr key={r.id}>
                 <td className="border px-2 py-1">{r.ipd}</td>
-                <td className="border px-2 py-1">{r.description}</td>
-                <td className="border px-2 py-1">{r.steel_spec}</td>
-                <td className="border px-2 py-1">{r.material_source}</td>
-                <td className="border px-2 py-1">{r.tube_route}</td>
+                <td className="border px-2 py-1">{r.supplier_code}</td>
+                <td className="border px-2 py-1">{r.start_date}</td>
+                <td className="border px-2 py-1">{r.end_date}</td>
                 <td className="border px-2 py-1">{r.price}</td>
-                <td className="border px-2 py-1 text-center">
-                  <button onClick={() => handleEdit(r)}>✏️</button>
-                  <button
-                    onClick={() => handleDelete(r.id)}
-                    className="ml-2 text-red-600"
-                  >
-                    🗑️
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
         </table>
-
-        {/* PAGINATION */}
-        <div className="flex justify-between mt-2 text-xs">
-          <span>
-            Page {page + 1} of {totalPages || 1}
-          </span>
-          <div className="space-x-2">
-            <button disabled={page === 0} onClick={() => setPage(page - 1)}>
-              Prev
-            </button>
-            <button
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </button>
-          </div>
-        </div>
       </div>
+
     </div>
   );
 }
