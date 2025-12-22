@@ -82,10 +82,10 @@ export default function RootLayout({
                     </Link>
 
                     <Link
-                      href="/data-master/summary"
+                      href="/data-master/price/view"
                       className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
                     >
-                      Price Summary 
+                      View Price 
                     </Link>
                   </div>
                 )}
