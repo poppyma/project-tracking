@@ -6,9 +6,6 @@ type Supplier = {
   id: string;
   supplier_code: string;
   supplier_name: string;
-  currency: string;
-  incoterm: string;
-  top: number;
 };
 
 type PriceRow = {
@@ -27,11 +24,10 @@ type PriceRow = {
 
 export default function PricePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [selectedSupplier, setSelectedSupplier] = useState<string>("");
-  const [selectedQuarter, setSelectedQuarter] = useState<string>("");
-  const [rows, setRows] = useState<PriceRow[]>([]);
-
+  const [selectedSupplier, setSelectedSupplier] = useState("");
   const [quarters, setQuarters] = useState<string[]>([]);
+  const [selectedQuarter, setSelectedQuarter] = useState("");
+  const [rows, setRows] = useState<PriceRow[]>([]);
 
   // Load suppliers
   useEffect(() => {
@@ -40,24 +36,27 @@ export default function PricePage() {
       .then(setSuppliers);
   }, []);
 
-  // Load quarter list (hardcode atau dari API)
+  // Load quarters when supplier changes
   useEffect(() => {
-    setQuarters(["Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025"]);
-  }, []);
+    if (!selectedSupplier) {
+      setQuarters([]);
+      setSelectedQuarter("");
+      return;
+    }
+
+    fetch(`/api/price/quarters?supplier_id=${selectedSupplier}`)
+      .then(r => r.json())
+      .then(setQuarters);
+  }, [selectedSupplier]);
 
   async function loadPrice() {
     if (!selectedSupplier || !selectedQuarter) return;
 
-    try {
-      const res = await fetch(
-        `/api/price?supplier_id=${selectedSupplier}&quarter=${encodeURIComponent(selectedQuarter)}`
-      );
-      const json = await res.json();
-      setRows(json);
-    } catch (err) {
-      console.error("LOAD PRICE ERROR:", err);
-      setRows([]);
-    }
+    const res = await fetch(
+      `/api/price?supplier_id=${selectedSupplier}&quarter=${encodeURIComponent(selectedQuarter)}`
+    );
+    const data = await res.json();
+    setRows(data);
   }
 
   function formatDate(dateStr: string) {
@@ -66,8 +65,8 @@ export default function PricePage() {
   }
 
   return (
-    <div className="p-4 space-y-4 text-xs">
-      <h1 className="text-2xl font-bold mb-4">View Price</h1>
+    <div className="p-4 space-y-4">
+      <h1 className="text-2xl font-bold">View Price</h1>
 
       <div className="flex gap-2">
         {/* Supplier Dropdown */}
@@ -89,6 +88,7 @@ export default function PricePage() {
           value={selectedQuarter}
           onChange={e => setSelectedQuarter(e.target.value)}
           className="border px-2 py-1"
+          disabled={!quarters.length}
         >
           <option value="">-- Select Quarter --</option>
           {quarters.map(q => (
@@ -121,7 +121,6 @@ export default function PricePage() {
             <th className="border px-2 py-1">Quarter</th>
           </tr>
         </thead>
-
         <tbody>
           {rows.length === 0 ? (
             <tr>
