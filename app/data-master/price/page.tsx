@@ -196,9 +196,12 @@ export default function PricePage() {
       <table className="w-full border text-xs">
   <thead className="bg-gray-100">
     <tr>
-      <th className="border px-2 py-1">Quarter</th>
+      <th className="border px-2 py-1">IPD Quotation</th>
       <th className="border px-2 py-1">IPD SIIS</th>
       <th className="border px-2 py-1">Description</th>
+      <th className="border px-2 py-1">Steel Spec</th>
+      <th className="border px-2 py-1">Material Source</th>
+      <th className="border px-2 py-1">Tube Route</th>
       <th className="border px-2 py-1">Price</th>
     </tr>
   </thead>
