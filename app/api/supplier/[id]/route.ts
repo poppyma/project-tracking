@@ -6,12 +6,14 @@ import { initTables, query } from "@/lib/db";
 ========================= */
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await initTables();
 
+    const { id } = await params;
     const body = await req.json();
+
     const {
       supplier_code,
       supplier_name,
@@ -55,7 +57,7 @@ export async function PUT(
         incoterm,
         top,
         forwarder,
-        params.id,
+        id,
       ]
     );
 
@@ -74,14 +76,16 @@ export async function PUT(
 ========================= */
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await initTables();
 
+    const { id } = await params;
+
     await query(
       `DELETE FROM supplier_master WHERE id = $1`,
-      [params.id]
+      [id]
     );
 
     return NextResponse.json({ success: true });
