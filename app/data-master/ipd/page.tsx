@@ -67,16 +67,16 @@ export default function InputIPDPage() {
   }
 
   return (
-  <div className="space-y-4">
+  <div className="space-y-2">
 
-    {/* ================= INPUT CARD ================= */}
-    <div className="bg-white rounded-lg border p-4">
+    {/* INPUT */}
+    <div className="bg-white border rounded p-3">
 
-      <div className="mb-3">
-        <h1 className="text-lg font-semibold">IPD Master</h1>
+      <div className="mb-2">
+        <h1 className="text-sm font-semibold">IPD Master</h1>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2">
 
         <div>
           <label className="label">IPD SIIS</label>
@@ -134,38 +134,38 @@ export default function InputIPDPage() {
         </div>
       </div>
 
-      <div className="flex justify-end mt-3">
+      <div className="flex justify-end mt-2">
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="px-6 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-1.5 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? "Saving..." : "Save"}
         </button>
       </div>
     </div>
 
-    {/* ================= TABLE CARD ================= */}
-    <div className="bg-white rounded-lg border p-4">
+    {/* TABLE */}
+    <div className="bg-white border rounded p-3">
 
-      <h2 className="text-sm font-semibold mb-2">IPD List</h2>
+      <h2 className="text-xs font-semibold mb-1">IPD List</h2>
 
       <div className="overflow-x-auto">
-        <table className="w-full border text-sm">
+        <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-1 text-left">IPD SIIS</th>
-              <th className="border px-2 py-1 text-left">Description</th>
-              <th className="border px-2 py-1 text-left">FB Type</th>
-              <th className="border px-2 py-1 text-left">Commodity</th>
-              <th className="border px-2 py-1 text-left">IPD Quotation</th>
+              <th className="border px-2 py-[3px] text-left">IPD SIIS</th>
+              <th className="border px-2 py-[3px] text-left">Description</th>
+              <th className="border px-2 py-[3px] text-left">FB Type</th>
+              <th className="border px-2 py-[3px] text-left">Commodity</th>
+              <th className="border px-2 py-[3px] text-left">IPD Quotation</th>
             </tr>
           </thead>
 
           <tbody>
             {data.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-center py-3 text-gray-400">
+                <td colSpan={5} className="text-center py-2 text-gray-400">
                   No data
                 </td>
               </tr>
@@ -173,11 +173,11 @@ export default function InputIPDPage() {
 
             {data.map((row) => (
               <tr key={row.id} className="hover:bg-gray-50">
-                <td className="border px-2 py-1">{row.ipd_siis}</td>
-                <td className="border px-2 py-1">{row.description}</td>
-                <td className="border px-2 py-1">{row.fb_type}</td>
-                <td className="border px-2 py-1">{row.commodity}</td>
-                <td className="border px-2 py-1">{row.ipd_quotation}</td>
+                <td className="border px-2 py-[3px]">{row.ipd_siis}</td>
+                <td className="border px-2 py-[3px]">{row.description}</td>
+                <td className="border px-2 py-[3px]">{row.fb_type}</td>
+                <td className="border px-2 py-[3px]">{row.commodity}</td>
+                <td className="border px-2 py-[3px]">{row.ipd_quotation}</td>
               </tr>
             ))}
           </tbody>

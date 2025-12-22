@@ -216,11 +216,12 @@ body {
 
 .label {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #374151;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
+
 
 
 .modal {
