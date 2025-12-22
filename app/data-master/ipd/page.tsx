@@ -130,7 +130,7 @@ export default function InputIPDPage() {
           />
         </div>
 
-        <div className="col-span-2">
+        <div>
           <label className="block text-[12px] font-medium text-gray-700 mb-[2px]">
             IPD Quotation
           </label>
