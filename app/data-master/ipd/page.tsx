@@ -22,7 +22,6 @@ export default function InputIPDPage() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  /* FILTER & SEARCH */
   const [search, setSearch] = useState("");
   const [filterFb, setFilterFb] = useState("");
   const [filterCommodity, setFilterCommodity] = useState("");
@@ -35,13 +34,12 @@ export default function InputIPDPage() {
     ipd_quotation: "",
   });
 
-  /* ================= LOAD DATA ================= */
+  /* LOAD DATA */
   async function loadData() {
     try {
       const res = await fetch("/api/ipd");
       if (!res.ok) throw new Error();
-      const json = await res.json();
-      setData(json);
+      setData(await res.json());
     } catch {
       alert("Gagal mengambil data IPD");
     }
@@ -55,7 +53,7 @@ export default function InputIPDPage() {
     setPage(0);
   }, [search, filterFb, filterCommodity]);
 
-  /* ================= SAVE / UPDATE ================= */
+  /* SAVE / UPDATE */
   async function handleSubmit() {
     if (!form.ipd_siis) {
       alert("IPD SIIS wajib diisi");
@@ -76,12 +74,11 @@ export default function InputIPDPage() {
 
       if (!res.ok) throw new Error();
 
-      alert(editId ? "Data IPD berhasil diupdate" : "Data IPD berhasil disimpan");
-
+      alert(editId ? "Data berhasil diupdate" : "Data berhasil disimpan");
       resetForm();
       loadData();
     } catch {
-      alert("Gagal menyimpan data IPD");
+      alert("Gagal menyimpan data");
     } finally {
       setLoading(false);
     }
@@ -99,7 +96,7 @@ export default function InputIPDPage() {
     setShowForm(false);
   }
 
-  /* ================= DELETE ================= */
+  /* DELETE */
   async function handleDelete(id: string) {
     if (!confirm("Yakin hapus data ini?")) return;
 
@@ -109,16 +106,16 @@ export default function InputIPDPage() {
       const res = await fetch(`/api/ipd/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
 
-      alert("Data IPD berhasil dihapus");
+      alert("Data berhasil dihapus");
       loadData();
     } catch {
-      alert("Gagal menghapus data IPD");
+      alert("Gagal menghapus data");
     } finally {
       setLoading(false);
     }
   }
 
-  /* ================= EDIT ================= */
+  /* EDIT */
   function handleEdit(row: IPD) {
     setForm({
       ipd_siis: row.ipd_siis,
@@ -131,16 +128,15 @@ export default function InputIPDPage() {
     setShowForm(true);
   }
 
-  /* ================= FILTER ================= */
+  /* FILTER */
   const filtered = data.filter((row) => {
-    const matchSearch =
-      row.ipd_siis.toLowerCase().includes(search.toLowerCase()) ||
-      row.description.toLowerCase().includes(search.toLowerCase());
-
-    const matchFb = filterFb ? row.fb_type === filterFb : true;
-    const matchCom = filterCommodity ? row.commodity === filterCommodity : true;
-
-    return matchSearch && matchFb && matchCom;
+    const s = search.toLowerCase();
+    return (
+      (row.ipd_siis.toLowerCase().includes(s) ||
+        row.description.toLowerCase().includes(s)) &&
+      (filterFb ? row.fb_type === filterFb : true) &&
+      (filterCommodity ? row.commodity === filterCommodity : true)
+    );
   });
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -149,7 +145,6 @@ export default function InputIPDPage() {
     page * PAGE_SIZE + PAGE_SIZE
   );
 
-  /* ================= RENDER ================= */
   return (
     <div className="space-y-2">
 
@@ -161,7 +156,7 @@ export default function InputIPDPage() {
             setShowForm((v) => !v);
             setEditId(null);
           }}
-          className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white disabled:opacity-50"
+          className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
           disabled={loading}
         >
           {showForm ? "Close" : "+ Add IPD"}
@@ -175,14 +170,12 @@ export default function InputIPDPage() {
           placeholder="Search IPD / Description"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          disabled={loading}
         />
 
         <select
           className="input-dense w-32"
           value={filterFb}
           onChange={(e) => setFilterFb(e.target.value)}
-          disabled={loading}
         >
           <option value="">All FB</option>
           {FB_TYPES.map((f) => (
@@ -194,7 +187,6 @@ export default function InputIPDPage() {
           className="input-dense w-40"
           value={filterCommodity}
           onChange={(e) => setFilterCommodity(e.target.value)}
-          disabled={loading}
         >
           <option value="">All Commodity</option>
           {COMMODITIES.map((c) => (
@@ -206,7 +198,6 @@ export default function InputIPDPage() {
       {/* FORM */}
       {showForm && (
         <div className="bg-white border rounded p-3 grid grid-cols-2 gap-2 text-xs">
-
           <input
             className="input-dense"
             placeholder="IPD SIIS"
@@ -214,7 +205,6 @@ export default function InputIPDPage() {
             onChange={(e) =>
               setForm({ ...form, ipd_siis: e.target.value })
             }
-            disabled={loading}
           />
 
           <select
@@ -223,7 +213,6 @@ export default function InputIPDPage() {
             onChange={(e) =>
               setForm({ ...form, fb_type: e.target.value })
             }
-            disabled={loading}
           >
             <option value="">FB Type</option>
             {FB_TYPES.map((f) => (
@@ -238,7 +227,6 @@ export default function InputIPDPage() {
             onChange={(e) =>
               setForm({ ...form, description: e.target.value })
             }
-            disabled={loading}
           />
 
           <select
@@ -247,7 +235,6 @@ export default function InputIPDPage() {
             onChange={(e) =>
               setForm({ ...form, commodity: e.target.value })
             }
-            disabled={loading}
           >
             <option value="">Commodity</option>
             {COMMODITIES.map((c) => (
@@ -262,28 +249,18 @@ export default function InputIPDPage() {
             onChange={(e) =>
               setForm({ ...form, ipd_quotation: e.target.value })
             }
-            disabled={loading}
           />
 
           <div className="col-span-2 flex justify-end gap-2">
-            <button
-              onClick={resetForm}
-              className="px-3 py-1 border rounded"
-              disabled={loading}
-            >
+            <button onClick={resetForm} className="px-3 py-1 border rounded">
               Cancel
             </button>
-
             <button
               onClick={handleSubmit}
               disabled={loading}
               className="px-4 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
             >
-              {loading
-                ? "Saving..."
-                : editId
-                ? "Update"
-                : "Save"}
+              {loading ? "Saving..." : editId ? "Update" : "Save"}
             </button>
           </div>
         </div>
@@ -299,7 +276,7 @@ export default function InputIPDPage() {
               <th className="border px-2 py-1">FB</th>
               <th className="border px-2 py-1">Commodity</th>
               <th className="border px-2 py-1">Quotation</th>
-              <th className="border px-2 py-1">Action</th>
+              <th className="border px-2 py-1 text-center">Action</th>
             </tr>
           </thead>
 
@@ -311,20 +288,29 @@ export default function InputIPDPage() {
                 <td className="border px-2 py-1">{r.fb_type}</td>
                 <td className="border px-2 py-1">{r.commodity}</td>
                 <td className="border px-2 py-1">{r.ipd_quotation}</td>
-                <td className="border px-2 py-1 space-x-2">
-                  <button
-                    onClick={() => handleEdit(r)}
-                    disabled={loading}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(r.id)}
-                    className="text-red-600"
-                    disabled={loading}
-                  >
-                    Delete
-                  </button>
+
+                <td className="border px-2 py-1">
+                  <div className="flex justify-center gap-2">
+                    {/* EDIT */}
+                    <button
+                      title="Edit"
+                      onClick={() => handleEdit(r)}
+                      className="p-1 rounded hover:bg-blue-100"
+                      disabled={loading}
+                    >
+                      ✏️
+                    </button>
+
+                    {/* DELETE */}
+                    <button
+                      title="Delete"
+                      onClick={() => handleDelete(r.id)}
+                      className="p-1 rounded hover:bg-red-100"
+                      disabled={loading}
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
