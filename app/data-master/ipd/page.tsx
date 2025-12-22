@@ -69,7 +69,7 @@ export default function InputIPDPage() {
   return (
   <div className="space-y-2">
 
-    {/* INPUT */}
+    {/* ===== FORM INPUT ===== */}
     <div className="bg-white border rounded p-3">
 
       <div className="mb-2">
@@ -79,9 +79,11 @@ export default function InputIPDPage() {
       <div className="grid grid-cols-2 gap-2">
 
         <div>
-          <label className="label">IPD SIIS</label>
+          <label className="block text-[12px] font-medium text-gray-700 mb-[2px]">
+            IPD SIIS
+          </label>
           <input
-            className="input"
+            className="input-dense"
             value={form.ipd_siis}
             onChange={(e) =>
               setForm({ ...form, ipd_siis: e.target.value })
@@ -90,9 +92,11 @@ export default function InputIPDPage() {
         </div>
 
         <div>
-          <label className="label">FB Type</label>
+          <label className="block text-[12px] font-medium text-gray-700 mb-[2px]">
+            FB Type
+          </label>
           <input
-            className="input"
+            className="input-dense"
             value={form.fb_type}
             onChange={(e) =>
               setForm({ ...form, fb_type: e.target.value })
@@ -101,9 +105,11 @@ export default function InputIPDPage() {
         </div>
 
         <div>
-          <label className="label">Description</label>
+          <label className="block text-[12px] font-medium text-gray-700 mb-[2px]">
+            Description
+          </label>
           <input
-            className="input"
+            className="input-dense"
             value={form.description}
             onChange={(e) =>
               setForm({ ...form, description: e.target.value })
@@ -112,9 +118,11 @@ export default function InputIPDPage() {
         </div>
 
         <div>
-          <label className="label">Commodity</label>
+          <label className="block text-[12px] font-medium text-gray-700 mb-[2px]">
+            Commodity
+          </label>
           <input
-            className="input"
+            className="input-dense"
             value={form.commodity}
             onChange={(e) =>
               setForm({ ...form, commodity: e.target.value })
@@ -123,9 +131,11 @@ export default function InputIPDPage() {
         </div>
 
         <div className="col-span-2">
-          <label className="label">IPD Quotation</label>
+          <label className="block text-[12px] font-medium text-gray-700 mb-[2px]">
+            IPD Quotation
+          </label>
           <input
-            className="input"
+            className="input-dense"
             value={form.ipd_quotation}
             onChange={(e) =>
               setForm({ ...form, ipd_quotation: e.target.value })
@@ -138,14 +148,14 @@ export default function InputIPDPage() {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="px-4 py-1.5 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? "Saving..." : "Save"}
         </button>
       </div>
     </div>
 
-    {/* TABLE */}
+    {/* ===== TABLE ===== */}
     <div className="bg-white border rounded p-3">
 
       <h2 className="text-xs font-semibold mb-1">IPD List</h2>
@@ -165,7 +175,10 @@ export default function InputIPDPage() {
           <tbody>
             {data.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-center py-2 text-gray-400">
+                <td
+                  colSpan={5}
+                  className="text-center py-2 text-gray-400"
+                >
                   No data
                 </td>
               </tr>
@@ -183,8 +196,8 @@ export default function InputIPDPage() {
           </tbody>
         </table>
       </div>
-
     </div>
+
   </div>
 );
 

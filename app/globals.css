@@ -222,6 +222,20 @@ body {
   margin-bottom: 2px;
 }
 
+.input-dense {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  background: #fff;
+}
+
+.input-dense:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
 
 
 .modal {
