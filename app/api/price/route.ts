@@ -64,9 +64,17 @@ export async function POST(req: Request) {
       price,
     } = body;
 
-    if (!supplier_id || !start_date || !quarter || !year || !price) {
+    const finalPrice = Number(price);
+
+    if (
+      !supplier_id ||
+      !start_date ||
+      !quarter ||
+      !year ||
+      isNaN(finalPrice)
+    ) {
       return NextResponse.json(
-        { error: "Data wajib belum lengkap" },
+        { error: "Data wajib belum lengkap / price tidak valid" },
         { status: 400 }
       );
     }
@@ -94,22 +102,22 @@ export async function POST(req: Request) {
       [
         supplier_id,
         start_date,
-        end_date,
+        end_date || null,
         quarter,
         year,
-        ipd_quotation,
-        ipd_siis,
-        description,
-        steel_spec,
-        material_source,
-        tube_route,
-        price,
+        ipd_quotation || null,
+        ipd_siis || null,
+        description || null,
+        steel_spec || null,
+        material_source || null,
+        tube_route || null,
+        finalPrice,
       ]
     );
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("PRICE INSERT ERROR:", err);
     return NextResponse.json(
       { error: "Failed to save price" },
       { status: 500 }
