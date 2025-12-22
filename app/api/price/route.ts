@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
 /* =========================
-   GET → Price Summary View
+   GET → Price List
 ========================= */
 export async function GET() {
   try {
@@ -15,13 +15,6 @@ export async function GET() {
         p.year,
         p.price,
 
-        i.id AS ipd_id,
-        i.ipd_siis,
-        i.description,
-        i.steel_spec,
-        i.material_source,
-        i.tube_route,
-
         s.id AS supplier_id,
         s.supplier_name,
         s.currency,
@@ -29,7 +22,6 @@ export async function GET() {
         s.top
 
       FROM price_input p
-      JOIN ipd_master i ON i.id = p.ipd_id
       JOIN supplier_master s ON s.id = p.supplier_id
       ORDER BY p.created_at DESC
     `);
@@ -52,7 +44,6 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const {
-      ipd_id,
       supplier_id,
       start_date,
       end_date,
@@ -61,9 +52,9 @@ export async function POST(req: Request) {
       price,
     } = body;
 
-    if (!ipd_id || !supplier_id || !start_date || !price) {
+    if (!supplier_id || !start_date || !price) {
       return NextResponse.json(
-        { error: "IPD, Supplier, Start Date, dan Price wajib diisi" },
+        { error: "Supplier, Start Date, dan Price wajib diisi" },
         { status: 400 }
       );
     }
@@ -71,10 +62,10 @@ export async function POST(req: Request) {
     await query(
       `
       INSERT INTO price_input
-        (ipd_id, supplier_id, start_date, end_date, quarter, year, price)
-      VALUES ($1,$2,$3,$4,$5,$6,$7)
+        (supplier_id, start_date, end_date, quarter, year, price)
+      VALUES ($1,$2,$3,$4,$5,$6)
       `,
-      [ipd_id, supplier_id, start_date, end_date, quarter, year, price]
+      [supplier_id, start_date, end_date, quarter, year, price]
     );
 
     return NextResponse.json({ success: true });
