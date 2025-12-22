@@ -209,7 +209,7 @@ export default function PricePage() {
   <tbody>
     {rows.length === 0 ? (
       <tr>
-        <td colSpan={4} className="text-center py-3 text-gray-400">
+        <td colSpan={6} className="text-center py-3 text-gray-400">
           No data
         </td>
       </tr>
