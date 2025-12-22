@@ -17,12 +17,10 @@ export async function POST(req: Request) {
 
     // INSERT HEADER
     const headerRes = await query(
-      `
-      INSERT INTO price_header
+      `INSERT INTO price_header
       (supplier_id, start_date, end_date, quarter)
       VALUES ($1,$2,$3,$4)
-      RETURNING id
-      `,
+      RETURNING id`,
       [supplier_id, startDateOnly, endDateOnly, header.quarter]
     );
     const headerId = headerRes.rows[0].id;
@@ -30,11 +28,9 @@ export async function POST(req: Request) {
     // INSERT DETAILS
     for (const d of details) {
       await query(
-        `
-        INSERT INTO price_detail
+        `INSERT INTO price_detail
         (header_id, ipd_quotation, ipd_siis, description, steel_spec, material_source, tube_route, price)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-        `,
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
         [
           headerId,
           d.ipd_quotation || null,
@@ -55,15 +51,27 @@ export async function POST(req: Request) {
   }
 }
 
-// GET → fetch price by supplier + optional quarter filter
+// GET → fetch price detail or list quarter
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const supplier_id = searchParams.get("supplier_id");
     const quarter = searchParams.get("quarter");
+    const listQuarter = searchParams.get("list_quarter");
 
     if (!supplier_id) return NextResponse.json([]);
 
+    // Jika request untuk list quarter
+    if (listQuarter === "true") {
+      const qResult = await query(
+        `SELECT DISTINCT quarter FROM price_header WHERE supplier_id = $1 ORDER BY quarter`,
+        [supplier_id]
+      );
+      const quarters = qResult.rows.map((r) => r.quarter);
+      return NextResponse.json(quarters);
+    }
+
+    // Fetch price detail (opsional filter quarter)
     const sql = `
       SELECT
         h.id AS header_id,
@@ -84,12 +92,11 @@ export async function GET(req: Request) {
       ${quarter ? "AND h.quarter = $2" : ""}
       ORDER BY h.start_date DESC, d.ipd_siis
     `;
-
     const params = quarter ? [supplier_id, quarter] : [supplier_id];
     const result = await query(sql, params);
 
-    // format date
-    const rows = result.rows.map(r => ({
+    // Format tanggal
+    const rows = result.rows.map((r) => ({
       ...r,
       start_date: r.start_date?.toISOString().split("T")[0],
       end_date: r.end_date?.toISOString().split("T")[0],
@@ -100,13 +107,4 @@ export async function GET(req: Request) {
     console.error("GET PRICE ERROR:", err);
     return NextResponse.json([], { status: 500 });
   }
-}
-
-// GET → list quarter available per supplier (optional, untuk dropdown)
-export async function getQuartersBySupplier(supplierId: string) {
-  const result = await query(
-    `SELECT DISTINCT quarter FROM price_header WHERE supplier_id = $1 ORDER BY quarter`,
-    [supplierId]
-  );
-  return result.rows.map(r => r.quarter);
 }
