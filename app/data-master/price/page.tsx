@@ -196,9 +196,9 @@ export default function InputPricePage() {
             <tr>
               <th className="border px-2 py-1">IPD</th>
               <th className="border px-2 py-1">Description</th>
-              <th className="border px-2 py-1">Steel</th>
-              <th className="border px-2 py-1">Source</th>
-              <th className="border px-2 py-1">Route</th>
+              <th className="border px-2 py-1">Steel Spec</th>
+              <th className="border px-2 py-1">Material Source</th>
+              <th className="border px-2 py-1">Tube Route</th>
               <th className="border px-2 py-1">Price</th>
               <th className="border px-2 py-1">Action</th>
             </tr>
