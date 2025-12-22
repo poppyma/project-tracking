@@ -79,42 +79,49 @@ export default function PricePage() {
   /* =========================
      SAVE
   ========================= */
-  async function handleSave() {
-    if (!selectedSupplier || !startDate || !form.price) {
-      alert("Supplier, Start Date & Price wajib diisi");
-      return;
-    }
-
-    const quarter = getQuarter(startDate);
-    const year = new Date(startDate).getFullYear();
-
-    await fetch("/api/price", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        supplier_id: selectedSupplier.id,
-        start_date: startDate,
-        end_date: endDate,
-        quarter: `${quarter}-${year}`,
-        year,
-        ...form,
-        price: Number(form.price),
-      }),
-    });
-
-    setForm({
-      ipd_quotation: "",
-      ipd_siis: "",
-      description: "",
-      steel_spec: "",
-      material_source: "",
-      tube_route: "",
-      price: "",
-    });
-
-    setShowForm(false);
-    loadPrice(selectedSupplier.id);
+ async function handleSave() {
+  if (!selectedSupplier || !startDate || !form.price) {
+    alert("Supplier, Start Date & Price wajib diisi");
+    return;
   }
+
+  const quarter = getQuarter(startDate);
+  const year = new Date(startDate).getFullYear();
+
+  const res = await fetch("/api/price", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      supplier_id: selectedSupplier.id,
+      start_date: startDate,
+      end_date: endDate || null,
+      quarter,
+      year,
+      ...form,
+      price: Number(form.price),
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    alert(err.error || "Gagal simpan data");
+    return;
+  }
+
+  setForm({
+    ipd_quotation: "",
+    ipd_siis: "",
+    description: "",
+    steel_spec: "",
+    material_source: "",
+    tube_route: "",
+    price: "",
+  });
+
+  setShowForm(false);
+  await loadPrice(selectedSupplier.id);
+}
+
 
   return (
     <div className="space-y-4 text-xs">
