@@ -70,11 +70,24 @@ export default function PricePage() {
   /* =========================
      LOAD PRICE
   ========================= */
-  async function loadPrice(supplierId: string) {
+ async function loadPrice(supplierId: string) {
+  try {
     const res = await fetch(`/api/price?supplier_id=${supplierId}`);
     const json = await res.json();
+
+    if (!Array.isArray(json)) {
+      console.error("PRICE API ERROR:", json);
+      setRows([]);
+      return;
+    }
+
     setRows(json);
+  } catch (err) {
+    console.error("LOAD PRICE ERROR:", err);
+    setRows([]);
   }
+}
+
 
   /* =========================
      SAVE
