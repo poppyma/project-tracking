@@ -1,34 +1,29 @@
 import { NextResponse } from "next/server";
-import { query } from "@/lib/db";
+import { initTables, query } from "@/lib/db";
 
 /* =========================
-   GET → Price List
+   GET → list price
 ========================= */
 export async function GET() {
   try {
+    await initTables();
+
     const result = await query(`
       SELECT
         p.id,
+        s.supplier_name,
+        s.supplier_code,
         p.start_date,
         p.end_date,
-        p.quarter,
-        p.year,
-        p.price,
-
-        s.id AS supplier_id,
-        s.supplier_name,
-        s.currency,
-        s.incoterm,
-        s.top
-
+        p.price
       FROM price_input p
       JOIN supplier_master s ON s.id = p.supplier_id
-      ORDER BY p.created_at DESC
+      ORDER BY p.start_date DESC
     `);
 
     return NextResponse.json(result.rows);
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { error: "Failed to fetch price data" },
       { status: 500 }
@@ -37,20 +32,14 @@ export async function GET() {
 }
 
 /* =========================
-   POST → Input Price
+   POST → insert price
 ========================= */
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    await initTables();
 
-    const {
-      supplier_id,
-      start_date,
-      end_date,
-      quarter,
-      year,
-      price,
-    } = body;
+    const body = await req.json();
+    const { supplier_id, start_date, end_date, price } = body;
 
     if (!supplier_id || !start_date || !price) {
       return NextResponse.json(
@@ -62,17 +51,22 @@ export async function POST(req: Request) {
     await query(
       `
       INSERT INTO price_input
-        (supplier_id, start_date, end_date, quarter, year, price)
-      VALUES ($1,$2,$3,$4,$5,$6)
+      (
+        supplier_id,
+        start_date,
+        end_date,
+        price
+      )
+      VALUES ($1,$2,$3,$4)
       `,
-      [supplier_id, start_date, end_date, quarter, year, price]
+      [supplier_id, start_date, end_date, price]
     );
 
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    console.error(e);
+  } catch (error) {
+    console.error(error);
     return NextResponse.json(
-      { error: e.message || "Failed to insert price" },
+      { error: "Failed to insert price" },
       { status: 500 }
     );
   }
