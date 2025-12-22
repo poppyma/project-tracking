@@ -2,267 +2,148 @@
 
 import { useEffect, useState } from "react";
 
-/* =====================
-   TYPE
-===================== */
-type PriceRow = {
+type IPD = {
   id: string;
-  ipd: string;
-  supplier_code: string;
-  quarter: number;
-  year: number;
-  price: number;
-  currency: string;
+  ipd_siis: string;
+  description: string;
+  steel_spec: string;
+  material_source: string;
+  tube_route: string;
 };
 
-const PAGE_SIZE = 50;
+type Supplier = {
+  id: string;
+  supplier_name: string;
+  currency: string;
+  incoterm: string;
+  top: number | null;
+};
 
-/* =====================
-   PAGE
-===================== */
-export default function PricePage() {
-  const [data, setData] = useState<PriceRow[]>([]);
+export default function InputPricePage() {
+  const [ipds, setIpds] = useState<IPD[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
 
   const [form, setForm] = useState({
-    ipd: "",
-    supplier_code: "",
+    ipd_id: "",
+    supplier_id: "",
+    start_date: "",
+    end_date: "",
     quarter: "",
-    year: new Date().getFullYear().toString(),
+    year: new Date().getFullYear(),
     price: "",
-    currency: "",
   });
 
-  /* =====================
-     LOAD DATA
-  ===================== */
-  async function loadData() {
-    try {
-      const res = await fetch("/api/price");
-      if (!res.ok) throw new Error("Failed to fetch");
-      const json = await res.json();
-      setData(json);
-    } catch (e) {
-      console.error(e);
-      setData([]);
-    }
-  }
-
+  /* ===== Load Master Data ===== */
   useEffect(() => {
-    loadData();
+    fetch("/api/ipd-master").then(r => r.json()).then(setIpds);
+    fetch("/api/supplier-master").then(r => r.json()).then(setSuppliers);
   }, []);
 
-  /* =====================
-     SUBMIT
-  ===================== */
+  /* ===== Auto Quarter ===== */
+  function calcQuarter(date: string) {
+    const m = new Date(date).getMonth() + 1;
+    return m <= 3 ? "Q1" : m <= 6 ? "Q2" : m <= 9 ? "Q3" : "Q4";
+  }
+
   async function handleSubmit() {
-    if (
-      !form.ipd ||
-      !form.supplier_code ||
-      !form.quarter ||
-      !form.year ||
-      !form.price
-    ) {
-      alert("IPD, Supplier, Quarter, Year, dan Price wajib diisi");
+    if (!form.ipd_id || !form.supplier_id || !form.start_date || !form.price) {
+      alert("Field wajib belum lengkap");
       return;
     }
 
     setLoading(true);
-
-    try {
-      const res = await fetch("/api/price", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ipd: form.ipd,
-          supplier_code: form.supplier_code,
-          quarter: Number(form.quarter),
-          year: Number(form.year),
-          price: Number(form.price),
-          currency: form.currency,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err?.error || "Gagal menyimpan price");
-        return;
-      }
-
-      alert("Price berhasil disimpan");
-      resetForm();
-      loadData();
-    } catch (e) {
-      console.error(e);
-      alert("Terjadi kesalahan");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function resetForm() {
-    setForm({
-      ipd: "",
-      supplier_code: "",
-      quarter: "",
-      year: new Date().getFullYear().toString(),
-      price: "",
-      currency: "",
+    await fetch("/api/price-input", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...form,
+        quarter: calcQuarter(form.start_date),
+      }),
     });
-    setShowForm(false);
+
+    setLoading(false);
+    alert("Price berhasil disimpan");
   }
 
-  /* =====================
-     FILTER & PAGINATION
-  ===================== */
-  const filtered = data.filter(
-    (r) =>
-      r.ipd.toLowerCase().includes(search.toLowerCase()) ||
-      r.supplier_code.toLowerCase().includes(search.toLowerCase())
-  );
+  const selectedIPD = ipds.find(i => i.id === form.ipd_id);
+  const selectedSupplier = suppliers.find(s => s.id === form.supplier_id);
 
-  const paged = filtered.slice(
-    page * PAGE_SIZE,
-    page * PAGE_SIZE + PAGE_SIZE
-  );
-
-  /* =====================
-     RENDER
-  ===================== */
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 text-xs">
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-sm font-semibold">Master Price (Quarter)</h1>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
-        >
-          {showForm ? "Close" : "+ Add Price"}
-        </button>
-      </div>
+      <h1 className="font-semibold">Input Price</h1>
 
-      {/* SEARCH */}
-      <input
-        className="input-dense w-64 text-xs"
-        placeholder="Search IPD / Supplier"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      {/* IPD */}
+      <select
+        className="input-dense"
+        value={form.ipd_id}
+        onChange={(e) =>
+          setForm({ ...form, ipd_id: e.target.value })
+        }
+      >
+        <option value="">-- Select IPD --</option>
+        {ipds.map(i => (
+          <option key={i.id} value={i.id}>
+            {i.ipd_siis}
+          </option>
+        ))}
+      </select>
 
-      {/* FORM */}
-      {showForm && (
-        <div className="bg-white border rounded p-3 grid grid-cols-4 gap-2 text-xs">
-
-          <input
-            className="input-dense"
-            placeholder="IPD"
-            value={form.ipd}
-            onChange={(e) =>
-              setForm({ ...form, ipd: e.target.value })
-            }
-          />
-
-          <input
-            className="input-dense"
-            placeholder="Supplier Code"
-            value={form.supplier_code}
-            onChange={(e) =>
-              setForm({ ...form, supplier_code: e.target.value })
-            }
-          />
-
-          <select
-            className="input-dense"
-            value={form.quarter}
-            onChange={(e) =>
-              setForm({ ...form, quarter: e.target.value })
-            }
-          >
-            <option value="">Quarter</option>
-            <option value="1">Q1</option>
-            <option value="2">Q2</option>
-            <option value="3">Q3</option>
-            <option value="4">Q4</option>
-          </select>
-
-          <input
-            className="input-dense"
-            placeholder="Year"
-            value={form.year}
-            onChange={(e) =>
-              setForm({ ...form, year: e.target.value })
-            }
-          />
-
-          <input
-            className="input-dense"
-            placeholder="Price"
-            value={form.price}
-            onChange={(e) =>
-              setForm({ ...form, price: e.target.value })
-            }
-          />
-
-          <input
-            className="input-dense"
-            placeholder="Currency"
-            value={form.currency}
-            onChange={(e) =>
-              setForm({ ...form, currency: e.target.value })
-            }
-          />
-
-          <div className="col-span-4 flex justify-end gap-2 pt-2">
-            <button
-              onClick={resetForm}
-              className="px-3 py-1 border rounded"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="px-4 py-1 bg-blue-600 text-white rounded"
-            >
-              {loading ? "Saving..." : "Save"}
-            </button>
-          </div>
+      {selectedIPD && (
+        <div className="border p-2 bg-gray-50">
+          <div>Description: {selectedIPD.description}</div>
+          <div>Steel Spec: {selectedIPD.steel_spec}</div>
+          <div>Material: {selectedIPD.material_source}</div>
+          <div>Tube Route: {selectedIPD.tube_route}</div>
         </div>
       )}
 
-      {/* TABLE */}
-      <div className="bg-white border rounded p-3">
-        <table className="w-full border text-xs">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border px-2 py-1">IPD</th>
-              <th className="border px-2 py-1">Supplier</th>
-              <th className="border px-2 py-1">Year</th>
-              <th className="border px-2 py-1">Quarter</th>
-              <th className="border px-2 py-1">Price</th>
-              <th className="border px-2 py-1">Currency</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paged.map((r) => (
-              <tr key={r.id}>
-                <td className="border px-2 py-1">{r.ipd}</td>
-                <td className="border px-2 py-1">{r.supplier_code}</td>
-                <td className="border px-2 py-1">{r.year}</td>
-                <td className="border px-2 py-1">Q{r.quarter}</td>
-                <td className="border px-2 py-1">{r.price}</td>
-                <td className="border px-2 py-1">{r.currency ?? "-"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Supplier */}
+      <select
+        className="input-dense"
+        value={form.supplier_id}
+        onChange={(e) =>
+          setForm({ ...form, supplier_id: e.target.value })
+        }
+      >
+        <option value="">-- Select Supplier --</option>
+        {suppliers.map(s => (
+          <option key={s.id} value={s.id}>
+            {s.supplier_name}
+          </option>
+        ))}
+      </select>
 
+      {selectedSupplier && (
+        <div className="border p-2 bg-gray-50">
+          <div>Currency: {selectedSupplier.currency}</div>
+          <div>Incoterm: {selectedSupplier.incoterm}</div>
+          <div>TOP: {selectedSupplier.top}</div>
+        </div>
+      )}
+
+      {/* Dates & Price */}
+      <input type="date" className="input-dense" value={form.start_date}
+        onChange={e => setForm({ ...form, start_date: e.target.value })} />
+
+      <input type="date" className="input-dense" value={form.end_date}
+        onChange={e => setForm({ ...form, end_date: e.target.value })} />
+
+      <input
+        className="input-dense"
+        placeholder="Price"
+        value={form.price}
+        onChange={(e) => setForm({ ...form, price: e.target.value })}
+      />
+
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        className="px-4 py-1 bg-blue-600 text-white rounded"
+      >
+        {loading ? "Saving..." : "Save"}
+      </button>
     </div>
   );
 }

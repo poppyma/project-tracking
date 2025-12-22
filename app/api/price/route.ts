@@ -1,65 +1,87 @@
 import { NextResponse } from "next/server";
-import { initTables, query } from "@/lib/db";
+import { query } from "@/lib/db";
 
 /* =========================
-   GET → list raw price
+   GET → Price Summary View
 ========================= */
 export async function GET() {
-  await initTables();
+  try {
+    const result = await query(`
+      SELECT
+        p.id,
+        p.start_date,
+        p.end_date,
+        p.quarter,
+        p.year,
+        p.price,
 
-  const result = await query(`
-    SELECT *
-    FROM master_price
-    ORDER BY year DESC, quarter DESC
-  `);
+        i.id AS ipd_id,
+        i.ipd_siis,
+        i.description,
+        i.steel_spec,
+        i.material_source,
+        i.tube_route,
 
-  return NextResponse.json(result.rows);
+        s.id AS supplier_id,
+        s.supplier_name,
+        s.currency,
+        s.incoterm,
+        s.top
+
+      FROM price_input p
+      JOIN ipd_master i ON i.id = p.ipd_id
+      JOIN supplier_master s ON s.id = p.supplier_id
+      ORDER BY p.created_at DESC
+    `);
+
+    return NextResponse.json(result.rows);
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json(
+      { error: "Failed to fetch price data" },
+      { status: 500 }
+    );
+  }
 }
 
 /* =========================
-   POST → input price
+   POST → Input Price
 ========================= */
 export async function POST(req: Request) {
   try {
-    await initTables();
+    const body = await req.json();
 
     const {
-      ipd,
-      supplier_code,
+      ipd_id,
+      supplier_id,
+      start_date,
+      end_date,
       quarter,
       year,
       price,
-      currency,
-    } = await req.json();
+    } = body;
 
-    if (!ipd || !supplier_code || !quarter || !year || !price) {
+    if (!ipd_id || !supplier_id || !start_date || !price) {
       return NextResponse.json(
-        { error: "IPD, Supplier, Quarter, Year, dan Price wajib diisi" },
+        { error: "IPD, Supplier, Start Date, dan Price wajib diisi" },
         { status: 400 }
       );
     }
 
     await query(
       `
-      INSERT INTO master_price
-        (ipd, supplier_code, quarter, year, price, currency)
-      VALUES ($1,$2,$3,$4,$5,$6)
+      INSERT INTO price_input
+        (ipd_id, supplier_id, start_date, end_date, quarter, year, price)
+      VALUES ($1,$2,$3,$4,$5,$6,$7)
       `,
-      [ipd, supplier_code, quarter, year, price, currency]
+      [ipd_id, supplier_id, start_date, end_date, quarter, year, price]
     );
 
     return NextResponse.json({ success: true });
   } catch (e: any) {
-    // duplikat IPD + Supplier + Quarter + Year
-    if (e.code === "23505") {
-      return NextResponse.json(
-        { error: "Price untuk IPD, Supplier, dan Quarter ini sudah ada" },
-        { status: 409 }
-      );
-    }
-
+    console.error(e);
     return NextResponse.json(
-      { error: "Gagal menyimpan price" },
+      { error: e.message || "Failed to insert price" },
       { status: 500 }
     );
   }
