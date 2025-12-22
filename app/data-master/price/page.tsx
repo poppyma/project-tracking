@@ -2,15 +2,50 @@
 
 import { useEffect, useState } from "react";
 
+/* =========================
+   TYPES
+========================= */
+type Supplier = {
+  id: string;
+  supplier_code: string;
+  supplier_name: string;
+  currency: string;
+  incoterm: string;
+  top: number;
+};
+
+type PriceRow = {
+  id: string;
+  ipd_quotation: string;
+  ipd_siis: string;
+  description: string;
+  steel_spec: string;
+  material_source: string;
+  tube_route: string;
+  price: string;
+  quarter: string;
+  year: number;
+};
+
+/* =========================
+   UTILS
+========================= */
+function getQuarter(date: string) {
+  const m = new Date(date).getMonth() + 1;
+  if (m <= 3) return "Q1";
+  if (m <= 6) return "Q2";
+  if (m <= 9) return "Q3";
+  return "Q4";
+}
+
 export default function PricePage() {
-  const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
-  const [prices, setPrices] = useState<any[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const [form, setForm] = useState({
-    start_date: "",
-    end_date: "",
     ipd_quotation: "",
     ipd_siis: "",
     description: "",
@@ -20,56 +55,54 @@ export default function PricePage() {
     price: "",
   });
 
-  /* =======================
-     FETCH SUPPLIERS
-  ======================= */
+  const [rows, setRows] = useState<PriceRow[]>([]);
+  const [showForm, setShowForm] = useState(false);
+
+  /* =========================
+     LOAD SUPPLIER
+  ========================= */
   useEffect(() => {
     fetch("/api/supplier")
-      .then(res => res.json())
+      .then((r) => r.json())
       .then(setSuppliers);
   }, []);
 
-  /* =======================
-     FETCH PRICE BY SUPPLIER
-  ======================= */
-  const fetchPrices = async (supplierId: string) => {
-    const res = await fetch(`/api/price/view?supplier_id=${supplierId}`);
-    const data = await res.json();
-    setPrices(data);
-  };
+  /* =========================
+     LOAD PRICE
+  ========================= */
+  async function loadPrice(supplierId: string) {
+    const res = await fetch(`/api/price?supplier_id=${supplierId}`);
+    const json = await res.json();
+    setRows(json);
+  }
 
-  /* =======================
-     HANDLE SUPPLIER CHANGE
-  ======================= */
-  const handleSupplierChange = (id: string) => {
-    const supplier = suppliers.find(s => s.id === id);
-    setSelectedSupplier(supplier);
-    setShowForm(false);
-    fetchPrices(id);
-  };
+  /* =========================
+     SAVE
+  ========================= */
+  async function handleSave() {
+    if (!selectedSupplier || !startDate || !form.price) {
+      alert("Supplier, Start Date & Price wajib diisi");
+      return;
+    }
 
-  /* =======================
-     HANDLE SAVE
-  ======================= */
-  const handleSave = async () => {
-    const res = await fetch("/api/price", {
+    const quarter = getQuarter(startDate);
+    const year = new Date(startDate).getFullYear();
+
+    await fetch("/api/price", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         supplier_id: selectedSupplier.id,
+        start_date: startDate,
+        end_date: endDate,
+        quarter: `${quarter}-${year}`,
+        year,
         ...form,
         price: Number(form.price),
       }),
     });
 
-    if (!res.ok) {
-      alert("Gagal menyimpan data");
-      return;
-    }
-
     setForm({
-      start_date: "",
-      end_date: "",
       ipd_quotation: "",
       ipd_siis: "",
       description: "",
@@ -80,130 +113,93 @@ export default function PricePage() {
     });
 
     setShowForm(false);
-    fetchPrices(selectedSupplier.id);
-  };
+    loadPrice(selectedSupplier.id);
+  }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 text-xs">
 
-      {/* ================= SUPPLIER SELECT ================= */}
-      <div>
-        <label className="font-medium">Supplier</label>
-        <select
-          className="border rounded px-3 py-2 w-full"
-          onChange={e => handleSupplierChange(e.target.value)}
-          defaultValue=""
-        >
-          <option value="" disabled>-- Select Supplier --</option>
-          {suppliers.map(s => (
-            <option key={s.id} value={s.id}>
-              {s.supplier_code} - {s.supplier_name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* SUPPLIER SELECT */}
+      <select
+        className="border px-2 py-1"
+        onChange={(e) => {
+          const s = suppliers.find(x => x.id === e.target.value);
+          setSelectedSupplier(s || null);
+          if (s) loadPrice(s.id);
+        }}
+      >
+        <option value="">-- Select Supplier --</option>
+        {suppliers.map(s => (
+          <option key={s.id} value={s.id}>
+            {s.supplier_code} - {s.supplier_name}
+          </option>
+        ))}
+      </select>
 
-      {/* ================= SUPPLIER DETAIL ================= */}
+      {/* SUPPLIER DETAIL */}
       {selectedSupplier && (
-        <div className="border rounded p-4 bg-gray-50 space-y-2">
-          <div><b>Supplier Code:</b> {selectedSupplier.supplier_code}</div>
-          <div><b>Currency:</b> {selectedSupplier.currency}</div>
-          <div><b>Incoterm:</b> {selectedSupplier.incoterm}</div>
-          <div><b>TOP:</b> {selectedSupplier.top}</div>
+        <div className="border p-2 bg-gray-50">
+          <div>Currency: {selectedSupplier.currency}</div>
+          <div>Incoterm: {selectedSupplier.incoterm}</div>
+          <div>TOP: {selectedSupplier.top}</div>
 
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <div>
-              <label>Start Date</label>
-              <input
-                type="date"
-                className="border rounded px-3 py-2 w-full"
-                value={form.start_date}
-                onChange={e => setForm({ ...form, start_date: e.target.value })}
-              />
-            </div>
-            <div>
-              <label>End Date</label>
-              <input
-                type="date"
-                className="border rounded px-3 py-2 w-full"
-                value={form.end_date}
-                onChange={e => setForm({ ...form, end_date: e.target.value })}
-              />
-            </div>
+          <div className="mt-2 flex gap-2">
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
           </div>
         </div>
       )}
 
-      {/* ================= ADD BUTTON ================= */}
-      {selectedSupplier && !showForm && (
+      {/* ADD BUTTON */}
+      {selectedSupplier && (
         <button
-          onClick={() => setShowForm(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          onClick={() => setShowForm(v => !v)}
+          className="px-3 py-1 bg-blue-600 text-white rounded"
         >
           + Add Price
         </button>
       )}
 
-      {/* ================= INPUT FORM ================= */}
+      {/* FORM */}
       {showForm && (
-        <div className="border rounded p-4 space-y-3">
-          {[
-            ["IPD Quotation", "ipd_quotation"],
-            ["IPD SIIS", "ipd_siis"],
-            ["Description", "description"],
-            ["Steel Spec", "steel_spec"],
-            ["Material Source", "material_source"],
-            ["Tube Route", "tube_route"],
-          ].map(([label, key]) => (
-            <div key={key}>
-              <label>{label}</label>
-              <input
-                className="border rounded px-3 py-2 w-full"
-                value={(form as any)[key]}
-                onChange={e => setForm({ ...form, [key]: e.target.value })}
-              />
-            </div>
+        <div className="grid grid-cols-4 gap-2 border p-3">
+          {Object.entries(form).map(([k, v]) => (
+            <input
+              key={k}
+              placeholder={k.replace("_", " ").toUpperCase()}
+              value={v}
+              onChange={e => setForm({ ...form, [k]: e.target.value })}
+              className="border px-2 py-1"
+            />
           ))}
 
-          <div>
-            <label>Price</label>
-            <input
-              type="number"
-              className="border rounded px-3 py-2 w-full"
-              value={form.price}
-              onChange={e => setForm({ ...form, price: e.target.value })}
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <button onClick={handleSave} className="bg-green-600 text-white px-4 py-2 rounded">
+          <div className="col-span-4 flex justify-end gap-2">
+            <button onClick={() => setShowForm(false)}>Cancel</button>
+            <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-1">
               Save
-            </button>
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 border rounded">
-              Cancel
             </button>
           </div>
         </div>
       )}
 
-      {/* ================= RESULT TABLE ================= */}
-      {prices.length > 0 && (
-        <table className="w-full border mt-6">
+      {/* TABLE */}
+      {rows.length > 0 && (
+        <table className="w-full border">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2">IPD Quotation</th>
-              <th className="border px-2">IPD SIIS</th>
-              <th className="border px-2">Steel Spec</th>
-              <th className="border px-2">Price</th>
+              <th>Quarter</th>
+              <th>IPD SIIS</th>
+              <th>Description</th>
+              <th>Price</th>
             </tr>
           </thead>
           <tbody>
-            {prices.map(p => (
-              <tr key={p.id}>
-                <td className="border px-2">{p.ipd_quotation}</td>
-                <td className="border px-2">{p.ipd_siis}</td>
-                <td className="border px-2">{p.steel_spec}</td>
-                <td className="border px-2">{p.price}</td>
+            {rows.map(r => (
+              <tr key={r.id}>
+                <td>{r.quarter}</td>
+                <td>{r.ipd_siis}</td>
+                <td>{r.description}</td>
+                <td>{r.price}</td>
               </tr>
             ))}
           </tbody>
