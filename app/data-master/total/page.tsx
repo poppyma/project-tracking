@@ -95,7 +95,7 @@ export default function ViewTotalIPDPage() {
                     <td
                       key={q}
                       className={`border px-2 py-1 text-center ${
-                        num !== 0 ? "bg-yellow-250 font-semibold" : ""
+                        num !== 0 ? "bg-yellow-300 font-semibold" : ""
                       }`}
                     >
                       {num}
