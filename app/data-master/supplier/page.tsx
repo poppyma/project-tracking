@@ -261,32 +261,27 @@ export default function InputSupplierPage() {
       )}
 
       {/* TABLE */}
-<div className="bg-white border rounded p-3 overflow-x-auto">
-  <table className="min-w-[1400px] border text-xs relative">
+      <div className="bg-white border rounded p-3 overflow-x-auto">
+        <table className="min-w-[1200px] border text-xs">
 
-    <thead className="bg-gray-100">
-      <tr>
-        <th className="border px-2 py-1 text-center w-10 sticky left-0 bg-gray-100 z-10">
-          No
-        </th>
-        <th className="border px-2 py-1 sticky left-10 bg-gray-100 z-10">
-          Supplier Code
-        </th>
-        <th className="border px-2 py-1">Supplier Name</th>
-        <th className="border px-2 py-1">Address</th>
-        <th className="border px-2 py-1">Country</th>
-        <th className="border px-2 py-1">PIC</th>
-        <th className="border px-2 py-1">Email</th>
-        <th className="border px-2 py-1">Category</th>
-        <th className="border px-2 py-1">Currency</th>
-        <th className="border px-2 py-1">Incoterm</th>
-        <th className="border px-2 py-1">TOP</th>
-        <th className="border px-2 py-1">Forwarder</th>
-        <th className="border px-2 py-1 text-center sticky right-0 bg-gray-100 z-10">
-          Action
-        </th>
-      </tr>
-    </thead>
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border px-2 py-1 text-center w-10">No</th>
+              <th className="border px-2 py-1">Supplier Code</th>
+              <th className="border px-2 py-1">Supplier Name</th>
+              <th className="border px-2 py-1">Address</th>
+              <th className="border px-2 py-1">Country</th>
+              <th className="border px-2 py-1">PIC</th>
+              <th className="border px-2 py-1">Email</th>
+              <th className="border px-2 py-1">Category</th>
+              <th className="border px-2 py-1">Currency</th>
+              <th className="border px-2 py-1">Incoterm</th>
+              <th className="border px-2 py-1">TOP</th>
+              <th className="border px-2 py-1">Forwarder</th>
+              <th className="border px-2 py-1 text-center">Action</th>
+            </tr>
+          </thead>
+
           <tbody>
             {pagedData.map((r, i) => (
               <tr key={r.id}>
