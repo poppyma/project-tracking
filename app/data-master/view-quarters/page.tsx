@@ -18,30 +18,61 @@ type Row = {
   description: string;
   material_source: string;
   quarter: string;
-  price: string; // ⬅️ STRING dari DB
+  price: string;
 };
 
 /* ================= FIXED QUARTERS ================= */
 const QUARTERS = ["Q4-2025", "Q1-2026", "Q2-2025", "Q3-2025"];
 
+/* ================= STORAGE KEY ================= */
+const STORAGE_KEY = "view_price_quarters_state";
 
 export default function ViewPriceQuartersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
 
-  /* LOAD SUPPLIER */
+  /* LOAD SUPPLIER LIST */
   useEffect(() => {
     fetch("/api/supplier")
       .then((r) => r.json())
       .then(setSuppliers);
   }, []);
 
-  async function loadData(supplierId: string) {
+  /* RESTORE STATE ON FIRST LOAD */
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+
+    try {
+      const parsed = JSON.parse(saved);
+      setSupplier(parsed.supplier || null);
+      setRows(parsed.rows || []);
+    } catch (e) {
+      console.error("Failed restore state", e);
+    }
+  }, []);
+
+  /* SAVE STATE */
+  useEffect(() => {
+    if (!supplier) return;
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        supplier,
+        rows,
+      })
+    );
+  }, [supplier, rows]);
+
+  async function loadData(supplierId: string, selected: Supplier) {
     const res = await fetch(
       `/api/price-quarters?supplier_id=${supplierId}`
     );
     const json = await res.json();
+
+    setSupplier(selected);
     setRows(Array.isArray(json) ? json : []);
   }
 
@@ -80,12 +111,12 @@ export default function ViewPriceQuartersPage() {
       {/* SELECT SUPPLIER */}
       <select
         className="border px-2 py-1"
+        value={supplier?.id || ""}
         onChange={(e) => {
           const s = suppliers.find(
             (x) => x.id === e.target.value
           );
-          setSupplier(s || null);
-          if (s) loadData(s.id);
+          if (s) loadData(s.id, s);
         }}
       >
         <option value="">-- Select Supplier --</option>
@@ -115,9 +146,7 @@ export default function ViewPriceQuartersPage() {
               <th className="border px-2">No</th>
               <th className="border px-2">IPD</th>
               <th className="border px-2">DESC</th>
-              <th className="border px-2">
-                Material Source
-              </th>
+              <th className="border px-2">Material Source</th>
               {QUARTERS.map((q) => (
                 <th key={q} className="border px-2">
                   {q}
@@ -155,28 +184,14 @@ export default function ViewPriceQuartersPage() {
                     {i.material_source}
                   </td>
 
-                  <td className="border px-2">
-                    {q4.toFixed(4)}
-                  </td>
-                  <td className="border px-2">
-                    {q1.toFixed(4)}
-                  </td>
-                  <td className="border px-2">
-                    {q2.toFixed(4)}
-                  </td>
-                  <td className="border px-2">
-                    {q3.toFixed(4)}
-                  </td>
+                  <td className="border px-2">{q4.toFixed(4)}</td>
+                  <td className="border px-2">{q1.toFixed(4)}</td>
+                  <td className="border px-2">{q2.toFixed(4)}</td>
+                  <td className="border px-2">{q3.toFixed(4)}</td>
 
-                  <td className="border px-2">
-                    {diff(q1, q4)}
-                  </td>
-                  <td className="border px-2">
-                    {diff(q2, q1)}
-                  </td>
-                  <td className="border px-2">
-                    {diff(q3, q2)}
-                  </td>
+                  <td className="border px-2">{diff(q1, q4)}</td>
+                  <td className="border px-2">{diff(q2, q1)}</td>
+                  <td className="border px-2">{diff(q3, q2)}</td>
                 </tr>
               );
             })}
