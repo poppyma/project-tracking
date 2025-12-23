@@ -10,10 +10,10 @@ type Row = {
 };
 
 const QUARTERS = [
-  "Q4-2025",
-  "Q1-2026",
-  "Q2-2026",
-  "Q3-2026",
+  "Total IPD Q4-2025",
+  "Total IPD Q1-2026",
+  "Total IPD Q2-2026",
+  "Total IPD Q3-2026",
 ];
 
 export default function ViewTotalIPDPage() {
