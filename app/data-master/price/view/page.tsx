@@ -54,12 +54,11 @@ export default function ViewPricePage() {
       .then((r) => r.json())
       .then((data: string[]) => {
         setQuarters(data);
-        setSelectedQuarter(""); // reset selected quarter
-        setRows([]); // reset table
+        setSelectedQuarter("");
+        setRows([]);
       });
   }, [selectedSupplier]);
 
-  // Fetch price data
   async function fetchPrice() {
     if (!selectedSupplier) return;
     setLoading(true);
@@ -84,7 +83,7 @@ export default function ViewPricePage() {
     <div className="p-4 space-y-4 text-xs">
       <h1 className="text-2xl font-bold">View Price</h1>
 
-      {/* Supplier Dropdown */}
+      {/* FILTER */}
       <div className="flex gap-2">
         <select
           className="border px-2 py-1"
@@ -102,7 +101,6 @@ export default function ViewPricePage() {
           ))}
         </select>
 
-        {/* Quarter Dropdown */}
         <select
           className="border px-2 py-1"
           value={selectedQuarter}
@@ -126,7 +124,31 @@ export default function ViewPricePage() {
         </button>
       </div>
 
-      {/* Table */}
+      {/* DETAIL SUPPLIER */}
+      {selectedSupplier && (
+        <div className="border rounded bg-gray-50 p-3 grid grid-cols-2 gap-2">
+          <div>
+            <b>Supplier Code:</b> {selectedSupplier.supplier_code}
+          </div>
+          <div>
+            <b>Supplier Name:</b> {selectedSupplier.supplier_name}
+          </div>
+          <div>
+            <b>Currency:</b> {selectedSupplier.currency}
+          </div>
+          <div>
+            <b>Incoterm:</b> {selectedSupplier.incoterm}
+          </div>
+          <div>
+            <b>TOP:</b> {selectedSupplier.top} Days
+          </div>
+          <div>
+            <b>Quarter:</b> {selectedQuarter || "-"}
+          </div>
+        </div>
+      )}
+
+      {/* TABLE */}
       <table className="w-full border text-xs">
         <thead className="bg-gray-100">
           <tr>
@@ -142,16 +164,14 @@ export default function ViewPricePage() {
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={9} className="text-center py-3 text-gray-400">
+              <td colSpan={7} className="text-center py-3 text-gray-400">
                 No data
               </td>
             </tr>
           ) : (
             rows.map((r, i) => (
               <tr key={r.detail_id}>
-                 <td className="border px-2 py-1 text-center">
-                  {i + 1}
-                </td>
+                <td className="border px-2 py-1 text-center">{i + 1}</td>
                 <td className="border px-2 py-1">{r.ipd_siis}</td>
                 <td className="border px-2 py-1">{r.description}</td>
                 <td className="border px-2 py-1">{r.steel_spec}</td>
