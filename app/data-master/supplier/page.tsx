@@ -261,8 +261,8 @@ export default function InputSupplierPage() {
       )}
 
       {/* TABLE */}
-      <div className="bg-white border rounded p-3">
-        <table className="w-full border text-xs">
+      <div className="bg-white border rounded p-3 overflow-x-auto">
+        <table className="min-w-[1200px] border text-xs">
           <thead className="bg-gray-100">
             <tr>
               <th className="border px-2 py-1 text-center w-10">No</th>
@@ -277,7 +277,11 @@ export default function InputSupplierPage() {
               <th className="border px-2 py-1">Incoterm</th>
               <th className="border px-2 py-1">TOP</th>
               <th className="border px-2 py-1">Forwarder</th>
-              <th className="border px-2 py-1 text-center">Action</th>
+              <td className="border px-2 py-1 sticky right-0 bg-white">
+                <div className="flex justify-center gap-2">
+                  <th className="border px-2 py-1 text-center">Action</th>
+                </div>
+              </td>
             </tr>
           </thead>
 
