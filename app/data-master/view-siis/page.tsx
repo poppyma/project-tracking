@@ -17,9 +17,12 @@ type Row = {
   ipd: string;
   description: string;
   material_source: string;
-  quarter: string; // Q4-2025
+  quarter: string;
   price: string;
 };
+
+/* ================= STORAGE KEY ================= */
+const STORAGE_KEY = "view_siis_supplier_state";
 
 /* ================= MONTHS ================= */
 const MONTHS = [
@@ -49,7 +52,8 @@ export default function ViewSIISPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
-  const [selectedQuarter, setSelectedQuarter] = useState<string>("");
+  const [selectedQuarter, setSelectedQuarter] =
+    useState<string>("");
 
   /* LOAD SUPPLIERS */
   useEffect(() => {
@@ -58,13 +62,43 @@ export default function ViewSIISPage() {
       .then(setSuppliers);
   }, []);
 
-  async function loadData(supplierId: string) {
-    const res = await fetch(`/api/siis?supplier_id=${supplierId}`);
+  /* RESTORE STATE ON REFRESH */
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+
+    try {
+      const parsed = JSON.parse(saved);
+      setSupplier(parsed.supplier || null);
+      setRows(parsed.rows || []);
+      setSelectedQuarter(parsed.selectedQuarter || "");
+    } catch (err) {
+      console.error("Restore SIIS state error:", err);
+    }
+  }, []);
+
+  /* SAVE STATE */
+  useEffect(() => {
+    if (!supplier) return;
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        supplier,
+        rows,
+        selectedQuarter,
+      })
+    );
+  }, [supplier, rows, selectedQuarter]);
+
+  async function loadData(s: Supplier) {
+    const res = await fetch(`/api/siis?supplier_id=${s.id}`);
     const json = await res.json();
-    const data = Array.isArray(json) ? json : [];
+    const data: Row[] = Array.isArray(json) ? json : [];
+
+    setSupplier(s);
     setRows(data);
 
-    // auto select quarter
     const qs = Array.from(new Set(data.map((r) => r.quarter)));
     setSelectedQuarter(qs.length === 1 ? qs[0] : "");
   }
@@ -75,7 +109,7 @@ export default function ViewSIISPage() {
     [rows]
   );
 
-  /* FILTER BY SELECTED QUARTER */
+  /* FILTER BY QUARTER */
   const filteredRows = useMemo(() => {
     if (!selectedQuarter) return rows;
     return rows.filter((r) => r.quarter === selectedQuarter);
@@ -102,7 +136,7 @@ export default function ViewSIISPage() {
   /* GET MONTH PRICE */
   function getMonthPrice(ipd: string, monthIndex: number) {
     for (const r of filteredRows) {
-      const q = r.quarter.split("-")[0]; // Q1
+      const q = r.quarter.split("-")[0];
       const months = QUARTER_MONTH_MAP[q];
       if (!months) continue;
 
@@ -122,14 +156,12 @@ export default function ViewSIISPage() {
       {/* SELECT SUPPLIER */}
       <select
         className="border px-2 py-1"
+        value={supplier?.id || ""}
         onChange={(e) => {
           const s = suppliers.find(
             (x) => x.id === e.target.value
           );
-          setSupplier(s || null);
-          setRows([]);
-          setSelectedQuarter("");
-          if (s) loadData(s.id);
+          if (s) loadData(s);
         }}
       >
         <option value="">-- Select Supplier --</option>
