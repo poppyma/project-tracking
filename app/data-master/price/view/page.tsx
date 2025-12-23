@@ -33,6 +33,7 @@ export default function ViewPricePage() {
   const [selectedQuarter, setSelectedQuarter] = useState<string>("");
   const [rows, setRows] = useState<PriceRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const headerInfo = rows.length > 0 ? rows[0] : null;
 
   // Load supplier list
   useEffect(() => {
@@ -141,6 +142,16 @@ export default function ViewPricePage() {
           </div>
           <div>
             <b>TOP:</b> {selectedSupplier.top} Days
+          </div>
+          
+          {/* START & END DATE */}
+          <div>
+            <b>Start Date:</b>{" "}
+            {headerInfo?.start_date || "-"}
+          </div>
+          <div>
+            <b>End Date:</b>{" "}
+            {headerInfo?.end_date || "-"}
           </div>
           <div>
             <b>Quarter:</b> {selectedQuarter || "-"}
