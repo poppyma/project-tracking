@@ -19,16 +19,11 @@ export async function GET(req: Request) {
         p.ipd_siis AS ipd,
         p.description,
         p.material_source,
-        CONCAT(
-          'Q',
-          EXTRACT(QUARTER FROM p.start_date),
-          '-',
-          EXTRACT(YEAR FROM p.start_date)
-        ) AS quarter,
+        p.quarter,
         p.price
       FROM price_input p
       WHERE p.supplier_id = $1
-      ORDER BY p.ipd_siis
+      ORDER BY p.ipd_siis, p.quarter
       `,
       [supplier_id]
     );
