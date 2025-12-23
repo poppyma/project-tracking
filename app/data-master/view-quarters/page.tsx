@@ -18,7 +18,7 @@ type Row = {
   description: string;
   material_source: string;
   quarter: string;
-  price: number;
+  price: string; // ⬅️ STRING dari DB
 };
 
 /* ================= FIXED QUARTERS ================= */
@@ -44,7 +44,7 @@ export default function ViewPriceQuartersPage() {
     setRows(Array.isArray(json) ? json : []);
   }
 
-  /* GROUP BY IPD */
+  /* GROUP IPD */
   const ipds = Array.from(
     new Map(
       rows.map((r) => [
@@ -62,7 +62,7 @@ export default function ViewPriceQuartersPage() {
     const found = rows.find(
       (r) => r.ipd === ipd && r.quarter === quarter
     );
-    return found ? found.price : 0;
+    return found ? Number(found.price) : 0;
   }
 
   function diff(curr: number, prev: number) {

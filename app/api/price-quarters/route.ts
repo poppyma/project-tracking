@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(result.rows);
   } catch (err) {
-    console.error("PRICE QUARTER ERROR:", err);
+    console.error("PRICE QUARTERS ERROR:", err);
     return NextResponse.json([], { status: 500 });
   }
 }
