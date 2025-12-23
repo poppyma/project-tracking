@@ -265,6 +265,7 @@ export default function InputSupplierPage() {
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
+              <th className="border px-2 py-1 text-center w-10">No</th>
               <th className="border px-2 py-1">Supplier Code</th>
               <th className="border px-2 py-1">Supplier Name</th>
               <th className="border px-2 py-1">Address</th>
@@ -281,8 +282,11 @@ export default function InputSupplierPage() {
           </thead>
 
           <tbody>
-            {pagedData.map((r) => (
+            {pagedData.map((r, i) => (
               <tr key={r.id}>
+                <td className="border px-2 py-1 text-center">
+                  {page * PAGE_SIZE + i + 1}
+                </td>
                 <td className="border px-2 py-1">{r.supplier_code}</td>
                 <td className="border px-2 py-1">{r.supplier_name}</td>
                 <td className="border px-2 py-1">{r.address}</td>
