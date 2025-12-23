@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+/* ================= TYPES ================= */
 type Supplier = {
   id: string;
   supplier_code: string;
@@ -26,23 +27,53 @@ type PriceRow = {
   price: string;
 };
 
+/* ================= STORAGE KEY ================= */
+const STORAGE_KEY = "view-price-state";
+
 export default function ViewPricePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedSupplier, setSelectedSupplier] =
+    useState<Supplier | null>(null);
   const [quarters, setQuarters] = useState<string[]>([]);
   const [selectedQuarter, setSelectedQuarter] = useState<string>("");
   const [rows, setRows] = useState<PriceRow[]>([]);
   const [loading, setLoading] = useState(false);
+
   const headerInfo = rows.length > 0 ? rows[0] : null;
 
-  // Load supplier list
+  /* ================= LOAD SUPPLIERS ================= */
   useEffect(() => {
     fetch("/api/supplier")
       .then((r) => r.json())
       .then(setSuppliers);
   }, []);
 
-  // Load available quarters when supplier changes
+  /* ================= LOAD SAVED STATE ================= */
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved || suppliers.length === 0) return;
+
+    const parsed = JSON.parse(saved);
+    const supplier = suppliers.find(
+      (s) => s.id === parsed.supplier_id
+    );
+
+    if (!supplier) return;
+
+    setSelectedSupplier(supplier);
+    setSelectedQuarter(parsed.quarter || "");
+
+    fetch(
+      `/api/price?list_quarter=true&supplier_id=${supplier.id}`
+    )
+      .then((r) => r.json())
+      .then((qList: string[]) => {
+        setQuarters(qList);
+        fetchPrice(supplier.id, parsed.quarter);
+      });
+  }, [suppliers]);
+
+  /* ================= LOAD QUARTERS ================= */
   useEffect(() => {
     if (!selectedSupplier) {
       setQuarters([]);
@@ -51,7 +82,9 @@ export default function ViewPricePage() {
       return;
     }
 
-    fetch(`/api/price?list_quarter=true&supplier_id=${selectedSupplier.id}`)
+    fetch(
+      `/api/price?list_quarter=true&supplier_id=${selectedSupplier.id}`
+    )
       .then((r) => r.json())
       .then((data: string[]) => {
         setQuarters(data);
@@ -60,18 +93,35 @@ export default function ViewPricePage() {
       });
   }, [selectedSupplier]);
 
-  async function fetchPrice() {
-    if (!selectedSupplier) return;
+  /* ================= FETCH PRICE ================= */
+  async function fetchPrice(
+    supplierId?: string,
+    quarterVal?: string
+  ) {
+    const sId = supplierId || selectedSupplier?.id;
+    const qVal = quarterVal ?? selectedQuarter;
+
+    if (!sId) return;
+
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        supplier_id: selectedSupplier.id,
+        supplier_id: sId,
       });
-      if (selectedQuarter) params.append("quarter", selectedQuarter);
+      if (qVal) params.append("quarter", qVal);
 
       const res = await fetch(`/api/price?${params.toString()}`);
       const data = await res.json();
       setRows(data);
+
+      // 🔥 SAVE STATE
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          supplier_id: sId,
+          quarter: qVal,
+        })
+      );
     } catch (err) {
       console.error(err);
       setRows([]);
@@ -84,13 +134,15 @@ export default function ViewPricePage() {
     <div className="p-4 space-y-4 text-xs">
       <h1 className="text-2xl font-bold">View Price</h1>
 
-      {/* FILTER */}
+      {/* ================= FILTER ================= */}
       <div className="flex gap-2">
         <select
           className="border px-2 py-1"
+          value={selectedSupplier?.id || ""}
           onChange={(e) =>
             setSelectedSupplier(
-              suppliers.find((s) => s.id === e.target.value) || null
+              suppliers.find((s) => s.id === e.target.value) ||
+                null
             )
           }
         >
@@ -118,21 +170,23 @@ export default function ViewPricePage() {
 
         <button
           className="bg-blue-600 text-white px-3 py-1"
-          onClick={fetchPrice}
+          onClick={() => fetchPrice()}
           disabled={!selectedSupplier || loading}
         >
           {loading ? "Loading..." : "View Price"}
         </button>
       </div>
 
-      {/* DETAIL SUPPLIER */}
+      {/* ================= SUPPLIER DETAIL ================= */}
       {selectedSupplier && (
         <div className="border rounded bg-gray-50 p-3 grid grid-cols-2 gap-2">
           <div>
-            <b>Supplier Code:</b> {selectedSupplier.supplier_code}
+            <b>Supplier Code:</b>{" "}
+            {selectedSupplier.supplier_code}
           </div>
           <div>
-            <b>Supplier Name:</b> {selectedSupplier.supplier_name}
+            <b>Supplier Name:</b>{" "}
+            {selectedSupplier.supplier_name}
           </div>
           <div>
             <b>Currency:</b> {selectedSupplier.currency}
@@ -143,8 +197,9 @@ export default function ViewPricePage() {
           <div>
             <b>TOP:</b> {selectedSupplier.top} Days
           </div>
-          
-          {/* START & END DATE */}
+          <div>
+            <b>Quarter:</b> {selectedQuarter || "-"}
+          </div>
           <div>
             <b>Start Date:</b>{" "}
             {headerInfo?.start_date || "-"}
@@ -153,47 +208,76 @@ export default function ViewPricePage() {
             <b>End Date:</b>{" "}
             {headerInfo?.end_date || "-"}
           </div>
-          <div>
-            <b>Quarter:</b> {selectedQuarter || "-"}
-          </div>
         </div>
       )}
 
-      {/* TABLE */}
-      <table className="w-full border text-xs">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border px-2 py-1 text-center w-10">No</th>
-            <th className="border px-2 py-1">IPD</th>
-            <th className="border px-2 py-1">Description</th>
-            <th className="border px-2 py-1">Steel Spec</th>
-            <th className="border px-2 py-1">Material Source</th>
-            <th className="border px-2 py-1">Tube Route</th>
-            <th className="border px-2 py-1">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
+      {/* ================= TABLE ================= */}
+      <div className="overflow-x-auto">
+        <table className="min-w-[1000px] border text-xs">
+          <thead className="bg-gray-100">
             <tr>
-              <td colSpan={7} className="text-center py-3 text-gray-400">
-                No data
-              </td>
+              <th className="border px-2 py-1 w-10 text-center">
+                No
+              </th>
+              <th className="border px-2 py-1">IPD</th>
+              <th className="border px-2 py-1">
+                Description
+              </th>
+              <th className="border px-2 py-1">
+                Steel Spec
+              </th>
+              <th className="border px-2 py-1">
+                Material Source
+              </th>
+              <th className="border px-2 py-1">
+                Tube Route
+              </th>
+              <th className="border px-2 py-1">
+                Price
+              </th>
             </tr>
-          ) : (
-            rows.map((r, i) => (
-              <tr key={r.detail_id}>
-                <td className="border px-2 py-1 text-center">{i + 1}</td>
-                <td className="border px-2 py-1">{r.ipd_siis}</td>
-                <td className="border px-2 py-1">{r.description}</td>
-                <td className="border px-2 py-1">{r.steel_spec}</td>
-                <td className="border px-2 py-1">{r.material_source}</td>
-                <td className="border px-2 py-1">{r.tube_route}</td>
-                <td className="border px-2 py-1">{r.price}</td>
+          </thead>
+
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="border py-4 text-center text-gray-400"
+                >
+                  No data
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              rows.map((r, i) => (
+                <tr key={r.detail_id}>
+                  <td className="border px-2 py-1 text-center">
+                    {i + 1}
+                  </td>
+                  <td className="border px-2 py-1">
+                    {r.ipd_siis}
+                  </td>
+                  <td className="border px-2 py-1">
+                    {r.description}
+                  </td>
+                  <td className="border px-2 py-1">
+                    {r.steel_spec}
+                  </td>
+                  <td className="border px-2 py-1">
+                    {r.material_source}
+                  </td>
+                  <td className="border px-2 py-1">
+                    {r.tube_route}
+                  </td>
+                  <td className="border px-2 py-1 text-right">
+                    {r.price}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
