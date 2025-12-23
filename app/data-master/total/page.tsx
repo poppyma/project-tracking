@@ -87,14 +87,22 @@ export default function ViewTotalIPDPage() {
                   {s.supplier_name}
                 </td>
 
-                {QUARTERS.map((q) => (
-                  <td
-                    key={q}
-                    className="border px-2 py-1 text-center"
-                  >
-                    {getValue(s.supplier_code, q)}
-                  </td>
-                ))}
+                {QUARTERS.map((q) => {
+                  const value = getValue(s.supplier_code, q);
+                  const num = Number(value);
+
+                  return (
+                    <td
+                      key={q}
+                      className={`border px-2 py-1 text-center ${
+                        num !== 0 ? "bg-yellow-200 font-semibold" : ""
+                      }`}
+                    >
+                      {num}
+                    </td>
+                  );
+                })}
+
               </tr>
             ))
           )}
