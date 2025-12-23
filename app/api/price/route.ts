@@ -27,22 +27,33 @@ export async function POST(req: Request) {
 
     // INSERT DETAILS
     for (const d of details) {
-      await query(
-        `INSERT INTO price_detail
-        (header_id, ipd_quotation, ipd_siis, description, steel_spec, material_source, tube_route, price)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [
-          headerId,
-          d.ipd_quotation || null,
-          d.ipd_siis || null,
-          d.description || null,
-          d.steel_spec || null,
-          d.material_source || null,
-          d.tube_route || null,
-          Number(d.price),
-        ]
+    const rawPrice = String(d.price).replace(/,/g, "");
+    const finalPrice = Number(rawPrice);
+
+    if (isNaN(finalPrice)) {
+      return NextResponse.json(
+        { error: `Invalid price value: ${d.price}` },
+        { status: 400 }
       );
     }
+
+    await query(
+      `INSERT INTO price_detail
+      (header_id, ipd_quotation, ipd_siis, description, steel_spec, material_source, tube_route, price)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [
+        headerId,
+        d.ipd_quotation || null,
+        d.ipd_siis || null,
+        d.description || null,
+        d.steel_spec || null,
+        d.material_source || null,
+        d.tube_route || null,
+        finalPrice,
+      ]
+    );
+  }
+
 
     return NextResponse.json({ success: true });
   } catch (err) {
