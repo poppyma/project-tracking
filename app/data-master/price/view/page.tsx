@@ -75,23 +75,30 @@ export default function ViewPricePage() {
 
   /* ================= LOAD QUARTERS ================= */
   useEffect(() => {
-    if (!selectedSupplier) {
-      setQuarters([]);
-      setSelectedQuarter("");
-      setRows([]);
-      return;
-    }
+  if (!selectedSupplier) {
+    setQuarters([]);
+    setSelectedQuarter("");
+    setRows([]);
+    return;
+  }
 
-    fetch(
-      `/api/price?list_quarter=true&supplier_id=${selectedSupplier.id}`
-    )
-      .then((r) => r.json())
-      .then((data: string[]) => {
-        setQuarters(data);
-        setSelectedQuarter("");
-        setRows([]);
-      });
-  }, [selectedSupplier]);
+  fetch(
+    `/api/price?list_quarter=true&supplier_id=${selectedSupplier.id}`
+  )
+    .then((r) => r.json())
+    .then((data: string[]) => {
+      setQuarters(data);
+
+      // ✅ JANGAN RESET JIKA QUARTER MASIH VALID
+      setSelectedQuarter((prev) =>
+        data.includes(prev) ? prev : ""
+      );
+
+      // ❗ rows jangan di-reset di sini
+      // biar hasil fetchPrice tetap tampil
+    });
+}, [selectedSupplier]);
+
 
   /* ================= FETCH PRICE ================= */
   async function fetchPrice(
