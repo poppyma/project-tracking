@@ -18,15 +18,19 @@ type Row = {
   description: string;
   material_source: string;
   quarter: string;
-  price: string; // dari DB string
+  price: string; // ⬅️ STRING dari DB
 };
+
+/* ================= FIXED QUARTERS ================= */
+const QUARTERS = ["Q4-2025", "Q1-2026", "Q2-2025", "Q3-2025"];
+
 
 export default function ViewPriceQuartersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
 
-  /* ================= LOAD SUPPLIER ================= */
+  /* LOAD SUPPLIER */
   useEffect(() => {
     fetch("/api/supplier")
       .then((r) => r.json())
@@ -41,7 +45,7 @@ export default function ViewPriceQuartersPage() {
     setRows(Array.isArray(json) ? json : []);
   }
 
-  /* ================= UNIQUE IPD ================= */
+  /* GROUP IPD */
   const ipds = Array.from(
     new Map(
       rows.map((r) => [
@@ -55,11 +59,6 @@ export default function ViewPriceQuartersPage() {
     ).values()
   );
 
-  /* ================= DYNAMIC QUARTERS ================= */
-  const quarters = Array.from(
-    new Set(rows.map((r) => r.quarter))
-  ).sort();
-
   function getPrice(ipd: string, quarter: string) {
     const found = rows.find(
       (r) => r.ipd === ipd && r.quarter === quarter
@@ -68,7 +67,7 @@ export default function ViewPriceQuartersPage() {
   }
 
   function diff(curr: number, prev: number) {
-    if (prev === 0) return "-";
+    if (prev === 0) return "0%";
     return (((curr - prev) / prev) * 100).toFixed(2) + "%";
   }
 
@@ -78,7 +77,7 @@ export default function ViewPriceQuartersPage() {
         View Update Price Quarters
       </h1>
 
-      {/* ================= SELECT SUPPLIER ================= */}
+      {/* SELECT SUPPLIER */}
       <select
         className="border px-2 py-1"
         onChange={(e) => {
@@ -97,97 +96,92 @@ export default function ViewPriceQuartersPage() {
         ))}
       </select>
 
-      {/* ================= SUPPLIER DETAIL ================= */}
+      {/* SUPPLIER DETAIL */}
       {supplier && (
         <div className="border p-2 bg-gray-50 space-y-1">
           <div>SUPPLIER: {supplier.supplier_name}</div>
           <div>ADDRESS: {supplier.address}</div>
           <div>CURRENCY: {supplier.currency}</div>
-          <div>INCOTERM: {supplier.incoterm}</div>
-          <div>TOP: {supplier.top}</div>
+          <div>INCOTERMS: {supplier.incoterm}</div>
+          <div>TERMS OF PAYMENT: {supplier.top}</div>
         </div>
       )}
 
-      {/* ================= TABLE ================= */}
+      {/* TABLE */}
       {supplier && (
-        <div className="overflow-x-auto">
-          <table className="min-w-[1200px] border">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="border px-2">No</th>
-                <th className="border px-2">IPD</th>
-                <th className="border px-2">Description</th>
-                <th className="border px-2">Material Source</th>
+        <table className="w-full border mt-4">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border px-2">No</th>
+              <th className="border px-2">IPD</th>
+              <th className="border px-2">DESC</th>
+              <th className="border px-2">
+                Material Source
+              </th>
+              {QUARTERS.map((q) => (
+                <th key={q} className="border px-2">
+                  {q}
+                </th>
+              ))}
+              <th className="border px-2">
+                Diff Q1-2026 - Q4-2025
+              </th>
+              <th className="border px-2">
+                Diff Q2-2025 - Q1-2026
+              </th>
+              <th className="border px-2">
+                Diff Q3-2025 - Q2-2025
+              </th>
+            </tr>
+          </thead>
 
-                {quarters.map((q) => (
-                  <th key={q} className="border px-2">
-                    {q}
-                  </th>
-                ))}
+          <tbody>
+            {ipds.map((i, idx) => {
+              const q4 = getPrice(i.ipd, "Q4-2025");
+              const q1 = getPrice(i.ipd, "Q1-2026");
+              const q2 = getPrice(i.ipd, "Q2-2025");
+              const q3 = getPrice(i.ipd, "Q3-2025");
 
-                {quarters.slice(1).map((q, i) => (
-                  <th key={q} className="border px-2">
-                    Diff {q} - {quarters[i]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+              return (
+                <tr key={i.ipd}>
+                  <td className="border px-2 text-center">
+                    {idx + 1}
+                  </td>
+                  <td className="border px-2">{i.ipd}</td>
+                  <td className="border px-2">
+                    {i.description}
+                  </td>
+                  <td className="border px-2">
+                    {i.material_source}
+                  </td>
 
-            <tbody>
-              {ipds.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={4 + quarters.length * 2}
-                    className="border text-center py-4 text-gray-400"
-                  >
-                    No data
+                  <td className="border px-2">
+                    {q4.toFixed(4)}
+                  </td>
+                  <td className="border px-2">
+                    {q1.toFixed(4)}
+                  </td>
+                  <td className="border px-2">
+                    {q2.toFixed(4)}
+                  </td>
+                  <td className="border px-2">
+                    {q3.toFixed(4)}
+                  </td>
+
+                  <td className="border px-2">
+                    {diff(q1, q4)}
+                  </td>
+                  <td className="border px-2">
+                    {diff(q2, q1)}
+                  </td>
+                  <td className="border px-2">
+                    {diff(q3, q2)}
                   </td>
                 </tr>
-              ) : (
-                ipds.map((i, idx) => {
-                  const prices = quarters.map((q) =>
-                    getPrice(i.ipd, q)
-                  );
-
-                  return (
-                    <tr key={i.ipd}>
-                      <td className="border px-2 text-center">
-                        {idx + 1}
-                      </td>
-                      <td className="border px-2">{i.ipd}</td>
-                      <td className="border px-2">
-                        {i.description}
-                      </td>
-                      <td className="border px-2">
-                        {i.material_source}
-                      </td>
-
-                      {prices.map((p, pi) => (
-                        <td
-                          key={pi}
-                          className={`border px-2 text-right ${
-                            p !== 0 ? "bg-yellow-100 font-semibold" : ""
-                          }`}
-                        >
-                          {p.toFixed(4)}
-                        </td>
-                      ))}
-
-                      {prices.slice(1).map((p, pi) => (
-                        <td
-                          key={pi}
-                          className="border px-2 text-right"
-                        >
-                          {diff(p, prices[pi])}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+              );
+            })}
+          </tbody>
+        </table>
       )}
     </div>
   );
