@@ -16,14 +16,15 @@ export async function GET(req: Request) {
     const result = await query(
       `
       SELECT
-        p.ipd_siis AS ipd,
-        p.description,
-        p.material_source,
-        p.quarter,
-        p.price
-      FROM price_input p
-      WHERE p.supplier_id = $1
-      ORDER BY p.ipd_siis, p.quarter
+        d.ipd_siis AS ipd,
+        d.description,
+        d.material_source,
+        h.quarter,
+        d.price
+      FROM price_header h
+      JOIN price_detail d ON d.header_id = h.id
+      WHERE h.supplier_id = $1
+      ORDER BY d.ipd_siis, h.quarter
       `,
       [supplier_id]
     );
