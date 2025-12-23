@@ -96,14 +96,14 @@ export default function RootLayout({
                     </Link>
 
                     <Link
-                      href="/data-master/view-siis"
+                      href="/data-master/view-quarters"
                       className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
                     >
                       View Quarters
                     </Link>
 
                     <Link
-                      href="/data-master/total_ipd"
+                      href="/data-master/view-siis"
                       className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
                     >
                       SIIS
