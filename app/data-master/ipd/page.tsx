@@ -271,6 +271,7 @@ export default function InputIPDPage() {
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
+              <th className="border px-2 py-1 text-center w-10">No</th>
               <th className="border px-2 py-1">IPD SIIS</th>
               <th className="border px-2 py-1">Description</th>
               <th className="border px-2 py-1">FB Type</th>
@@ -281,8 +282,11 @@ export default function InputIPDPage() {
           </thead>
 
           <tbody>
-            {pagedData.map((r) => (
+            {pagedData.map((r, i) => (
               <tr key={r.id}>
+                <td className="border px-2 py-1 text-center">
+                  {page * PAGE_SIZE + i + 1}
+                </td>
                 <td className="border px-2 py-1">{r.ipd_siis}</td>
                 <td className="border px-2 py-1">{r.description}</td>
                 <td className="border px-2 py-1">{r.fb_type}</td>
