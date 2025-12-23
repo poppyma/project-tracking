@@ -96,7 +96,7 @@ export default function RootLayout({
                     </Link>
 
                     <Link
-                      href="/data-master/total_ipd"
+                      href="/data-master/view-quarters"
                       className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
                     >
                       View Quarters
