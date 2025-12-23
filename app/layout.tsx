@@ -111,8 +111,6 @@ export default function RootLayout({
                   </div>
                 )}
 
-
-
                 {/* TRACKING */}
                 <Link
                   href="/"
