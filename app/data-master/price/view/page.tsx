@@ -130,10 +130,8 @@ export default function ViewPricePage() {
       <table className="w-full border text-xs">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border px-2 py-1">Start Date</th>
-            <th className="border px-2 py-1">End Date</th>
-            <th className="border px-2 py-1">Quarter</th>
-            <th className="border px-2 py-1">IPD SIIS</th>
+            <th className="border px-2 py-1 text-center w-10">No</th>
+            <th className="border px-2 py-1">IPD</th>
             <th className="border px-2 py-1">Description</th>
             <th className="border px-2 py-1">Steel Spec</th>
             <th className="border px-2 py-1">Material Source</th>
@@ -149,11 +147,11 @@ export default function ViewPricePage() {
               </td>
             </tr>
           ) : (
-            rows.map((r) => (
+            rows.map((r, i) => (
               <tr key={r.detail_id}>
-                <td className="border px-2 py-1">{r.start_date}</td>
-                <td className="border px-2 py-1">{r.end_date}</td>
-                <td className="border px-2 py-1">{r.quarter}</td>
+                 <td className="border px-2 py-1 text-center">
+                  {i + 1}
+                </td>
                 <td className="border px-2 py-1">{r.ipd_siis}</td>
                 <td className="border px-2 py-1">{r.description}</td>
                 <td className="border px-2 py-1">{r.steel_spec}</td>
