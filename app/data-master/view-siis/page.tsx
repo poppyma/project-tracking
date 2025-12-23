@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 /* ================= TYPES ================= */
 type Supplier = {
@@ -17,8 +17,8 @@ type Row = {
   ipd: string;
   description: string;
   material_source: string;
-  quarter: string;
-  price: string; // STRING dari DB
+  quarter: string; // Q4-2025
+  price: string;
 };
 
 /* ================= MONTHS ================= */
@@ -39,16 +39,17 @@ const MONTHS = [
 
 /* ================= QUARTER → MONTH MAP ================= */
 const QUARTER_MONTH_MAP: Record<string, number[]> = {
-  "Q1": [0, 1, 2],
-  "Q2": [3, 4, 5],
-  "Q3": [6, 7, 8],
-  "Q4": [9, 10, 11],
+  Q1: [0, 1, 2],
+  Q2: [3, 4, 5],
+  Q3: [6, 7, 8],
+  Q4: [9, 10, 11],
 };
 
 export default function ViewSIISPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
+  const [selectedQuarter, setSelectedQuarter] = useState<string>("");
 
   /* LOAD SUPPLIERS */
   useEffect(() => {
@@ -60,27 +61,48 @@ export default function ViewSIISPage() {
   async function loadData(supplierId: string) {
     const res = await fetch(`/api/siis?supplier_id=${supplierId}`);
     const json = await res.json();
-    setRows(Array.isArray(json) ? json : []);
+    const data = Array.isArray(json) ? json : [];
+    setRows(data);
+
+    // auto select quarter
+    const qs = Array.from(new Set(data.map((r) => r.quarter)));
+    setSelectedQuarter(qs.length === 1 ? qs[0] : "");
   }
 
+  /* UNIQUE QUARTERS */
+  const quarters = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.quarter))),
+    [rows]
+  );
+
+  /* FILTER BY SELECTED QUARTER */
+  const filteredRows = useMemo(() => {
+    if (!selectedQuarter) return rows;
+    return rows.filter((r) => r.quarter === selectedQuarter);
+  }, [rows, selectedQuarter]);
+
   /* GROUP IPD */
-  const ipds = Array.from(
-    new Map(
-      rows.map((r) => [
-        r.ipd,
-        {
-          ipd: r.ipd,
-          description: r.description,
-          material_source: r.material_source,
-        },
-      ])
-    ).values()
+  const ipds = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          filteredRows.map((r) => [
+            r.ipd,
+            {
+              ipd: r.ipd,
+              description: r.description,
+              material_source: r.material_source,
+            },
+          ])
+        ).values()
+      ),
+    [filteredRows]
   );
 
   /* GET MONTH PRICE */
   function getMonthPrice(ipd: string, monthIndex: number) {
-    for (const r of rows) {
-      const q = r.quarter.split("-")[0]; // Q1, Q2, Q3, Q4
+    for (const r of filteredRows) {
+      const q = r.quarter.split("-")[0]; // Q1
       const months = QUARTER_MONTH_MAP[q];
       if (!months) continue;
 
@@ -105,6 +127,8 @@ export default function ViewSIISPage() {
             (x) => x.id === e.target.value
           );
           setSupplier(s || null);
+          setRows([]);
+          setSelectedQuarter("");
           if (s) loadData(s.id);
         }}
       >
@@ -124,11 +148,37 @@ export default function ViewSIISPage() {
           <div>CURRENCY: {supplier.currency}</div>
           <div>INCOTERMS: {supplier.incoterm}</div>
           <div>TERMS OF PAYMENT: {supplier.top}</div>
+
+          {/* PRICE VALIDITY */}
+          <div className="flex items-center gap-2">
+            <span>PRICE VALIDITY:</span>
+
+            {quarters.length <= 1 ? (
+              <strong>{quarters[0]}</strong>
+            ) : (
+              <select
+                className="border px-2 py-0.5"
+                value={selectedQuarter}
+                onChange={(e) =>
+                  setSelectedQuarter(e.target.value)
+                }
+              >
+                <option value="">
+                  -- Select Quarter --
+                </option>
+                {quarters.map((q) => (
+                  <option key={q} value={q}>
+                    {q}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
       )}
 
       {/* TABLE */}
-      {supplier && (
+      {supplier && selectedQuarter && (
         <div className="overflow-x-auto">
           <table className="border w-full">
             <thead className="bg-gray-200">
