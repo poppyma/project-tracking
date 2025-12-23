@@ -30,18 +30,18 @@ export default function ViewPricePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [quarters, setQuarters] = useState<string[]>([]);
-  const [selectedQuarter, setSelectedQuarter] = useState<string>("");
+  const [selectedQuarter, setSelectedQuarter] = useState("");
   const [rows, setRows] = useState<PriceRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load supplier list
+  // load supplier
   useEffect(() => {
     fetch("/api/supplier")
       .then((r) => r.json())
       .then(setSuppliers);
   }, []);
 
-  // Load available quarters when supplier changes
+  // load quarter when supplier changed
   useEffect(() => {
     if (!selectedSupplier) {
       setQuarters([]);
@@ -61,6 +61,7 @@ export default function ViewPricePage() {
 
   async function fetchPrice() {
     if (!selectedSupplier) return;
+
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -79,9 +80,12 @@ export default function ViewPricePage() {
     }
   }
 
+  // ambil header info (start & end date)
+  const headerInfo = rows.length > 0 ? rows[0] : null;
+
   return (
     <div className="p-4 space-y-4 text-xs">
-      <h1 className="text-2xl font-bold">View Price</h1>
+      <h1 className="text-xl font-semibold">View Price</h1>
 
       {/* FILTER */}
       <div className="flex gap-2">
@@ -116,7 +120,7 @@ export default function ViewPricePage() {
         </select>
 
         <button
-          className="bg-blue-600 text-white px-3 py-1"
+          className="bg-blue-600 text-white px-3 py-1 rounded"
           onClick={fetchPrice}
           disabled={!selectedSupplier || loading}
         >
@@ -126,63 +130,60 @@ export default function ViewPricePage() {
 
       {/* DETAIL SUPPLIER */}
       {selectedSupplier && (
-        <div className="border rounded bg-gray-50 p-3 grid grid-cols-2 gap-2">
-          <div>
-            <b>Supplier Code:</b> {selectedSupplier.supplier_code}
-          </div>
-          <div>
-            <b>Supplier Name:</b> {selectedSupplier.supplier_name}
-          </div>
-          <div>
-            <b>Currency:</b> {selectedSupplier.currency}
-          </div>
-          <div>
-            <b>Incoterm:</b> {selectedSupplier.incoterm}
-          </div>
-          <div>
-            <b>TOP:</b> {selectedSupplier.top} Days
-          </div>
-          <div>
-            <b>Quarter:</b> {selectedQuarter || "-"}
-          </div>
+        <div className="border rounded bg-gray-50 p-3 grid grid-cols-3 gap-2">
+          <div><b>Supplier Code:</b> {selectedSupplier.supplier_code}</div>
+          <div><b>Supplier Name:</b> {selectedSupplier.supplier_name}</div>
+          <div><b>Currency:</b> {selectedSupplier.currency}</div>
+
+          <div><b>Incoterm:</b> {selectedSupplier.incoterm}</div>
+          <div><b>TOP:</b> {selectedSupplier.top} Days</div>
+          <div><b>Quarter:</b> {selectedQuarter || "-"}</div>
+
+          <div><b>Start Date:</b> {headerInfo?.start_date || "-"}</div>
+          <div><b>End Date:</b> {headerInfo?.end_date || "-"}</div>
         </div>
       )}
 
       {/* TABLE */}
-      <table className="w-full border text-xs">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border px-2 py-1 text-center w-10">No</th>
-            <th className="border px-2 py-1">IPD</th>
-            <th className="border px-2 py-1">Description</th>
-            <th className="border px-2 py-1">Steel Spec</th>
-            <th className="border px-2 py-1">Material Source</th>
-            <th className="border px-2 py-1">Tube Route</th>
-            <th className="border px-2 py-1">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
+      <div className="border rounded bg-white p-3 overflow-x-auto">
+        <table className="min-w-[900px] border text-xs">
+          <thead className="bg-gray-100">
             <tr>
-              <td colSpan={7} className="text-center py-3 text-gray-400">
-                No data
-              </td>
+              <th className="border px-2 py-1 w-10 text-center">No</th>
+              <th className="border px-2 py-1">IPD</th>
+              <th className="border px-2 py-1">Description</th>
+              <th className="border px-2 py-1">Steel Spec</th>
+              <th className="border px-2 py-1">Material Source</th>
+              <th className="border px-2 py-1">Tube Route</th>
+              <th className="border px-2 py-1 text-right">Price</th>
             </tr>
-          ) : (
-            rows.map((r, i) => (
-              <tr key={r.detail_id}>
-                <td className="border px-2 py-1 text-center">{i + 1}</td>
-                <td className="border px-2 py-1">{r.ipd_siis}</td>
-                <td className="border px-2 py-1">{r.description}</td>
-                <td className="border px-2 py-1">{r.steel_spec}</td>
-                <td className="border px-2 py-1">{r.material_source}</td>
-                <td className="border px-2 py-1">{r.tube_route}</td>
-                <td className="border px-2 py-1">{r.price}</td>
+          </thead>
+
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-3 text-gray-400">
+                  No data
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              rows.map((r, i) => (
+                <tr key={r.detail_id}>
+                  <td className="border px-2 py-1 text-center">{i + 1}</td>
+                  <td className="border px-2 py-1">{r.ipd_siis}</td>
+                  <td className="border px-2 py-1">{r.description}</td>
+                  <td className="border px-2 py-1">{r.steel_spec}</td>
+                  <td className="border px-2 py-1">{r.material_source}</td>
+                  <td className="border px-2 py-1">{r.tube_route}</td>
+                  <td className="border px-2 py-1 text-right">
+                    {Number(r.price).toLocaleString()}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
