@@ -4,10 +4,10 @@ import { query } from "@/lib/db";
 /* ================= DELETE ================= */
 export async function DELETE(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     await query(
       `DELETE FROM price_detail WHERE id = $1`,
@@ -16,7 +16,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("DELETE PRICE DETAIL ERROR:", err);
     return NextResponse.json(
       { error: "Failed to delete price detail" },
       { status: 500 }
@@ -27,10 +27,10 @@ export async function DELETE(
 /* ================= UPDATE ================= */
 export async function PUT(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const body = await req.json();
 
     const rawPrice = String(body.price).replace(/,/g, "");
@@ -70,7 +70,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("UPDATE PRICE DETAIL ERROR:", err);
     return NextResponse.json(
       { error: "Failed to update price detail" },
       { status: 500 }
