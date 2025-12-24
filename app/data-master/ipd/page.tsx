@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 
+/* ================= TYPES ================= */
 type IPD = {
   id: string;
   ipd_siis: string;
@@ -13,10 +14,12 @@ type IPD = {
   ipd_quotation: string;
 };
 
+/* ================= CONSTANTS ================= */
 const PAGE_SIZE = 50;
 const FB_TYPES = ["DGBB", "HBU-1"];
 const COMMODITIES = ["Cage", "Ring", "Balls", "Seal", "Shield"];
 
+/* ================= PAGE ================= */
 export default function InputIPDPage() {
   const [data, setData] = useState<IPD[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,7 +41,7 @@ export default function InputIPDPage() {
     ipd_quotation: "",
   });
 
-  /* LOAD DATA */
+  /* ================= LOAD DATA ================= */
   async function loadData() {
     try {
       const res = await fetch("/api/ipd");
@@ -57,7 +60,7 @@ export default function InputIPDPage() {
     setPage(0);
   }, [search, filterFb, filterCommodity]);
 
-  /* SAVE / UPDATE */
+  /* ================= SAVE / UPDATE ================= */
   async function handleSubmit() {
     if (!form.ipd_siis) {
       alert("IPD SIIS wajib diisi");
@@ -65,7 +68,6 @@ export default function InputIPDPage() {
     }
 
     setLoading(true);
-
     try {
       const url = editId ? `/api/ipd/${editId}` : "/api/ipd";
       const method = editId ? "PUT" : "POST";
@@ -100,7 +102,7 @@ export default function InputIPDPage() {
     setShowForm(false);
   }
 
-  /* DELETE */
+  /* ================= DELETE ================= */
   async function handleDelete(id: string) {
     if (!confirm("Yakin hapus data ini?")) return;
 
@@ -118,7 +120,7 @@ export default function InputIPDPage() {
     }
   }
 
-  /* EDIT */
+  /* ================= EDIT ================= */
   function handleEdit(row: IPD) {
     setForm({
       ipd_siis: row.ipd_siis,
@@ -131,7 +133,7 @@ export default function InputIPDPage() {
     setShowForm(true);
   }
 
-  /* FILTER */
+  /* ================= FILTER ================= */
   const filtered = data.filter((row) => {
     const s = search.toLowerCase();
     return (
@@ -148,6 +150,7 @@ export default function InputIPDPage() {
     page * PAGE_SIZE + PAGE_SIZE
   );
 
+  /* ================= UI ================= */
   return (
     <div className="space-y-2">
       {/* HEADER */}
@@ -196,64 +199,101 @@ export default function InputIPDPage() {
         </label>
       </div>
 
-      {/* FILTER */}
-      <div className="flex gap-2 text-xs">
-        <input
-          className="input-dense w-48"
-          placeholder="Search IPD / Description"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* FORM ADD / EDIT */}
+      {showForm && (
+        <div className="bg-white border rounded p-3 grid grid-cols-2 gap-2 text-xs">
+          <input
+            className="input-dense"
+            placeholder="IPD SIIS"
+            value={form.ipd_siis}
+            onChange={(e) =>
+              setForm({ ...form, ipd_siis: e.target.value })
+            }
+          />
 
-        <select
-          className="input-dense w-32"
-          value={filterFb}
-          onChange={(e) => setFilterFb(e.target.value)}
-        >
-          <option value="">All FB</option>
-          {FB_TYPES.map((f) => (
-            <option key={f}>{f}</option>
-          ))}
-        </select>
+          <select
+            className="input-dense"
+            value={form.fb_type}
+            onChange={(e) =>
+              setForm({ ...form, fb_type: e.target.value })
+            }
+          >
+            <option value="">FB Type</option>
+            {FB_TYPES.map((f) => (
+              <option key={f}>{f}</option>
+            ))}
+          </select>
 
-        <select
-          className="input-dense w-40"
-          value={filterCommodity}
-          onChange={(e) => setFilterCommodity(e.target.value)}
-        >
-          <option value="">All Commodity</option>
-          {COMMODITIES.map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
-      </div>
+          <input
+            className="input-dense"
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) =>
+              setForm({ ...form, description: e.target.value })
+            }
+          />
+
+          <select
+            className="input-dense"
+            value={form.commodity}
+            onChange={(e) =>
+              setForm({ ...form, commodity: e.target.value })
+            }
+          >
+            <option value="">Commodity</option>
+            {COMMODITIES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+
+          <input
+            className="input-dense col-span-2"
+            placeholder="IPD Quotation"
+            value={form.ipd_quotation}
+            onChange={(e) =>
+              setForm({ ...form, ipd_quotation: e.target.value })
+            }
+          />
+
+          <div className="col-span-2 flex justify-end gap-2">
+            <button onClick={resetForm} className="px-3 py-1 border rounded">
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="px-4 py-1 bg-blue-600 text-white rounded"
+            >
+              {editId ? "Update" : "Save"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* TABLE */}
       <div className="bg-white border rounded p-3">
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-1">No</th>
-              <th className="border px-2 py-1">IPD SIIS</th>
-              <th className="border px-2 py-1">Description</th>
-              <th className="border px-2 py-1">FB Type</th>
-              <th className="border px-2 py-1">Commodity</th>
-              <th className="border px-2 py-1">IPD Quotation</th>
-              <th className="border px-2 py-1">Action</th>
+              <th>No</th>
+              <th>IPD SIIS</th>
+              <th>Description</th>
+              <th>FB Type</th>
+              <th>Commodity</th>
+              <th>IPD Quotation</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {pagedData.map((r, i) => (
               <tr key={r.id}>
-                <td className="border px-2 py-1">
-                  {page * PAGE_SIZE + i + 1}
-                </td>
-                <td className="border px-2 py-1">{r.ipd_siis}</td>
-                <td className="border px-2 py-1">{r.description}</td>
-                <td className="border px-2 py-1">{r.fb_type}</td>
-                <td className="border px-2 py-1">{r.commodity}</td>
-                <td className="border px-2 py-1">{r.ipd_quotation}</td>
-                <td className="border px-2 py-1 text-center">
+                <td>{page * PAGE_SIZE + i + 1}</td>
+                <td>{r.ipd_siis}</td>
+                <td>{r.description}</td>
+                <td>{r.fb_type}</td>
+                <td>{r.commodity}</td>
+                <td>{r.ipd_quotation}</td>
+                <td className="text-center">
                   <button onClick={() => handleEdit(r)}>✏️</button>
                   <button onClick={() => handleDelete(r.id)}>🗑️</button>
                 </td>
