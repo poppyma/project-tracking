@@ -41,6 +41,9 @@ export default function ViewPricePage() {
   const [loading, setLoading] = useState(false);
 
   const headerInfo = rows.length > 0 ? rows[0] : null;
+  const [editingRow, setEditingRow] = useState<PriceRow | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+
 
   /* ================= LOAD SUPPLIERS ================= */
   useEffect(() => {
@@ -323,13 +326,15 @@ export default function ViewPricePage() {
                   <td className="border px-2 py-1 text-center">
                     <div className="flex justify-center gap-1">
                       <button
-                        onClick={() =>
-                          handleEdit(r)
-                        }
-                        className="px-2 py-0.5 text-xs bg-yellow-500 text-white rounded"
+                        className="bg-yellow-500 text-white px-2 py-1 rounded"
+                        onClick={() => {
+                          setEditingRow(r);
+                          setEditPrice(r.price);
+                        }}
                       >
                         Edit
                       </button>
+
                       <button
                         onClick={() =>
                           handleDelete(r.detail_id)
@@ -346,6 +351,56 @@ export default function ViewPricePage() {
           </tbody>
         </table>
       </div>
+
+      {editingRow && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+          <div className="bg-white p-4 rounded w-80 space-y-3">
+            <h2 className="font-bold text-sm">Edit Price</h2>
+
+            <div className="text-xs">
+              <b>IPD SIIS:</b> {editingRow.ipd_siis}
+            </div>
+
+            <input
+              className="border px-2 py-1 w-full text-xs"
+              value={editPrice}
+              onChange={(e) => setEditPrice(e.target.value)}
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                className="border px-3 py-1 text-xs"
+                onClick={() => setEditingRow(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-600 text-white px-3 py-1 text-xs"
+                onClick={async () => {
+                  await fetch(
+                    `/api/price/detail/${editingRow.detail_id}`,
+                    {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        price: editPrice,
+                      }),
+                    }
+                  );
+
+                  setEditingRow(null);
+                  fetchPrice(); // reload table
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
