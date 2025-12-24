@@ -1,10 +1,7 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useState } from "react";
 
-/* ================= TYPES ================= */
 type IPD = {
   id: string;
   ipd_siis: string;
@@ -14,17 +11,13 @@ type IPD = {
   ipd_quotation: string;
 };
 
-/* ================= CONSTANTS ================= */
 const PAGE_SIZE = 50;
 const FB_TYPES = ["DGBB", "HBU-1"];
 const COMMODITIES = ["Cage", "Ring", "Balls", "Seal", "Shield"];
 
-/* ================= PAGE ================= */
 export default function InputIPDPage() {
   const [data, setData] = useState<IPD[]>([]);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
   const [page, setPage] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -41,7 +34,7 @@ export default function InputIPDPage() {
     ipd_quotation: "",
   });
 
-  /* ================= LOAD DATA ================= */
+  /* LOAD DATA */
   async function loadData() {
     try {
       const res = await fetch("/api/ipd");
@@ -60,7 +53,7 @@ export default function InputIPDPage() {
     setPage(0);
   }, [search, filterFb, filterCommodity]);
 
-  /* ================= SAVE / UPDATE ================= */
+  /* SAVE / UPDATE */
   async function handleSubmit() {
     if (!form.ipd_siis) {
       alert("IPD SIIS wajib diisi");
@@ -68,6 +61,7 @@ export default function InputIPDPage() {
     }
 
     setLoading(true);
+
     try {
       const url = editId ? `/api/ipd/${editId}` : "/api/ipd";
       const method = editId ? "PUT" : "POST";
@@ -102,11 +96,12 @@ export default function InputIPDPage() {
     setShowForm(false);
   }
 
-  /* ================= DELETE ================= */
+  /* DELETE */
   async function handleDelete(id: string) {
     if (!confirm("Yakin hapus data ini?")) return;
 
     setLoading(true);
+
     try {
       const res = await fetch(`/api/ipd/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
@@ -120,7 +115,7 @@ export default function InputIPDPage() {
     }
   }
 
-  /* ================= EDIT ================= */
+  /* EDIT */
   function handleEdit(row: IPD) {
     setForm({
       ipd_siis: row.ipd_siis,
@@ -133,7 +128,7 @@ export default function InputIPDPage() {
     setShowForm(true);
   }
 
-  /* ================= FILTER ================= */
+  /* FILTER */
   const filtered = data.filter((row) => {
     const s = search.toLowerCase();
     return (
@@ -150,11 +145,12 @@ export default function InputIPDPage() {
     page * PAGE_SIZE + PAGE_SIZE
   );
 
-  /* ================= UI ================= */
   return (
     <div className="space-y-2">
+
       {/* HEADER */}
-      <div className="flex gap-2">
+      <div className="flex justify-between items-center">
+        <h1 className="text-sm font-semibold">IPD Master</h1>
         <button
           onClick={() => {
             setShowForm((v) => !v);
@@ -165,41 +161,41 @@ export default function InputIPDPage() {
         >
           {showForm ? "Close" : "+ Add IPD"}
         </button>
-
-        <label className="px-3 py-1.5 text-xs rounded bg-green-600 text-white cursor-pointer">
-          {uploading ? "Uploading..." : "Upload File"}
-          <input
-            type="file"
-            accept=".csv"
-            hidden
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-
-              const formData = new FormData();
-              formData.append("file", file);
-
-              setUploading(true);
-              try {
-                const res = await fetch("/api/ipd/upload", {
-                  method: "POST",
-                  body: formData,
-                });
-                if (!res.ok) throw new Error();
-
-                alert("Upload berhasil");
-                loadData();
-              } catch {
-                alert("Upload gagal");
-              } finally {
-                setUploading(false);
-              }
-            }}
-          />
-        </label>
       </div>
 
-      {/* FORM ADD / EDIT */}
+      {/* FILTER */}
+      <div className="flex gap-2 text-xs">
+        <input
+          className="input-dense w-48"
+          placeholder="Search IPD / Description"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <select
+          className="input-dense w-32"
+          value={filterFb}
+          onChange={(e) => setFilterFb(e.target.value)}
+        >
+          <option value="">All FB</option>
+          {FB_TYPES.map((f) => (
+            <option key={f}>{f}</option>
+          ))}
+        </select>
+
+        <select
+          className="input-dense w-40"
+          value={filterCommodity}
+          onChange={(e) => setFilterCommodity(e.target.value)}
+        >
+          <option value="">All Commodity</option>
+          {COMMODITIES.map((c) => (
+            <option key={c}>{c}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* FORM */}
       {showForm && (
         <div className="bg-white border rounded p-3 grid grid-cols-2 gap-2 text-xs">
           <input
@@ -262,9 +258,9 @@ export default function InputIPDPage() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="px-4 py-1 bg-blue-600 text-white rounded"
+              className="px-4 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
             >
-              {editId ? "Update" : "Save"}
+              {loading ? "Saving..." : editId ? "Update" : "Save"}
             </button>
           </div>
         </div>
@@ -275,32 +271,76 @@ export default function InputIPDPage() {
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
-              <th>No</th>
-              <th>IPD SIIS</th>
-              <th>Description</th>
-              <th>FB Type</th>
-              <th>Commodity</th>
-              <th>IPD Quotation</th>
-              <th>Action</th>
+              <th className="border px-2 py-1 text-center w-10">No</th>
+              <th className="border px-2 py-1">IPD SIIS</th>
+              <th className="border px-2 py-1">Description</th>
+              <th className="border px-2 py-1">FB Type</th>
+              <th className="border px-2 py-1">Comodity</th>
+              <th className="border px-2 py-1">IPD Quotation</th>
+              <th className="border px-2 py-1 text-center">Action</th>
             </tr>
           </thead>
+
           <tbody>
             {pagedData.map((r, i) => (
               <tr key={r.id}>
-                <td>{page * PAGE_SIZE + i + 1}</td>
-                <td>{r.ipd_siis}</td>
-                <td>{r.description}</td>
-                <td>{r.fb_type}</td>
-                <td>{r.commodity}</td>
-                <td>{r.ipd_quotation}</td>
-                <td className="text-center">
-                  <button onClick={() => handleEdit(r)}>✏️</button>
-                  <button onClick={() => handleDelete(r.id)}>🗑️</button>
+                <td className="border px-2 py-1 text-center">
+                  {page * PAGE_SIZE + i + 1}
+                </td>
+                <td className="border px-2 py-1">{r.ipd_siis}</td>
+                <td className="border px-2 py-1">{r.description}</td>
+                <td className="border px-2 py-1">{r.fb_type}</td>
+                <td className="border px-2 py-1">{r.commodity}</td>
+                <td className="border px-2 py-1">{r.ipd_quotation}</td>
+
+                <td className="border px-2 py-1">
+                  <div className="flex justify-center gap-2">
+                    {/* EDIT */}
+                    <button
+                      title="Edit"
+                      onClick={() => handleEdit(r)}
+                      className="p-1 rounded hover:bg-blue-100"
+                      disabled={loading}
+                    >
+                      ✏️
+                    </button>
+
+                    {/* DELETE */}
+                    <button
+                      title="Delete"
+                      onClick={() => handleDelete(r.id)}
+                      className="p-1 rounded hover:bg-red-100"
+                      disabled={loading}
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+
+        {/* PAGINATION */}
+        <div className="flex justify-between mt-2 text-xs">
+          <span>
+            Page {page + 1} of {totalPages || 1}
+          </span>
+          <div className="space-x-2">
+            <button
+              disabled={page === 0 || loading}
+              onClick={() => setPage(page - 1)}
+            >
+              Prev
+            </button>
+            <button
+              disabled={page >= totalPages - 1 || loading}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
