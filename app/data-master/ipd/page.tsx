@@ -14,6 +14,7 @@ type IPD = {
 const PAGE_SIZE = 50;
 const FB_TYPES = ["DGBB", "HBU-1"];
 const COMMODITIES = ["Cage", "Ring", "Balls", "Seal", "Shield"];
+const [uploading, setUploading] = useState(false);
 
 export default function InputIPDPage() {
   const [data, setData] = useState<IPD[]>([]);
@@ -149,8 +150,7 @@ export default function InputIPDPage() {
     <div className="space-y-2">
 
       {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-sm font-semibold">IPD Master</h1>
+      <div className="flex gap-2">
         <button
           onClick={() => {
             setShowForm((v) => !v);
@@ -161,7 +161,40 @@ export default function InputIPDPage() {
         >
           {showForm ? "Close" : "+ Add IPD"}
         </button>
+
+        <label className="px-3 py-1.5 text-xs rounded bg-green-600 text-white cursor-pointer">
+          {uploading ? "Uploading..." : "Upload File"}
+          <input
+            type="file"
+            accept=".csv"
+            hidden
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+
+              const formData = new FormData();
+              formData.append("file", file);
+
+              setUploading(true);
+              try {
+                const res = await fetch("/api/ipd/upload", {
+                  method: "POST",
+                  body: formData,
+                });
+
+                if (!res.ok) throw new Error();
+                alert("Upload berhasil");
+                loadData();
+              } catch {
+                alert("Upload gagal");
+              } finally {
+                setUploading(false);
+              }
+            }}
+          />
+        </label>
       </div>
+
 
       {/* FILTER */}
       <div className="flex gap-2 text-xs">
