@@ -35,7 +35,8 @@ export default function ViewPricePage() {
   const [selectedSupplier, setSelectedSupplier] =
     useState<Supplier | null>(null);
   const [quarters, setQuarters] = useState<string[]>([]);
-  const [selectedQuarter, setSelectedQuarter] = useState<string>("");
+  const [selectedQuarter, setSelectedQuarter] =
+    useState<string>("");
   const [rows, setRows] = useState<PriceRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -57,7 +58,6 @@ export default function ViewPricePage() {
     const supplier = suppliers.find(
       (s) => s.id === parsed.supplier_id
     );
-
     if (!supplier) return;
 
     setSelectedSupplier(supplier);
@@ -75,30 +75,24 @@ export default function ViewPricePage() {
 
   /* ================= LOAD QUARTERS ================= */
   useEffect(() => {
-  if (!selectedSupplier) {
-    setQuarters([]);
-    setSelectedQuarter("");
-    setRows([]);
-    return;
-  }
+    if (!selectedSupplier) {
+      setQuarters([]);
+      setSelectedQuarter("");
+      setRows([]);
+      return;
+    }
 
-  fetch(
-    `/api/price?list_quarter=true&supplier_id=${selectedSupplier.id}`
-  )
-    .then((r) => r.json())
-    .then((data: string[]) => {
-      setQuarters(data);
-
-      // ✅ JANGAN RESET JIKA QUARTER MASIH VALID
-      setSelectedQuarter((prev) =>
-        data.includes(prev) ? prev : ""
-      );
-
-      // ❗ rows jangan di-reset di sini
-      // biar hasil fetchPrice tetap tampil
-    });
-}, [selectedSupplier]);
-
+    fetch(
+      `/api/price?list_quarter=true&supplier_id=${selectedSupplier.id}`
+    )
+      .then((r) => r.json())
+      .then((data: string[]) => {
+        setQuarters(data);
+        setSelectedQuarter((prev) =>
+          data.includes(prev) ? prev : ""
+        );
+      });
+  }, [selectedSupplier]);
 
   /* ================= FETCH PRICE ================= */
   async function fetchPrice(
@@ -107,7 +101,6 @@ export default function ViewPricePage() {
   ) {
     const sId = supplierId || selectedSupplier?.id;
     const qVal = quarterVal ?? selectedQuarter;
-
     if (!sId) return;
 
     setLoading(true);
@@ -117,11 +110,10 @@ export default function ViewPricePage() {
       });
       if (qVal) params.append("quarter", qVal);
 
-      const res = await fetch(`/api/price?${params.toString()}`);
+      const res = await fetch(`/api/price?${params}`);
       const data = await res.json();
       setRows(data);
 
-      // 🔥 SAVE STATE
       localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({
@@ -137,9 +129,41 @@ export default function ViewPricePage() {
     }
   }
 
+  /* ================= DELETE ================= */
+  async function handleDelete(detailId: string) {
+    if (!confirm("Yakin ingin menghapus data ini?")) return;
+
+    try {
+      const res = await fetch(
+        `/api/price/detail/${detailId}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        alert("Gagal menghapus data");
+        return;
+      }
+
+      alert("Data berhasil dihapus");
+      fetchPrice();
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan");
+    }
+  }
+
+  /* ================= EDIT (PLACEHOLDER) ================= */
+  function handleEdit(row: PriceRow) {
+    alert(
+      `EDIT\n\nIPD SIIS: ${row.ipd_siis}\nPrice: ${row.price}`
+    );
+  }
+
   return (
     <div className="p-4 space-y-4 text-xs">
-      <h1 className="text-2xl font-bold">View Price</h1>
+      <h1 className="text-2xl font-bold">
+        View Price
+      </h1>
 
       {/* ================= FILTER ================= */}
       <div className="flex gap-2">
@@ -148,15 +172,19 @@ export default function ViewPricePage() {
           value={selectedSupplier?.id || ""}
           onChange={(e) =>
             setSelectedSupplier(
-              suppliers.find((s) => s.id === e.target.value) ||
-                null
+              suppliers.find(
+                (s) => s.id === e.target.value
+              ) || null
             )
           }
         >
-          <option value="">-- Select Supplier --</option>
+          <option value="">
+            -- Select Supplier --
+          </option>
           {suppliers.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.supplier_code} - {s.supplier_name}
+              {s.supplier_code} -{" "}
+              {s.supplier_name}
             </option>
           ))}
         </select>
@@ -164,10 +192,14 @@ export default function ViewPricePage() {
         <select
           className="border px-2 py-1"
           value={selectedQuarter}
-          onChange={(e) => setSelectedQuarter(e.target.value)}
+          onChange={(e) =>
+            setSelectedQuarter(e.target.value)
+          }
           disabled={quarters.length === 0}
         >
-          <option value="">-- Select Quarter --</option>
+          <option value="">
+            -- Select Quarter --
+          </option>
           {quarters.map((q) => (
             <option key={q} value={q}>
               {q}
@@ -196,16 +228,20 @@ export default function ViewPricePage() {
             {selectedSupplier.supplier_name}
           </div>
           <div>
-            <b>Currency:</b> {selectedSupplier.currency}
+            <b>Currency:</b>{" "}
+            {selectedSupplier.currency}
           </div>
           <div>
-            <b>Incoterm:</b> {selectedSupplier.incoterm}
+            <b>Incoterm:</b>{" "}
+            {selectedSupplier.incoterm}
           </div>
           <div>
-            <b>TOP:</b> {selectedSupplier.top} Days
+            <b>TOP:</b>{" "}
+            {selectedSupplier.top} Days
           </div>
           <div>
-            <b>Quarter:</b> {selectedQuarter || "-"}
+            <b>Quarter:</b>{" "}
+            {selectedQuarter || "-"}
           </div>
           <div>
             <b>Start Date:</b>{" "}
@@ -220,13 +256,15 @@ export default function ViewPricePage() {
 
       {/* ================= TABLE ================= */}
       <div className="overflow-x-auto">
-        <table className="min-w-[1000px] border text-xs">
+        <table className="min-w-[1100px] border text-xs">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-1 w-10 text-center">
+              <th className="border px-2 py-1 text-center w-10">
                 No
               </th>
-              <th className="border px-2 py-1">IPD</th>
+              <th className="border px-2 py-1">
+                IPD
+              </th>
               <th className="border px-2 py-1">
                 Description
               </th>
@@ -239,8 +277,11 @@ export default function ViewPricePage() {
               <th className="border px-2 py-1">
                 Tube Route
               </th>
-              <th className="border px-2 py-1">
+              <th className="border px-2 py-1 text-right">
                 Price
+              </th>
+              <th className="border px-2 py-1 text-center w-24">
+                Action
               </th>
             </tr>
           </thead>
@@ -249,8 +290,8 @@ export default function ViewPricePage() {
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
-                  className="border py-4 text-center text-gray-400"
+                  colSpan={8}
+                  className="border py-6 text-center text-gray-400"
                 >
                   No data
                 </td>
@@ -278,6 +319,26 @@ export default function ViewPricePage() {
                   </td>
                   <td className="border px-2 py-1 text-right">
                     {r.price}
+                  </td>
+                  <td className="border px-2 py-1 text-center">
+                    <div className="flex justify-center gap-1">
+                      <button
+                        onClick={() =>
+                          handleEdit(r)
+                        }
+                        className="px-2 py-0.5 text-xs bg-yellow-500 text-white rounded"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDelete(r.detail_id)
+                        }
+                        className="px-2 py-0.5 text-xs bg-red-600 text-white rounded"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
