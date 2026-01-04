@@ -76,40 +76,30 @@ export default function PricePage() {
   /* ================= IPD VERIFY ================= */
 
   async function verifyIPD(index: number, ipd_siis: string) {
-    const normalized = ipd_siis.trim();
-    if (!normalized) return;
+  const normalized = ipd_siis
+    .trim()
+    .replace(/\s+/g, " ")
+    .toUpperCase();
 
-    try {
-      const res = await fetch(
-        `/api/ipd/verify?ipd_siis=${encodeURIComponent(normalized)}`,
-        { cache: "no-store" }
-      );
+  if (!normalized) return;
 
-      const data = await res.json();
+  const res = await fetch(
+    `/api/ipd/verify?ipd_siis=${encodeURIComponent(normalized)}`,
+    { cache: "no-store" }
+  );
 
-      setDetails((prev) => {
-        const copy = [...prev];
+  const data = await res.json();
 
-        if (!data.exists) {
-          copy[index] = {
-            ...copy[index],
-            price: "",
-            valid_ipd: false,
-          };
-        } else {
-          copy[index] = {
-            ...copy[index],
-            valid_ipd: true,
-            price: data.price || copy[index].price,
-          };
-        }
-
-        return copy;
-      });
-    } catch (err) {
-      console.error("VERIFY IPD ERROR:", err);
-    }
-  }
+  setDetails((prev) => {
+    const copy = [...prev];
+    copy[index] = {
+      ...copy[index],
+      ipd_siis: normalized,
+      valid_ipd: data.exists,
+    };
+    return copy;
+  });
+}
 
 
 
@@ -275,16 +265,17 @@ export default function PricePage() {
 
               <td className="border">
                 <input
-                  className="w-full px-1"
-                  value={row.price}
-                  disabled={!row.valid_ipd}
-                  placeholder={!row.valid_ipd ? "No IPD Quotation" : ""}
-                  onChange={(e) => {
-                    const copy = [...details];
-                    copy[i].price = e.target.value;
-                    setDetails(copy);
-                  }}
-                />
+  className="w-full px-1"
+  value={row.price}
+  disabled={!row.valid_ipd}
+  placeholder={!row.valid_ipd ? "IPD tidak ditemukan" : ""}
+  onChange={(e) => {
+    const copy = [...details];
+    copy[i].price = e.target.value;
+    setDetails(copy);
+  }}
+/>
+
               </td>
 
               <td className="border text-center">

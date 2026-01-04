@@ -8,47 +8,35 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const ipd_siis = searchParams.get("ipd_siis");
 
-    console.log("VERIFY IPD ROUTE HIT:", ipd_siis);
-
     if (!ipd_siis) {
       return NextResponse.json(
-        { error: "ipd_siis required" },
+        { exists: false },
         { status: 400 }
       );
     }
 
-    const normalized = ipd_siis.trim();
+    const normalized = ipd_siis
+      .trim()
+      .replace(/\s+/g, " ")
+      .toUpperCase();
 
     const res = await query(
-  `
-  SELECT ipd_siis, ipd_quotation, price_reference
-  FROM ipd_master
-  WHERE
-    REGEXP_REPLACE(UPPER(ipd_siis), '\\s+', ' ', 'g')
-    =
-    REGEXP_REPLACE(UPPER($1), '\\s+', ' ', 'g')
-  `,
-  [normalized]
-);
-
-
-    if (res.rowCount === 0) {
-      return NextResponse.json({
-        exists: false,
-        hasQuotation: false,
-        price: "",
-      });
-    }
+      `
+      SELECT 1
+      FROM ipd_master
+      WHERE UPPER(ipd_siis) = $1
+      LIMIT 1
+      `,
+      [normalized]
+    );
 
     return NextResponse.json({
-      exists: true,
-      hasQuotation: true,
-      price: res.rows[0].price_reference ?? "",
+      exists: (res.rowCount ?? 0) > 0,
     });
   } catch (err) {
     console.error("VERIFY IPD ERROR:", err);
     return NextResponse.json(
-      { error: "Failed to verify IPD" },
+      { exists: false },
       { status: 500 }
     );
   }
