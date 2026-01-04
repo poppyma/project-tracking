@@ -26,6 +26,7 @@ type PriceDetailForm = {
   material_source: string;
   tube_route: string;
   price: string;
+  valid_ipd: boolean;
 };
 
 /* ================= PAGE ================= */
@@ -48,6 +49,7 @@ export default function PricePage() {
       material_source: "",
       tube_route: "",
       price: "",
+      valid_ipd: false,
     },
   ]);
 
@@ -70,6 +72,33 @@ export default function PricePage() {
       .then(setSuppliers);
   }, []);
 
+  /* ================= IPD VERIFY ================= */
+
+  async function verifyIPD(index: number, ipd_siis: string) {
+    if (!ipd_siis) return;
+
+    try {
+      const res = await fetch(
+        `/api/ipd/verify?ipd_siis=${ipd_siis}`
+      );
+      const data = await res.json();
+
+      const copy = [...details];
+
+      if (!data.hasQuotation) {
+        copy[index].price = "";
+        copy[index].valid_ipd = false;
+      } else {
+        copy[index].price = data.price ?? "";
+        copy[index].valid_ipd = true;
+      }
+
+      setDetails(copy);
+    } catch (err) {
+      console.error("VERIFY IPD ERROR:", err);
+    }
+  }
+
   /* ================= SAVE ================= */
 
   async function handleSave() {
@@ -79,6 +108,15 @@ export default function PricePage() {
 
     if (details.length === 0)
       return alert("Minimal 1 IPD harus diisi");
+
+    for (const d of details) {
+      if (!d.valid_ipd) {
+        alert(
+          `IPD SIIS ${d.ipd_siis || "(kosong)"} belum memiliki IPD Quotation`
+        );
+        return;
+      }
+    }
 
     setLoading(true);
 
@@ -107,6 +145,7 @@ export default function PricePage() {
           material_source: "",
           tube_route: "",
           price: "",
+          valid_ipd: false,
         },
       ]);
     } catch (e: any) {
@@ -202,19 +241,84 @@ export default function PricePage() {
         <tbody>
           {details.map((row, i) => (
             <tr key={i}>
-              {Object.keys(row).map((key) => (
-                <td key={key} className="border">
-                  <input
-                    className="w-full px-1"
-                    value={row[key as keyof PriceDetailForm]}
-                    onChange={(e) => {
-                      const copy = [...details];
-                      copy[i][key as keyof PriceDetailForm] = e.target.value;
-                      setDetails(copy);
-                    }}
-                  />
-                </td>
-              ))}
+              <td className="border">
+                <input
+                  className="w-full px-1"
+                  value={row.ipd_siis}
+                  onChange={(e) => {
+                    const copy = [...details];
+                    copy[i].ipd_siis = e.target.value;
+                    copy[i].valid_ipd = false;
+                    setDetails(copy);
+                  }}
+                  onBlur={(e) => verifyIPD(i, e.target.value)}
+                />
+              </td>
+
+              <td className="border">
+                <input
+                  className="w-full px-1"
+                  value={row.description}
+                  onChange={(e) => {
+                    const copy = [...details];
+                    copy[i].description = e.target.value;
+                    setDetails(copy);
+                  }}
+                />
+              </td>
+
+              <td className="border">
+                <input
+                  className="w-full px-1"
+                  value={row.steel_spec}
+                  onChange={(e) => {
+                    const copy = [...details];
+                    copy[i].steel_spec = e.target.value;
+                    setDetails(copy);
+                  }}
+                />
+              </td>
+
+              <td className="border">
+                <input
+                  className="w-full px-1"
+                  value={row.material_source}
+                  onChange={(e) => {
+                    const copy = [...details];
+                    copy[i].material_source = e.target.value;
+                    setDetails(copy);
+                  }}
+                />
+              </td>
+
+              <td className="border">
+                <input
+                  className="w-full px-1"
+                  value={row.tube_route}
+                  onChange={(e) => {
+                    const copy = [...details];
+                    copy[i].tube_route = e.target.value;
+                    setDetails(copy);
+                  }}
+                />
+              </td>
+
+              <td className="border">
+                <input
+                  className="w-full px-1"
+                  value={row.price}
+                  disabled={!row.valid_ipd}
+                  placeholder={
+                    !row.valid_ipd ? "No IPD Quotation" : ""
+                  }
+                  onChange={(e) => {
+                    const copy = [...details];
+                    copy[i].price = e.target.value;
+                    setDetails(copy);
+                  }}
+                />
+              </td>
+
               <td className="border text-center">
                 <button
                   onClick={() =>
@@ -242,6 +346,7 @@ export default function PricePage() {
               material_source: "",
               tube_route: "",
               price: "",
+              valid_ipd: false,
             },
           ])
         }
