@@ -273,9 +273,12 @@ export default function PricePage() {
                   className="w-full px-1"
                   value={row.price}
                   disabled={!row.valid_ipd}
-                  placeholder={
-                    !row.valid_ipd ? "No IPD Quotation" : ""
-                  }
+                  placeholder={!row.valid_ipd ? "No IPD Quotation" : ""}
+                  onChange={(e) => {
+                    const copy = [...details];
+                    copy[i].price = e.target.value;
+                    setDetails(copy);
+                  }}
                 />
               </td>
 
