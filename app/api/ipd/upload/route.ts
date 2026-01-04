@@ -68,25 +68,25 @@ export async function POST(req: Request) {
       }
 
       await query(
-        `
-        INSERT INTO ipd_master (
-          ipd_siis,
-          description,
-          fb_type,
-          commodity,
-          ipd_quotation
-        )
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (ipd_siis) DO NOTHING
-        `,
-        [
-          row.ipd_siis,
-          row.description,
-          row.fb_type,
-          row.commodity,
-          row.ipd_quotation ?? "",
-        ]
-      );
+  `
+  INSERT INTO ipd_master (
+    ipd_siis,
+    description,
+    fb_type,
+    commodity,
+    ipd_quotation
+  )
+  VALUES ($1, $2, $3, $4, $5)
+  `,
+  [
+    row.ipd_siis,
+    row.description,
+    row.fb_type,
+    row.commodity,
+    row.ipd_quotation ?? "",
+  ]
+);
+
     }
 
     return NextResponse.json({
