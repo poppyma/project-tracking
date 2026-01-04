@@ -85,27 +85,30 @@ export default function PricePage() {
       );
       const data = await res.json();
 
-      const copy = [...details];
+      setDetails((prev) => {
+        const copy = [...prev];
 
-      if (!data.exists) {
-        // IPD SIIS TIDAK ADA DI MASTER
-        copy[index].price = "";
-        copy[index].valid_ipd = false;
-      } else {
-        // IPD SIIS ADA → BOLEH INPUT PRICE
-        copy[index].valid_ipd = true;
-
-        // OPTIONAL: kalau ada price_reference, auto-fill
-        if (data.price) {
-          copy[index].price = data.price;
+        if (!data.exists) {
+          copy[index] = {
+            ...copy[index],
+            price: "",
+            valid_ipd: false,
+          };
+        } else {
+          copy[index] = {
+            ...copy[index],
+            valid_ipd: true,
+            price: data.price || copy[index].price,
+          };
         }
-      }
 
-      setDetails(copy);
+        return copy;
+      });
     } catch (err) {
       console.error("VERIFY IPD ERROR:", err);
     }
   }
+
 
 
   /* ================= SAVE ================= */
