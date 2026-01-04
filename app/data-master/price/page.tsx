@@ -81,8 +81,10 @@ export default function PricePage() {
 
     try {
       const res = await fetch(
-        `/api/ipd/verify?ipd_siis=${encodeURIComponent(normalized)}`
+        `/api/ipd/verify?ipd_siis=${encodeURIComponent(normalized)}`,
+        { cache: "no-store" }
       );
+
       const data = await res.json();
 
       setDetails((prev) => {
