@@ -27,7 +27,8 @@ export async function GET(req: Request) {
       [normalized]
     );
 
-    if (res.rowCount === 0 || !res.rows[0].ipd_quotation) {
+    // ❗ HANYA cek keberadaan IPD SIIS
+    if (res.rowCount === 0) {
       return NextResponse.json({
         exists: false,
         hasQuotation: false,
