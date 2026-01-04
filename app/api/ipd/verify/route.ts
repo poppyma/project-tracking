@@ -13,6 +13,8 @@ export async function GET(req: Request) {
       );
     }
 
+    const normalized = ipd_siis.trim();
+
     const res = await query(
       `
       SELECT
@@ -20,9 +22,9 @@ export async function GET(req: Request) {
         ipd_quotation,
         price_reference
       FROM ipd_master
-      WHERE ipd_siis = $1
+      WHERE TRIM(UPPER(ipd_siis)) = TRIM(UPPER($1))
       `,
-      [ipd_siis]
+      [normalized]
     );
 
     if (res.rowCount === 0 || !res.rows[0].ipd_quotation) {
@@ -36,7 +38,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       exists: true,
       hasQuotation: true,
-      price: res.rows[0].price_reference || "",
+      price: res.rows[0].price_reference ?? "",
     });
   } catch (err) {
     console.error("VERIFY IPD ERROR:", err);

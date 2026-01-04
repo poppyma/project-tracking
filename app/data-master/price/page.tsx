@@ -33,7 +33,8 @@ type PriceDetailForm = {
 
 export default function PricePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedSupplier, setSelectedSupplier] =
+    useState<Supplier | null>(null);
 
   const [header, setHeader] = useState<PriceHeaderForm>({
     start_date: "",
@@ -75,11 +76,12 @@ export default function PricePage() {
   /* ================= IPD VERIFY ================= */
 
   async function verifyIPD(index: number, ipd_siis: string) {
-    if (!ipd_siis) return;
+    const normalized = ipd_siis.trim();
+    if (!normalized) return;
 
     try {
       const res = await fetch(
-        `/api/ipd/verify?ipd_siis=${ipd_siis}`
+        `/api/ipd/verify?ipd_siis=${encodeURIComponent(normalized)}`
       );
       const data = await res.json();
 
@@ -105,9 +107,6 @@ export default function PricePage() {
     if (!selectedSupplier) return alert("Supplier wajib dipilih");
     if (!header.start_date || !header.end_date)
       return alert("Start & End Date wajib diisi");
-
-    if (details.length === 0)
-      return alert("Minimal 1 IPD harus diisi");
 
     for (const d of details) {
       if (!d.valid_ipd) {
@@ -178,17 +177,6 @@ export default function PricePage() {
         ))}
       </select>
 
-      {/* SUPPLIER INFO */}
-      {selectedSupplier && (
-        <div className="border p-2 bg-gray-50">
-          <div>Supplier Code : {selectedSupplier.supplier_code}</div>
-          <div>Supplier Name : {selectedSupplier.supplier_name}</div>
-          <div>Currency : {selectedSupplier.currency}</div>
-          <div>Incoterm : {selectedSupplier.incoterm}</div>
-          <div>TOP : {selectedSupplier.top}</div>
-        </div>
-      )}
-
       {/* HEADER */}
       <div className="border p-3 grid grid-cols-3 gap-4 bg-gray-50">
         <div>
@@ -224,7 +212,7 @@ export default function PricePage() {
         </div>
       </div>
 
-      {/* TABLE INPUT */}
+      {/* TABLE */}
       <table className="w-full border">
         <thead className="bg-yellow-200">
           <tr>
@@ -251,56 +239,26 @@ export default function PricePage() {
                     copy[i].valid_ipd = false;
                     setDetails(copy);
                   }}
-                  onBlur={(e) => verifyIPD(i, e.target.value)}
+                  onBlur={(e) =>
+                    verifyIPD(i, e.target.value)
+                  }
                 />
               </td>
 
               <td className="border">
-                <input
-                  className="w-full px-1"
-                  value={row.description}
-                  onChange={(e) => {
-                    const copy = [...details];
-                    copy[i].description = e.target.value;
-                    setDetails(copy);
-                  }}
-                />
+                <input className="w-full px-1" />
               </td>
 
               <td className="border">
-                <input
-                  className="w-full px-1"
-                  value={row.steel_spec}
-                  onChange={(e) => {
-                    const copy = [...details];
-                    copy[i].steel_spec = e.target.value;
-                    setDetails(copy);
-                  }}
-                />
+                <input className="w-full px-1" />
               </td>
 
               <td className="border">
-                <input
-                  className="w-full px-1"
-                  value={row.material_source}
-                  onChange={(e) => {
-                    const copy = [...details];
-                    copy[i].material_source = e.target.value;
-                    setDetails(copy);
-                  }}
-                />
+                <input className="w-full px-1" />
               </td>
 
               <td className="border">
-                <input
-                  className="w-full px-1"
-                  value={row.tube_route}
-                  onChange={(e) => {
-                    const copy = [...details];
-                    copy[i].tube_route = e.target.value;
-                    setDetails(copy);
-                  }}
-                />
+                <input className="w-full px-1" />
               </td>
 
               <td className="border">
@@ -311,50 +269,17 @@ export default function PricePage() {
                   placeholder={
                     !row.valid_ipd ? "No IPD Quotation" : ""
                   }
-                  onChange={(e) => {
-                    const copy = [...details];
-                    copy[i].price = e.target.value;
-                    setDetails(copy);
-                  }}
                 />
               </td>
 
               <td className="border text-center">
-                <button
-                  onClick={() =>
-                    setDetails(details.filter((_, idx) => idx !== i))
-                  }
-                  className="text-red-600"
-                >
-                  ✕
-                </button>
+                ✕
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <button
-        className="bg-green-600 text-white px-3 py-1"
-        onClick={() =>
-          setDetails([
-            ...details,
-            {
-              ipd_siis: "",
-              description: "",
-              steel_spec: "",
-              material_source: "",
-              tube_route: "",
-              price: "",
-              valid_ipd: false,
-            },
-          ])
-        }
-      >
-        + Add IPD
-      </button>
-
-      {/* SAVE */}
       <div className="flex justify-end">
         <button
           onClick={handleSave}
