@@ -45,6 +45,39 @@ export default function InputIPDPage() {
     }
   }
 
+  async function handleUploadCSV(e: React.ChangeEvent<HTMLInputElement>) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (!file.name.endsWith(".csv")) {
+        alert("File harus berformat CSV");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      setLoading(true);
+
+      try {
+        const res = await fetch("/api/ipd/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) throw new Error();
+
+        alert("Upload CSV berhasil");
+        loadData();
+      } catch {
+        alert("Gagal upload CSV");
+      } finally {
+        setLoading(false);
+        e.target.value = "";
+      }
+    }
+
+
   useEffect(() => {
     loadData();
   }, []);
@@ -161,6 +194,15 @@ export default function InputIPDPage() {
         >
           {showForm ? "Close" : "+ Add IPD"}
         </button>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="file"
+          accept=".csv"
+          onChange={handleUploadCSV}
+          className="text-xs"
+        />
       </div>
 
       {/* FILTER */}
