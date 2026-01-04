@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     await query(
       `INSERT INTO price_detail
       (header_id, ipd_siis, description, steel_spec, material_source, tube_route, price)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
       [
         headerId,
         d.ipd_siis || null,
