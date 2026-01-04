@@ -39,11 +39,10 @@ export async function POST(req: Request) {
 
     await query(
       `INSERT INTO price_detail
-      (header_id, ipd_quotation, ipd_siis, description, steel_spec, material_source, tube_route, price)
+      (header_id, ipd_siis, description, steel_spec, material_source, tube_route, price)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [
         headerId,
-        d.ipd_quotation || null,
         d.ipd_siis || null,
         d.description || null,
         d.steel_spec || null,
@@ -90,7 +89,6 @@ export async function GET(req: Request) {
         h.end_date,
         h.quarter,
         d.id AS detail_id,
-        d.ipd_quotation,
         d.ipd_siis,
         d.description,
         d.steel_spec,

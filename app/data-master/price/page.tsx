@@ -20,7 +20,6 @@ type PriceHeaderForm = {
 };
 
 type PriceDetailForm = {
-  ipd_quotation: string;
   ipd_siis: string;
   description: string;
   steel_spec: string;
@@ -43,7 +42,6 @@ export default function PricePage() {
 
   const [details, setDetails] = useState<PriceDetailForm[]>([
     {
-      ipd_quotation: "",
       ipd_siis: "",
       description: "",
       steel_spec: "",
@@ -103,7 +101,6 @@ export default function PricePage() {
       setHeader({ start_date: "", end_date: "", quarter: "" });
       setDetails([
         {
-          ipd_quotation: "",
           ipd_siis: "",
           description: "",
           steel_spec: "",
@@ -192,7 +189,6 @@ export default function PricePage() {
       <table className="w-full border">
         <thead className="bg-yellow-200">
           <tr>
-            <th className="border">IPD Quotation</th>
             <th className="border">IPD SIIS</th>
             <th className="border">Description</th>
             <th className="border">Steel Spec</th>
@@ -240,7 +236,6 @@ export default function PricePage() {
           setDetails([
             ...details,
             {
-              ipd_quotation: "",
               ipd_siis: "",
               description: "",
               steel_spec: "",
