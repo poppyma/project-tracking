@@ -20,13 +20,17 @@ export async function GET(req: Request) {
     const normalized = ipd_siis.trim();
 
     const res = await query(
-      `
-      SELECT ipd_siis, ipd_quotation, price_reference
-      FROM ipd_master
-      WHERE TRIM(UPPER(ipd_siis)) = TRIM(UPPER($1))
-      `,
-      [normalized]
-    );
+  `
+  SELECT ipd_siis, ipd_quotation, price_reference
+  FROM ipd_master
+  WHERE
+    REGEXP_REPLACE(UPPER(ipd_siis), '\\s+', ' ', 'g')
+    =
+    REGEXP_REPLACE(UPPER($1), '\\s+', ' ', 'g')
+  `,
+  [normalized]
+);
+
 
     if (res.rowCount === 0) {
       return NextResponse.json({
