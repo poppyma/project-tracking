@@ -183,27 +183,32 @@ export default function InputIPDPage() {
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
-        <h1 className="text-sm font-semibold">IPD Master</h1>
-        <button
-          onClick={() => {
-            setShowForm((v) => !v);
-            setEditId(null);
-          }}
-          className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
-          disabled={loading}
-        >
-          {showForm ? "Close" : "+ Add IPD"}
-        </button>
-      </div>
+  <h1 className="text-sm font-semibold">IPD Master</h1>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="file"
-          accept=".csv"
-          onChange={handleUploadCSV}
-          className="text-xs"
-        />
-      </div>
+  <div className="flex gap-2">
+    <label className="px-3 py-1.5 text-xs rounded bg-green-600 text-white cursor-pointer">
+      Upload CSV
+      <input
+        type="file"
+        accept=".csv"
+        onChange={handleUploadCSV}
+        className="hidden"
+      />
+    </label>
+
+    <button
+      onClick={() => {
+        setShowForm((v) => !v);
+        setEditId(null);
+      }}
+      className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
+      disabled={loading}
+    >
+      {showForm ? "Close" : "+ Add IPD"}
+    </button>
+  </div>
+</div>
+
 
       {/* FILTER */}
       <div className="flex gap-2 text-xs">
