@@ -33,7 +33,7 @@ export async function PUT(
     const { id } = await context.params;
     const body = await req.json();
 
-    const rawPrice = String(body.price).replace(/,/g, "");
+    const rawPrice = String(body.price ?? "").replace(/,/g, "");
     const finalPrice = Number(rawPrice);
 
     if (isNaN(finalPrice)) {
@@ -47,22 +47,20 @@ export async function PUT(
       `
       UPDATE price_detail
       SET
-        ipd_quotation = $1,
-        ipd_siis = $2,
-        description = $3,
-        steel_spec = $4,
-        material_source = $5,
-        tube_route = $6,
-        price = $7
-      WHERE id = $8
+        ipd_siis = $1,
+        description = $2,
+        steel_spec = $3,
+        material_source = $4,
+        tube_route = $5,
+        price = $6
+      WHERE id = $7
       `,
       [
-        body.ipd_quotation || null,
-        body.ipd_siis || null,
-        body.description || null,
-        body.steel_spec || null,
-        body.material_source || null,
-        body.tube_route || null,
+        body.ipd_siis ?? null,
+        body.description ?? null,
+        body.steel_spec ?? null,
+        body.material_source ?? null,
+        body.tube_route ?? null,
         finalPrice,
         id,
       ]
