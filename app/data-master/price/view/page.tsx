@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 /* ================= TYPES ================= */
+
 type Supplier = {
   id: string;
   supplier_code: string;
@@ -18,7 +19,6 @@ type PriceRow = {
   end_date: string;
   quarter: string;
   detail_id: string;
-  ipd_quotation: string;
   ipd_siis: string;
   description: string;
   steel_spec: string;
@@ -28,23 +28,28 @@ type PriceRow = {
 };
 
 /* ================= STORAGE KEY ================= */
+
 const STORAGE_KEY = "view-price-state";
+
+/* ================= PAGE ================= */
 
 export default function ViewPricePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] =
     useState<Supplier | null>(null);
   const [quarters, setQuarters] = useState<string[]>([]);
-  const [selectedQuarter, setSelectedQuarter] =
-    useState<string>("");
+  const [selectedQuarter, setSelectedQuarter] = useState("");
   const [rows, setRows] = useState<PriceRow[]>([]);
   const [loading, setLoading] = useState(false);
 
+  /* ===== INLINE EDIT STATE ===== */
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editRow, setEditRow] = useState<Partial<PriceRow>>({});
+
   const headerInfo = rows.length > 0 ? rows[0] : null;
 
-
-
   /* ================= LOAD SUPPLIERS ================= */
+
   useEffect(() => {
     fetch("/api/supplier")
       .then((r) => r.json())
@@ -52,6 +57,7 @@ export default function ViewPricePage() {
   }, []);
 
   /* ================= LOAD SAVED STATE ================= */
+
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved || suppliers.length === 0) return;
@@ -76,6 +82,7 @@ export default function ViewPricePage() {
   }, [suppliers]);
 
   /* ================= LOAD QUARTERS ================= */
+
   useEffect(() => {
     if (!selectedSupplier) {
       setQuarters([]);
@@ -97,6 +104,7 @@ export default function ViewPricePage() {
   }, [selectedSupplier]);
 
   /* ================= FETCH PRICE ================= */
+
   async function fetchPrice(
     supplierId?: string,
     quarterVal?: string
@@ -131,7 +139,47 @@ export default function ViewPricePage() {
     }
   }
 
+  /* ================= EDIT ================= */
+
+  function startEdit(row: PriceRow) {
+    setEditId(row.detail_id);
+    setEditRow({ ...row });
+  }
+
+  function cancelEdit() {
+    setEditId(null);
+    setEditRow({});
+  }
+
+  async function saveEdit() {
+    if (!editId) return;
+
+    try {
+      const res = await fetch(`/api/price/detail/${editId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ipd_siis: editRow.ipd_siis,
+          description: editRow.description,
+          steel_spec: editRow.steel_spec,
+          material_source: editRow.material_source,
+          tube_route: editRow.tube_route,
+          price: editRow.price,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      alert("Data berhasil diupdate");
+      cancelEdit();
+      fetchPrice();
+    } catch {
+      alert("Gagal update data");
+    }
+  }
+
   /* ================= DELETE ================= */
+
   async function handleDelete(detailId: string) {
     if (!confirm("Yakin ingin menghapus data ini?")) return;
 
@@ -154,13 +202,13 @@ export default function ViewPricePage() {
     }
   }
 
+  /* ================= UI ================= */
+
   return (
     <div className="p-4 space-y-4 text-xs">
-      <h1 className="text-2xl font-bold">
-        View Price
-      </h1>
+      <h1 className="text-2xl font-bold">View Price</h1>
 
-      {/* ================= FILTER ================= */}
+      {/* FILTER */}
       <div className="flex gap-2">
         <select
           className="border px-2 py-1"
@@ -173,13 +221,10 @@ export default function ViewPricePage() {
             )
           }
         >
-          <option value="">
-            -- Select Supplier --
-          </option>
+          <option value="">-- Select Supplier --</option>
           {suppliers.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.supplier_code} -{" "}
-              {s.supplier_name}
+              {s.supplier_code} - {s.supplier_name}
             </option>
           ))}
         </select>
@@ -187,14 +232,10 @@ export default function ViewPricePage() {
         <select
           className="border px-2 py-1"
           value={selectedQuarter}
-          onChange={(e) =>
-            setSelectedQuarter(e.target.value)
-          }
+          onChange={(e) => setSelectedQuarter(e.target.value)}
           disabled={quarters.length === 0}
         >
-          <option value="">
-            -- Select Quarter --
-          </option>
+          <option value="">-- Select Quarter --</option>
           {quarters.map((q) => (
             <option key={q} value={q}>
               {q}
@@ -211,130 +252,179 @@ export default function ViewPricePage() {
         </button>
       </div>
 
-      {/* ================= SUPPLIER DETAIL ================= */}
+      {/* SUPPLIER INFO */}
       {selectedSupplier && (
         <div className="border rounded bg-gray-50 p-3 grid grid-cols-2 gap-2">
-          <div>
-            <b>Supplier Code:</b>{" "}
-            {selectedSupplier.supplier_code}
-          </div>
-          <div>
-            <b>Supplier Name:</b>{" "}
-            {selectedSupplier.supplier_name}
-          </div>
-          <div>
-            <b>Currency:</b>{" "}
-            {selectedSupplier.currency}
-          </div>
-          <div>
-            <b>Incoterm:</b>{" "}
-            {selectedSupplier.incoterm}
-          </div>
-          <div>
-            <b>TOP:</b>{" "}
-            {selectedSupplier.top} Days
-          </div>
-          <div>
-            <b>Quarter:</b>{" "}
-            {selectedQuarter || "-"}
-          </div>
-          <div>
-            <b>Start Date:</b>{" "}
-            {headerInfo?.start_date || "-"}
-          </div>
-          <div>
-            <b>End Date:</b>{" "}
-            {headerInfo?.end_date || "-"}
-          </div>
+          <div><b>Supplier Code:</b> {selectedSupplier.supplier_code}</div>
+          <div><b>Supplier Name:</b> {selectedSupplier.supplier_name}</div>
+          <div><b>Currency:</b> {selectedSupplier.currency}</div>
+          <div><b>Incoterm:</b> {selectedSupplier.incoterm}</div>
+          <div><b>TOP:</b> {selectedSupplier.top} Days</div>
+          <div><b>Quarter:</b> {selectedQuarter || "-"}</div>
+          <div><b>Start Date:</b> {headerInfo?.start_date || "-"}</div>
+          <div><b>End Date:</b> {headerInfo?.end_date || "-"}</div>
         </div>
       )}
 
-      {/* ================= TABLE ================= */}
+      {/* TABLE */}
       <div className="overflow-x-auto">
         <table className="min-w-[1100px] border text-xs">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-1 text-center w-10">
-                No
-              </th>
-              <th className="border px-2 py-1">
-                IPD
-              </th>
-              <th className="border px-2 py-1">
-                Description
-              </th>
-              <th className="border px-2 py-1">
-                Steel Spec
-              </th>
-              <th className="border px-2 py-1">
-                Material Source
-              </th>
-              <th className="border px-2 py-1">
-                Tube Route
-              </th>
-              <th className="border px-2 py-1 text-right">
-                Price
-              </th>
-              <th className="border px-2 py-1 text-center w-24">
-                Action
-              </th>
+              <th className="border px-2 py-1 w-10">No</th>
+              <th className="border px-2 py-1">IPD</th>
+              <th className="border px-2 py-1">Description</th>
+              <th className="border px-2 py-1">Steel Spec</th>
+              <th className="border px-2 py-1">Material Source</th>
+              <th className="border px-2 py-1">Tube Route</th>
+              <th className="border px-2 py-1 text-right">Price</th>
+              <th className="border px-2 py-1 w-28">Action</th>
             </tr>
           </thead>
 
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td
-                  colSpan={8}
-                  className="border py-6 text-center text-gray-400"
-                >
+                <td colSpan={8} className="border py-6 text-center text-gray-400">
                   No data
                 </td>
               </tr>
             ) : (
-              rows.map((r, i) => (
-                <tr key={r.detail_id}>
-                  <td className="border px-2 py-1 text-center">
-                    {i + 1}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {r.ipd_siis}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {r.description}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {r.steel_spec}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {r.material_source}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {r.tube_route}
-                  </td>
-                  <td className="border px-2 py-1 text-right">
-                    {r.price}
-                  </td>
-                  <td className="border px-2 py-1 text-center">
-                    <div className="flex justify-center gap-1">
-                    
-                      <button
-                        onClick={() =>
-                          handleDelete(r.detail_id)
-                        }
-                        className="px-2 py-0.5 text-xs bg-red-600 text-white rounded"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              rows.map((r, i) => {
+                const isEdit = editId === r.detail_id;
+
+                return (
+                  <tr key={r.detail_id}>
+                    <td className="border px-2 py-1 text-center">{i + 1}</td>
+
+                    <td className="border px-2 py-1">
+                      {isEdit ? (
+                        <input
+                          className="w-full border px-1"
+                          value={editRow.ipd_siis || ""}
+                          onChange={(e) =>
+                            setEditRow({ ...editRow, ipd_siis: e.target.value })
+                          }
+                        />
+                      ) : (
+                        r.ipd_siis
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1">
+                      {isEdit ? (
+                        <input
+                          className="w-full border px-1"
+                          value={editRow.description || ""}
+                          onChange={(e) =>
+                            setEditRow({ ...editRow, description: e.target.value })
+                          }
+                        />
+                      ) : (
+                        r.description
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1">
+                      {isEdit ? (
+                        <input
+                          className="w-full border px-1"
+                          value={editRow.steel_spec || ""}
+                          onChange={(e) =>
+                            setEditRow({ ...editRow, steel_spec: e.target.value })
+                          }
+                        />
+                      ) : (
+                        r.steel_spec
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1">
+                      {isEdit ? (
+                        <input
+                          className="w-full border px-1"
+                          value={editRow.material_source || ""}
+                          onChange={(e) =>
+                            setEditRow({
+                              ...editRow,
+                              material_source: e.target.value,
+                            })
+                          }
+                        />
+                      ) : (
+                        r.material_source
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1">
+                      {isEdit ? (
+                        <input
+                          className="w-full border px-1"
+                          value={editRow.tube_route || ""}
+                          onChange={(e) =>
+                            setEditRow({ ...editRow, tube_route: e.target.value })
+                          }
+                        />
+                      ) : (
+                        r.tube_route
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1 text-right">
+                      {isEdit ? (
+                        <input
+                          type="number"
+                          className="w-full border px-1 text-right"
+                          value={editRow.price || ""}
+                          onChange={(e) =>
+                            setEditRow({ ...editRow, price: e.target.value })
+                          }
+                        />
+                      ) : (
+                        r.price
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1 text-center">
+                      {isEdit ? (
+                        <div className="flex justify-center gap-1">
+                          <button
+                            onClick={saveEdit}
+                            className="px-2 py-0.5 bg-green-600 text-white rounded"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="px-2 py-0.5 bg-gray-400 text-white rounded"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-center gap-1">
+                          <button
+                            onClick={() => startEdit(r)}
+                            className="px-2 py-0.5 bg-yellow-500 text-white rounded"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(r.detail_id)}
+                            className="px-2 py-0.5 bg-red-600 text-white rounded"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
-
     </div>
   );
 }
