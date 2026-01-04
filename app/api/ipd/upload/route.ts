@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
       await query(
         `
-        INSERT INTO ipd (
+        INSERT INTO ipd_master (
           ipd_siis,
           description,
           fb_type,
