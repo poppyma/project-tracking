@@ -53,6 +53,7 @@ export default function ViewPriceQuartersPage() {
     }
   }, []);
 
+
   /* SAVE STATE */
   useEffect(() => {
     if (!supplier) return;

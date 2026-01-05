@@ -126,15 +126,6 @@ export default function PricePage() {
     if (details.length === 0)
       return alert("Minimal 1 IPD harus diisi");
 
-    // for (const d of details) {
-    //   if (!d.valid_ipd) {
-    //     alert(
-    //       `IPD SIIS ${d.ipd_siis || "(kosong)"} belum memiliki IPD Quotation`
-    //     );
-    //     return;
-    //   }
-    // }
-
     setLoading(true);
 
     try {
