@@ -32,40 +32,64 @@ export default function ViewPriceQuartersPage() {
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
 
-  /* LOAD SUPPLIER LIST */
+  async function fetchPriceQuarters(supplierId: string) {
+    try {
+      const res = await fetch(
+        `/api/price-quarters?supplier_id=${supplierId}`,
+        { cache: "no-store" }
+      );
+
+      const json = await res.json();
+      setRows(Array.isArray(json) ? json : []);
+    } catch (e) {
+      console.error("Failed fetch price quarters", e);
+      setRows([]);
+    }
+  }
+
+  /* ================= LOAD SUPPLIER LIST ================= */
   useEffect(() => {
     fetch("/api/supplier")
       .then((r) => r.json())
-      .then(setSuppliers);
+      .then(setSuppliers)
+      .catch(console.error);
   }, []);
 
-  /* RESTORE STATE ON FIRST LOAD */
+  /* ================= RESTORE SUPPLIER ON FIRST LOAD ================= */
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
 
     try {
       const parsed = JSON.parse(saved);
-      setSupplier(parsed.supplier || null);
-      setRows(parsed.rows || []);
+
+      // ✅ HANYA restore supplier
+      if (parsed?.supplier) {
+        setSupplier(parsed.supplier);
+      }
     } catch (e) {
       console.error("Failed restore state", e);
     }
   }, []);
 
+  /* ================= FETCH PRICE QUARTERS WHEN SUPPLIER READY ================= */
+  useEffect(() => {
+    if (!supplier?.id) return;
 
-  /* SAVE STATE */
+    // 🔥 WAJIB fetch ulang dari API
+    fetchPriceQuarters(supplier.id);
+  }, [supplier?.id]);
+
+  /* ================= SAVE SUPPLIER STATE ================= */
   useEffect(() => {
     if (!supplier) return;
 
+    // ✅ SIMPAN HANYA supplier (JANGAN rows)
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({
-        supplier,
-        rows,
-      })
+      JSON.stringify({ supplier })
     );
-  }, [supplier, rows]);
+  }, [supplier]);
 
   async function loadData(supplierId: string, selected: Supplier) {
     const res = await fetch(
