@@ -52,70 +52,83 @@ export default function ViewSIISPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
-  const [selectedQuarter, setSelectedQuarter] =
-    useState<string>("");
+  const [selectedQuarter, setSelectedQuarter] = useState<string>("");
 
-  /* LOAD SUPPLIERS */
+  /* ================= LOAD SUPPLIERS ================= */
   useEffect(() => {
     fetch("/api/supplier")
       .then((r) => r.json())
-      .then(setSuppliers);
+      .then(setSuppliers)
+      .catch(console.error);
   }, []);
 
-  /* RESTORE STATE ON REFRESH */
+  /* ================= RESTORE SUPPLIER ONLY ================= */
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
 
     try {
       const parsed = JSON.parse(saved);
-      setSupplier(parsed.supplier || null);
-      setRows(parsed.rows || []);
-      setSelectedQuarter(parsed.selectedQuarter || "");
+      if (parsed?.supplier) {
+        setSupplier(parsed.supplier);
+      }
     } catch (err) {
       console.error("Restore SIIS state error:", err);
     }
   }, []);
 
-  /* SAVE STATE */
+  /* ================= FETCH DATA WHEN SUPPLIER READY ================= */
+  useEffect(() => {
+    if (!supplier?.id) return;
+
+    fetchSIISData(supplier.id);
+  }, [supplier?.id]);
+
+  /* ================= SAVE SUPPLIER STATE ================= */
   useEffect(() => {
     if (!supplier) return;
 
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({
-        supplier,
-        rows,
-        selectedQuarter,
-      })
+      JSON.stringify({ supplier })
     );
-  }, [supplier, rows, selectedQuarter]);
+  }, [supplier]);
 
-  async function loadData(s: Supplier) {
-    const res = await fetch(`/api/siis?supplier_id=${s.id}`);
-    const json = await res.json();
-    const data: Row[] = Array.isArray(json) ? json : [];
+  /* ================= FETCH SIIS DATA ================= */
+  async function fetchSIISData(supplierId: string) {
+    try {
+      const res = await fetch(
+        `/api/siis?supplier_id=${supplierId}`,
+        { cache: "no-store" }
+      );
+      const json = await res.json();
+      const data: Row[] = Array.isArray(json) ? json : [];
 
-    setSupplier(s);
-    setRows(data);
+      setRows(data);
 
-    const qs = Array.from(new Set(data.map((r) => r.quarter)));
-    setSelectedQuarter(qs.length === 1 ? qs[0] : "");
+      const qs = Array.from(
+        new Set(data.map((r) => r.quarter))
+      );
+      setSelectedQuarter(qs.length === 1 ? qs[0] : "");
+    } catch (err) {
+      console.error("Fetch SIIS error:", err);
+      setRows([]);
+    }
   }
 
-  /* UNIQUE QUARTERS */
+  /* ================= UNIQUE QUARTERS ================= */
   const quarters = useMemo(
     () => Array.from(new Set(rows.map((r) => r.quarter))),
     [rows]
   );
 
-  /* FILTER BY QUARTER */
+  /* ================= FILTER BY QUARTER ================= */
   const filteredRows = useMemo(() => {
     if (!selectedQuarter) return rows;
     return rows.filter((r) => r.quarter === selectedQuarter);
   }, [rows, selectedQuarter]);
 
-  /* GROUP IPD */
+  /* ================= GROUP IPD ================= */
   const ipds = useMemo(
     () =>
       Array.from(
@@ -133,7 +146,7 @@ export default function ViewSIISPage() {
     [filteredRows]
   );
 
-  /* GET MONTH PRICE */
+  /* ================= GET MONTH PRICE ================= */
   function getMonthPrice(ipd: string, monthIndex: number) {
     for (const r of filteredRows) {
       const q = r.quarter.split("-")[0];
@@ -141,7 +154,7 @@ export default function ViewSIISPage() {
       if (!months) continue;
 
       if (months.includes(monthIndex) && r.ipd === ipd) {
-        return Number(r.price);
+        return Number(r.price || 0);
       }
     }
     return 0;
@@ -161,7 +174,7 @@ export default function ViewSIISPage() {
           const s = suppliers.find(
             (x) => x.id === e.target.value
           );
-          if (s) loadData(s);
+          if (s) setSupplier(s);
         }}
       >
         <option value="">-- Select Supplier --</option>
@@ -181,7 +194,6 @@ export default function ViewSIISPage() {
           <div>INCOTERMS: {supplier.incoterm}</div>
           <div>TERMS OF PAYMENT: {supplier.top}</div>
 
-          {/* PRICE VALIDITY */}
           <div className="flex items-center gap-2">
             <span>PRICE VALIDITY:</span>
 
