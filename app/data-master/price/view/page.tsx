@@ -109,7 +109,6 @@ export default function ViewPricePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ipd_siis: editRow.ipd_siis,
           description: editRow.description,
           steel_spec: editRow.steel_spec,
           material_source: editRow.material_source,
