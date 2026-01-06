@@ -18,192 +18,68 @@ type PriceRow = {
   start_date: string;
   end_date: string;
   quarter: string;
+
   detail_id: string;
-  ipd_siis: string;
-  description: string;
-  steel_spec: string;
-  material_source: string;
-  tube_route: string;
+  ipd_quotation: string;
+
+  ipd_siis: string | null;
+  description: string | null;
+
+  steel_spec: string | null;
+  material_source: string | null;
   price: string;
 };
-
-/* ================= STORAGE KEY ================= */
-
-const STORAGE_KEY = "view-price-state";
 
 /* ================= PAGE ================= */
 
 export default function ViewPricePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [selectedSupplier, setSelectedSupplier] =
-    useState<Supplier | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [quarters, setQuarters] = useState<string[]>([]);
   const [selectedQuarter, setSelectedQuarter] = useState("");
   const [rows, setRows] = useState<PriceRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  /* ===== INLINE EDIT STATE ===== */
-  const [editId, setEditId] = useState<string | null>(null);
-  const [editRow, setEditRow] = useState<Partial<PriceRow>>({});
-
   const headerInfo = rows.length > 0 ? rows[0] : null;
 
-  /* ================= LOAD SUPPLIERS ================= */
-
+  /* ================= LOAD SUPPLIER ================= */
   useEffect(() => {
     fetch("/api/supplier")
       .then((r) => r.json())
       .then(setSuppliers);
   }, []);
 
-  /* ================= LOAD SAVED STATE ================= */
-
+  /* ================= LOAD QUARTER ================= */
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved || suppliers.length === 0) return;
+    if (!selectedSupplier) return;
 
-    const parsed = JSON.parse(saved);
-    const supplier = suppliers.find(
-      (s) => s.id === parsed.supplier_id
-    );
-    if (!supplier) return;
-
-    setSelectedSupplier(supplier);
-    setSelectedQuarter(parsed.quarter || "");
-
-    fetch(
-      `/api/price?list_quarter=true&supplier_id=${supplier.id}`
-    )
+    fetch(`/api/price?list_quarter=true&supplier_id=${selectedSupplier.id}`)
       .then((r) => r.json())
-      .then((qList: string[]) => {
-        setQuarters(qList);
-        fetchPrice(supplier.id, parsed.quarter);
-      });
-  }, [suppliers]);
-
-  /* ================= LOAD QUARTERS ================= */
-
-  useEffect(() => {
-    if (!selectedSupplier) {
-      setQuarters([]);
-      setSelectedQuarter("");
-      setRows([]);
-      return;
-    }
-
-    fetch(
-      `/api/price?list_quarter=true&supplier_id=${selectedSupplier.id}`
-    )
-      .then((r) => r.json())
-      .then((data: string[]) => {
-        setQuarters(data);
-        setSelectedQuarter((prev) =>
-          data.includes(prev) ? prev : ""
-        );
-      });
+      .then(setQuarters);
   }, [selectedSupplier]);
 
   /* ================= FETCH PRICE ================= */
-
-  async function fetchPrice(
-    supplierId?: string,
-    quarterVal?: string
-  ) {
-    const sId = supplierId || selectedSupplier?.id;
-    const qVal = quarterVal ?? selectedQuarter;
-    if (!sId) return;
+  async function fetchPrice() {
+    if (!selectedSupplier) return;
 
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        supplier_id: sId,
+        supplier_id: selectedSupplier.id,
       });
-      if (qVal) params.append("quarter", qVal);
+      if (selectedQuarter) params.append("quarter", selectedQuarter);
 
       const res = await fetch(`/api/price?${params}`);
       const data = await res.json();
       setRows(data);
-
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          supplier_id: sId,
-          quarter: qVal,
-        })
-      );
-    } catch (err) {
-      console.error(err);
+    } catch {
       setRows([]);
     } finally {
       setLoading(false);
     }
   }
 
-  /* ================= EDIT ================= */
-
-  function startEdit(row: PriceRow) {
-    setEditId(row.detail_id);
-    setEditRow({ ...row });
-  }
-
-  function cancelEdit() {
-    setEditId(null);
-    setEditRow({});
-  }
-
-  async function saveEdit() {
-    if (!editId) return;
-
-    try {
-      const res = await fetch(`/api/price/detail/${editId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ipd_siis: editRow.ipd_siis,
-          description: editRow.description,
-          steel_spec: editRow.steel_spec,
-          material_source: editRow.material_source,
-          tube_route: editRow.tube_route,
-          price: editRow.price,
-        }),
-      });
-
-      if (!res.ok) throw new Error();
-
-      alert("Data berhasil diupdate");
-      cancelEdit();
-      fetchPrice();
-    } catch {
-      alert("Gagal update data");
-    }
-  }
-
-  /* ================= DELETE ================= */
-
-  async function handleDelete(detailId: string) {
-    if (!confirm("Yakin ingin menghapus data ini?")) return;
-
-    try {
-      const res = await fetch(
-        `/api/price/detail/${detailId}`,
-        { method: "DELETE" }
-      );
-
-      if (!res.ok) {
-        alert("Gagal menghapus data");
-        return;
-      }
-
-      alert("Data berhasil dihapus");
-      fetchPrice();
-    } catch (err) {
-      console.error(err);
-      alert("Terjadi kesalahan");
-    }
-  }
-
   /* ================= UI ================= */
-
   return (
     <div className="p-4 space-y-4 text-xs">
       <h1 className="text-2xl font-bold">View Price</h1>
@@ -215,9 +91,7 @@ export default function ViewPricePage() {
           value={selectedSupplier?.id || ""}
           onChange={(e) =>
             setSelectedSupplier(
-              suppliers.find(
-                (s) => s.id === e.target.value
-              ) || null
+              suppliers.find((s) => s.id === e.target.value) || null
             )
           }
         >
@@ -245,14 +119,14 @@ export default function ViewPricePage() {
 
         <button
           className="bg-blue-600 text-white px-3 py-1"
-          onClick={() => fetchPrice()}
+          onClick={fetchPrice}
           disabled={!selectedSupplier || loading}
         >
           {loading ? "Loading..." : "View Price"}
         </button>
       </div>
 
-      {/* SUPPLIER INFO */}
+      {/* HEADER INFO */}
       {selectedSupplier && (
         <div className="border rounded bg-gray-50 p-3 grid grid-cols-2 gap-2">
           <div><b>Supplier Code:</b> {selectedSupplier.supplier_code}</div>
@@ -271,156 +145,33 @@ export default function ViewPricePage() {
         <table className="min-w-[1100px] border text-xs">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-1 w-10">No</th>
+              <th className="border px-2 py-1">No</th>
               <th className="border px-2 py-1">IPD</th>
               <th className="border px-2 py-1">Description</th>
               <th className="border px-2 py-1">Steel Spec</th>
               <th className="border px-2 py-1">Material Source</th>
-              <th className="border px-2 py-1">Tube Route</th>
               <th className="border px-2 py-1 text-right">Price</th>
-              <th className="border px-2 py-1 w-28">Action</th>
             </tr>
           </thead>
 
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="border py-6 text-center text-gray-400">
+                <td colSpan={6} className="border py-6 text-center text-gray-400">
                   No data
                 </td>
               </tr>
             ) : (
-              rows.map((r, i) => {
-                const isEdit = editId === r.detail_id;
-
-                return (
-                  <tr key={r.detail_id}>
-                    <td className="border px-2 py-1 text-center">{i + 1}</td>
-
-                    <td className="border px-2 py-1">
-                      {isEdit ? (
-                        <input
-                          className="w-full border px-1"
-                          value={editRow.ipd_siis || ""}
-                          onChange={(e) =>
-                            setEditRow({ ...editRow, ipd_siis: e.target.value })
-                          }
-                        />
-                      ) : (
-                        r.ipd_siis
-                      )}
-                    </td>
-
-                    <td className="border px-2 py-1">
-                      {isEdit ? (
-                        <input
-                          className="w-full border px-1"
-                          value={editRow.description || ""}
-                          onChange={(e) =>
-                            setEditRow({ ...editRow, description: e.target.value })
-                          }
-                        />
-                      ) : (
-                        r.description
-                      )}
-                    </td>
-
-                    <td className="border px-2 py-1">
-                      {isEdit ? (
-                        <input
-                          className="w-full border px-1"
-                          value={editRow.steel_spec || ""}
-                          onChange={(e) =>
-                            setEditRow({ ...editRow, steel_spec: e.target.value })
-                          }
-                        />
-                      ) : (
-                        r.steel_spec
-                      )}
-                    </td>
-
-                    <td className="border px-2 py-1">
-                      {isEdit ? (
-                        <input
-                          className="w-full border px-1"
-                          value={editRow.material_source || ""}
-                          onChange={(e) =>
-                            setEditRow({
-                              ...editRow,
-                              material_source: e.target.value,
-                            })
-                          }
-                        />
-                      ) : (
-                        r.material_source
-                      )}
-                    </td>
-
-                    <td className="border px-2 py-1">
-                      {isEdit ? (
-                        <input
-                          className="w-full border px-1"
-                          value={editRow.tube_route || ""}
-                          onChange={(e) =>
-                            setEditRow({ ...editRow, tube_route: e.target.value })
-                          }
-                        />
-                      ) : (
-                        r.tube_route
-                      )}
-                    </td>
-
-                    <td className="border px-2 py-1 text-right">
-                      {isEdit ? (
-                        <input
-                          type="number"
-                          className="w-full border px-1 text-right"
-                          value={editRow.price || ""}
-                          onChange={(e) =>
-                            setEditRow({ ...editRow, price: e.target.value })
-                          }
-                        />
-                      ) : (
-                        r.price
-                      )}
-                    </td>
-
-                    <td className="border px-2 py-1 text-center">
-                      {isEdit ? (
-                        <div className="flex justify-center gap-1">
-                          <button
-                            onClick={saveEdit}
-                            className="px-2 py-0.5 bg-green-600 text-white rounded"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={cancelEdit}
-                            className="px-2 py-0.5 bg-gray-400 text-white rounded"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex justify-center gap-1">
-                          <button
-                            onClick={() => startEdit(r)}
-                            className="px-2 py-0.5 bg-yellow-500 text-white rounded"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(r.detail_id)}
-                            className="px-2 py-0.5 bg-red-600 text-white rounded"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
+              rows.map((r, i) => (
+                <tr key={r.detail_id}>
+                  <td className="border px-2 py-1 text-center">{i + 1}</td>
+                  <td className="border px-2 py-1">{r.ipd_siis || "-"}</td>
+                  <td className="border px-2 py-1">{r.description || "-"}</td>
+                  <td className="border px-2 py-1">{r.steel_spec || "-"}</td>
+                  <td className="border px-2 py-1">{r.material_source || "-"}</td>
+                  <td className="border px-2 py-1 text-right">{r.price}</td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
