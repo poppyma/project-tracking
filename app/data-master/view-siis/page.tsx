@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 /* ================= TYPES ================= */
 type Supplier = {
@@ -63,7 +66,7 @@ export default function ViewSIISPage() {
     } catch {}
   }, []);
 
-  /* ================= FETCH WHEN SUPPLIER READY ================= */
+  /* ================= FETCH DATA ================= */
   useEffect(() => {
     if (!supplier?.id) return;
     fetchSIISData(supplier.id);
@@ -86,7 +89,6 @@ export default function ViewSIISPage() {
       );
       const json = await res.json();
       const data: Row[] = Array.isArray(json) ? json : [];
-
       setRows(data);
 
       const qs = Array.from(new Set(data.map((r) => r.quarter)));
@@ -108,7 +110,7 @@ export default function ViewSIISPage() {
     return rows.filter((r) => r.quarter === selectedQuarter);
   }, [rows, selectedQuarter]);
 
-  /* ================= GROUP IPD (KEY = ipd_quotation) ================= */
+  /* ================= GROUP BY IPD (KEY = ipd_quotation) ================= */
   const ipds = useMemo(
     () =>
       Array.from(
@@ -116,6 +118,7 @@ export default function ViewSIISPage() {
           filteredRows.map((r) => [
             r.ipd_quotation,
             {
+              ipd_quotation: r.ipd_quotation,
               ipd: r.ipd || "-",
               description: r.description || "-",
               material_source: r.material_source || "-",
@@ -141,6 +144,80 @@ export default function ViewSIISPage() {
       }
     }
     return 0;
+  }
+
+  /* ================= DOWNLOAD EXCEL ================= */
+  function downloadExcel() {
+    if (!supplier || !selectedQuarter) return;
+
+    const header = [
+      "IPD",
+      "Description",
+      "Material Source",
+      ...MONTHS,
+    ];
+
+    const data = ipds.map((i) => [
+      i.ipd,
+      i.description,
+      i.material_source,
+      ...MONTHS.map((_, mIdx) =>
+        getMonthPrice(i.ipd_quotation, mIdx)
+      ),
+    ]);
+
+    const ws = XLSX.utils.aoa_to_sheet([header, ...data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "SIIS");
+
+    XLSX.writeFile(
+      wb,
+      `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
+    );
+  }
+
+  /* ================= DOWNLOAD PDF ================= */
+  function downloadPDF() {
+    if (!supplier || !selectedQuarter) return;
+
+    const doc = new jsPDF("l", "mm", "a4");
+
+    doc.setFontSize(12);
+    doc.text(
+      `SIIS PRICE - ${supplier.supplier_name}`,
+      14,
+      10
+    );
+    doc.setFontSize(10);
+    doc.text(`Quarter: ${selectedQuarter}`, 14, 16);
+
+    const tableColumn = [
+      "IPD",
+      "Description",
+      "Material Source",
+      ...MONTHS,
+    ];
+
+    const tableRows = ipds.map((i) => [
+      i.ipd,
+      i.description,
+      i.material_source,
+      ...MONTHS.map((_, mIdx) =>
+        getMonthPrice(i.ipd_quotation, mIdx).toFixed(4)
+      ),
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 22,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [200, 200, 200] },
+    });
+
+    doc.save(
+      `SIIS_${supplier.supplier_code}_${selectedQuarter}.pdf`
+    );
   }
 
   return (
@@ -198,6 +275,24 @@ export default function ViewSIISPage() {
               </select>
             )}
           </div>
+
+          {/* DOWNLOAD BUTTONS */}
+          {selectedQuarter && (
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={downloadExcel}
+                className="bg-green-600 text-white px-3 py-1 rounded"
+              >
+                Download Excel
+              </button>
+              <button
+                onClick={downloadPDF}
+                className="bg-red-600 text-white px-3 py-1 rounded"
+              >
+                Download PDF
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -221,7 +316,7 @@ export default function ViewSIISPage() {
 
             <tbody>
               {ipds.map((i, idx) => (
-                <tr key={i.ipd + idx}>
+                <tr key={i.ipd_quotation}>
                   <td className="border px-2 text-center">
                     {idx + 1}
                   </td>
@@ -235,11 +330,7 @@ export default function ViewSIISPage() {
                       className="border px-2 text-right"
                     >
                       {getMonthPrice(
-                        rows.find(
-                          (r) =>
-                            r.ipd === i.ipd &&
-                            r.material_source === i.material_source
-                        )?.ipd_quotation || "",
+                        i.ipd_quotation,
                         mIdx
                       ).toFixed(4)}
                     </td>
