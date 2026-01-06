@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 type Supplier = {
   id: string;
@@ -26,6 +26,8 @@ export default function InputSupplierPage() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState({
     supplier_code: "",
@@ -51,6 +53,35 @@ export default function InputSupplierPage() {
       alert("Gagal mengambil data supplier");
     }
   }
+
+  async function handleUploadCSV(file: File) {
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/supplier/upload-csv", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        alert(json.message || "Gagal upload CSV");
+        return;
+      }
+
+      alert("Upload CSV berhasil");
+      loadData(); // refresh table
+    } catch (err) {
+      alert("Terjadi kesalahan saat upload CSV");
+    } finally {
+      setUploading(false);
+    }
+  }
+
 
   useEffect(() => {
     loadData();
@@ -172,19 +203,45 @@ export default function InputSupplierPage() {
     <div className="space-y-2">
 
       {/* HEADER */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-2">
         <h1 className="text-sm font-semibold">Supplier Master</h1>
-        <button
-          onClick={() => {
-            setShowForm((v) => !v);
-            setEditId(null);
-          }}
-          className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
-          disabled={loading}
-        >
-          {showForm ? "Close" : "+ Add Supplier"}
-        </button>
+
+        <div className="flex gap-2">
+          {/* Upload CSV */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3 py-1.5 text-xs rounded bg-green-600 text-white"
+            disabled={uploading}
+          >
+            {uploading ? "Uploading..." : "Upload CSV"}
+          </button>
+
+          {/* Add Supplier */}
+          <button
+            onClick={() => {
+              setShowForm((v) => !v);
+              setEditId(null);
+            }}
+            className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
+            disabled={loading}
+          >
+            {showForm ? "Close" : "+ Add Supplier"}
+          </button>
+        </div>
       </div>
+      
+      <input
+        type="file"
+        accept=".csv"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleUploadCSV(file);
+          e.target.value = ""; // reset input
+        }}
+      />
+
 
       {/* SEARCH */}
       <input
