@@ -86,8 +86,15 @@ export default function ViewPricePage() {
   /* ================= EDIT ================= */
   function startEdit(row: PriceRow) {
     setEditId(row.detail_id);
-    setEditRow({ ...row });
+    setEditRow({
+      ...row,
+      price:
+        row.price && !isNaN(Number(row.price))
+          ? String(row.price)
+          : "",
+    });
   }
+
 
   function cancelEdit() {
     setEditId(null);
@@ -106,6 +113,7 @@ export default function ViewPricePage() {
           description: editRow.description,
           steel_spec: editRow.steel_spec,
           material_source: editRow.material_source,
+          tube_route: null, // 🔥 WAJIB ADA
           price: editRow.price,
         }),
       });
