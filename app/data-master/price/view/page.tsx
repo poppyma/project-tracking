@@ -40,6 +40,10 @@ export default function ViewPricePage() {
   const [rows, setRows] = useState<PriceRow[]>([]);
   const [loading, setLoading] = useState(false);
 
+  /* ===== EDIT STATE ===== */
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editRow, setEditRow] = useState<Partial<PriceRow>>({});
+
   const headerInfo = rows.length > 0 ? rows[0] : null;
 
   /* ================= LOAD SUPPLIER ================= */
@@ -76,6 +80,61 @@ export default function ViewPricePage() {
       setRows([]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  /* ================= EDIT ================= */
+  function startEdit(row: PriceRow) {
+    setEditId(row.detail_id);
+    setEditRow({ ...row });
+  }
+
+  function cancelEdit() {
+    setEditId(null);
+    setEditRow({});
+  }
+
+  async function saveEdit() {
+    if (!editId) return;
+
+    try {
+      const res = await fetch(`/api/price/detail/${editId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ipd_siis: editRow.ipd_siis,
+          description: editRow.description,
+          steel_spec: editRow.steel_spec,
+          material_source: editRow.material_source,
+          price: editRow.price,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      alert("Data berhasil diupdate");
+      cancelEdit();
+      fetchPrice();
+    } catch {
+      alert("Gagal update data");
+    }
+  }
+
+  /* ================= DELETE ================= */
+  async function handleDelete(id: string) {
+    if (!confirm("Yakin ingin menghapus data ini?")) return;
+
+    try {
+      const res = await fetch(`/api/price/detail/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error();
+
+      alert("Data berhasil dihapus");
+      fetchPrice();
+    } catch {
+      alert("Gagal menghapus data");
     }
   }
 
@@ -142,7 +201,7 @@ export default function ViewPricePage() {
 
       {/* TABLE */}
       <div className="overflow-x-auto">
-        <table className="min-w-[1100px] border text-xs">
+        <table className="min-w-[1200px] border text-xs">
           <thead className="bg-gray-100">
             <tr>
               <th className="border px-2 py-1">No</th>
@@ -151,27 +210,135 @@ export default function ViewPricePage() {
               <th className="border px-2 py-1">Steel Spec</th>
               <th className="border px-2 py-1">Steel Supplier</th>
               <th className="border px-2 py-1 text-right">Price</th>
+              <th className="border px-2 py-1 w-28">Action</th>
             </tr>
           </thead>
 
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="border py-6 text-center text-gray-400">
+                <td colSpan={7} className="border py-6 text-center text-gray-400">
                   No data
                 </td>
               </tr>
             ) : (
-              rows.map((r, i) => (
-                <tr key={r.detail_id}>
-                  <td className="border px-2 py-1 text-center">{i + 1}</td>
-                  <td className="border px-2 py-1">{r.ipd_siis || "-"}</td>
-                  <td className="border px-2 py-1">{r.description || "-"}</td>
-                  <td className="border px-2 py-1">{r.steel_spec || "-"}</td>
-                  <td className="border px-2 py-1">{r.material_source || "-"}</td>
-                  <td className="border px-2 py-1 text-right">{r.price}</td>
-                </tr>
-              ))
+              rows.map((r, i) => {
+                const isEdit = editId === r.detail_id;
+
+                return (
+                  <tr key={r.detail_id}>
+                    <td className="border px-2 py-1 text-center">{i + 1}</td>
+
+                    <td className="border px-2 py-1">
+                      {isEdit ? (
+                        <input
+                          className="w-full border px-1"
+                          value={editRow.ipd_siis || ""}
+                          onChange={(e) =>
+                            setEditRow({ ...editRow, ipd_siis: e.target.value })
+                          }
+                        />
+                      ) : (
+                        r.ipd_siis || "-"
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1">
+                      {isEdit ? (
+                        <input
+                          className="w-full border px-1"
+                          value={editRow.description || ""}
+                          onChange={(e) =>
+                            setEditRow({ ...editRow, description: e.target.value })
+                          }
+                        />
+                      ) : (
+                        r.description || "-"
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1">
+                      {isEdit ? (
+                        <input
+                          className="w-full border px-1"
+                          value={editRow.steel_spec || ""}
+                          onChange={(e) =>
+                            setEditRow({ ...editRow, steel_spec: e.target.value })
+                          }
+                        />
+                      ) : (
+                        r.steel_spec || "-"
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1">
+                      {isEdit ? (
+                        <input
+                          className="w-full border px-1"
+                          value={editRow.material_source || ""}
+                          onChange={(e) =>
+                            setEditRow({
+                              ...editRow,
+                              material_source: e.target.value,
+                            })
+                          }
+                        />
+                      ) : (
+                        r.material_source || "-"
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1 text-right">
+                      {isEdit ? (
+                        <input
+                          type="number"
+                          className="w-full border px-1 text-right"
+                          value={editRow.price || ""}
+                          onChange={(e) =>
+                            setEditRow({ ...editRow, price: e.target.value })
+                          }
+                        />
+                      ) : (
+                        r.price
+                      )}
+                    </td>
+
+                    <td className="border px-2 py-1 text-center">
+                      {isEdit ? (
+                        <div className="flex justify-center gap-1">
+                          <button
+                            onClick={saveEdit}
+                            className="px-2 py-0.5 bg-green-600 text-white rounded"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="px-2 py-0.5 bg-gray-400 text-white rounded"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-center gap-1">
+                          <button
+                            onClick={() => startEdit(r)}
+                            className="px-2 py-0.5 bg-yellow-500 text-white rounded"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(r.detail_id)}
+                            className="px-2 py-0.5 bg-red-600 text-white rounded"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
