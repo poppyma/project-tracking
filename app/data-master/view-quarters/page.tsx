@@ -14,9 +14,10 @@ type Supplier = {
 };
 
 type Row = {
-  ipd: string;
-  description: string;
-  material_source: string;
+  ipd_quotation: string;
+  ipd: string | null;
+  description: string | null;
+  material_source: string | null;
   quarter: string;
   price: string;
 };
@@ -38,7 +39,6 @@ export default function ViewPriceQuartersPage() {
         `/api/price-quarters?supplier_id=${supplierId}`,
         { cache: "no-store" }
       );
-
       const json = await res.json();
       setRows(Array.isArray(json) ? json : []);
     } catch (e) {
@@ -55,36 +55,28 @@ export default function ViewPriceQuartersPage() {
       .catch(console.error);
   }, []);
 
-  /* ================= RESTORE SUPPLIER ON FIRST LOAD ================= */
+  /* ================= RESTORE SUPPLIER ================= */
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
 
     try {
       const parsed = JSON.parse(saved);
-
-      // ✅ HANYA restore supplier
       if (parsed?.supplier) {
         setSupplier(parsed.supplier);
       }
-    } catch (e) {
-      console.error("Failed restore state", e);
-    }
+    } catch {}
   }, []);
 
-  /* ================= FETCH PRICE QUARTERS WHEN SUPPLIER READY ================= */
+  /* ================= FETCH WHEN SUPPLIER READY ================= */
   useEffect(() => {
     if (!supplier?.id) return;
-
-    // 🔥 WAJIB fetch ulang dari API
     fetchPriceQuarters(supplier.id);
   }, [supplier?.id]);
 
-  /* ================= SAVE SUPPLIER STATE ================= */
+  /* ================= SAVE SUPPLIER ================= */
   useEffect(() => {
     if (!supplier) return;
-
-    // ✅ SIMPAN HANYA supplier (JANGAN rows)
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ supplier })
@@ -92,24 +84,19 @@ export default function ViewPriceQuartersPage() {
   }, [supplier]);
 
   async function loadData(supplierId: string, selected: Supplier) {
-    const res = await fetch(
-      `/api/price-quarters?supplier_id=${supplierId}`
-    );
-    const json = await res.json();
-
     setSupplier(selected);
-    setRows(Array.isArray(json) ? json : []);
+    fetchPriceQuarters(supplierId);
   }
 
-  /* GROUP IPD */
+  /* ================= GROUP BY IPD ================= */
   const ipds = Array.from(
     new Map(
       rows.map((r) => [
-        r.ipd,
+        r.ipd || r.ipd_quotation,
         {
-          ipd: r.ipd,
-          description: r.description,
-          material_source: r.material_source,
+          ipd: r.ipd || "-",
+          description: r.description || "-",
+          material_source: r.material_source || "-",
         },
       ])
     ).values()
@@ -117,7 +104,9 @@ export default function ViewPriceQuartersPage() {
 
   function getPrice(ipd: string, quarter: string) {
     const found = rows.find(
-      (r) => r.ipd === ipd && r.quarter === quarter
+      (r) =>
+        (r.ipd || r.ipd_quotation) === ipd &&
+        r.quarter === quarter
     );
     return found ? Number(found.price) : 0;
   }
@@ -197,17 +186,13 @@ export default function ViewPriceQuartersPage() {
               const q3 = getPrice(i.ipd, "Q3-2025");
 
               return (
-                <tr key={i.ipd}>
+                <tr key={i.ipd + idx}>
                   <td className="border px-2 text-center">
                     {idx + 1}
                   </td>
                   <td className="border px-2">{i.ipd}</td>
-                  <td className="border px-2">
-                    {i.description}
-                  </td>
-                  <td className="border px-2">
-                    {i.material_source}
-                  </td>
+                  <td className="border px-2">{i.description}</td>
+                  <td className="border px-2">{i.material_source}</td>
 
                   <td className="border px-2">{q4.toFixed(4)}</td>
                   <td className="border px-2">{q1.toFixed(4)}</td>
