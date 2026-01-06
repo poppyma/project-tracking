@@ -145,11 +145,7 @@ export default function PricePage() {
 
         <div className="text-xs text-gray-600">
           Format CSV:
-          <pre className="bg-white p-2 border mt-1">
-ipd_siis,steel_spec,material_source,price
-IPD-001,SUJ2,LOCAL,12500
-IPD-002,S45C,IMPORT,14300
-          </pre>
+          
         </div>
       </div>
 
