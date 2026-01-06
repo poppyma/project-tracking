@@ -141,17 +141,52 @@ export default function PricePage() {
       <div className="border p-4 bg-gray-50 rounded max-w-xl space-y-2">
         <div className="font-semibold">Upload Price CSV</div>
 
+        {/* Hidden file input */}
         <input
+          id="price-csv"
           type="file"
           accept=".csv"
+          className="hidden"
           onChange={(e) => setPriceFile(e.target.files?.[0] || null)}
         />
 
+        {/* Custom button */}
+        <label
+          htmlFor="price-csv"
+          tabIndex={0}
+          className="
+            inline-flex items-center gap-2
+            bg-blue-600 text-white
+            px-4 py-2 rounded
+            cursor-pointer
+            hover:bg-blue-700
+            focus:outline-none focus:ring-2 focus:ring-blue-400
+          "
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              document.getElementById("price-csv")?.click();
+            }
+          }}
+        >
+          📁 Choose CSV File
+        </label>
+
+        {/* File name */}
+        <div className="text-sm text-gray-700">
+          {priceFile ? (
+            <span className="font-medium">{priceFile.name}</span>
+          ) : (
+            <span className="italic text-gray-400">
+              No file selected
+            </span>
+          )}
+        </div>
+
         <div className="text-xs text-gray-600">
-          Format CSV:
-          
+          Format CSV: <code>.csv</code>
         </div>
       </div>
+
 
       {/* ================= ACTION ================= */}
       <button
