@@ -47,15 +47,13 @@ export async function PUT(
       `
       UPDATE price_detail
       SET
-        description = $1,
-        steel_spec = $2,
-        material_source = $3,
-        tube_route = $4,
-        price = $5
-      WHERE id = $6
+        steel_spec = $1,
+        material_source = $2,
+        tube_route = $3,
+        price = $4
+      WHERE id = $5
       `,
       [
-        body.description ?? null,
         body.steel_spec ?? null,
         body.material_source ?? null,
         body.tube_route ?? null,
@@ -63,7 +61,6 @@ export async function PUT(
         id,
       ]
     );
-
 
     return NextResponse.json({ success: true });
   } catch (err) {

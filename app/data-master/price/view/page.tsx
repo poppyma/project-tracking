@@ -109,12 +109,12 @@ export default function ViewPricePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          description: editRow.description,
-          steel_spec: editRow.steel_spec,
-          material_source: editRow.material_source,
-          tube_route: null, // 🔥 WAJIB ADA
+          steel_spec: editRow.steel_spec ?? null,
+          material_source: editRow.material_source ?? null,
+          tube_route: null,
           price: editRow.price,
-        }),
+        })
+
       });
 
       if (!res.ok) throw new Error();
