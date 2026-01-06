@@ -58,11 +58,11 @@ export async function POST(req: Request) {
     for (const r of parsed.data as any[]) {
       await query(
         `INSERT INTO price_detail
-         (header_id, ipd_siis, steel_spec, material_source, price)
+         (header_id, ipd_quotation, steel_spec, material_source, price)
          VALUES ($1,$2,$3,$4,$5)`,
         [
           header_id,
-          r.ipd_siis,
+          r.ipd_quotation,
           r.steel_spec,
           r.material_source,
           Number(String(r.price).replace(/,/g, "")),
