@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     // ambil supplier_id
     const supplierRes = await query(
-      `SELECT id FROM supplier WHERE supplier_code = $1`,
+      `SELECT id FROM supplier_master WHERE supplier_code = $1`,
       [supplier_code]
     );
     const supplier_id = supplierRes.rows[0]?.id;
