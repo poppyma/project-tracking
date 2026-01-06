@@ -112,11 +112,9 @@ export default function ViewPriceQuartersPage() {
   }
 
   function diff(curr: number, prev: number) {
-  if (prev === 0 && curr > 0) return "NEW";
-  if (prev === 0 && curr === 0) return "0%";
-  return (((curr - prev) / prev) * 100).toFixed(2) + "%";
-}
-
+    if (prev === 0) return "0%";
+    return (((curr - prev) / prev) * 100).toFixed(2) + "%";
+  }
 
   return (
     <div className="p-4 text-xs space-y-4">
