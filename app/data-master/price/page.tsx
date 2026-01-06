@@ -25,8 +25,12 @@ export default function PricePage() {
   useEffect(() => {
     fetch("/api/supplier")
       .then((res) => res.json())
-      .then((json) => setSuppliers(json.rows || []));
+      .then((json) => {
+        console.log("SUPPLIER API:", json);
+        setSuppliers(Array.isArray(json) ? json : json.rows || []);
+      });
   }, []);
+
 
   /* =========================
      AUTO QUARTER
