@@ -13,7 +13,9 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
+    // 🔧 FIX UTAMA DI SINI
     const records = parse(buffer, {
+      delimiter: [";", ","], // ⬅️ INI KUNCINYA
       skip_empty_lines: true,
       trim: true,
       relax_column_count: true,
@@ -29,12 +31,13 @@ export async function POST(req: Request) {
     let inserted = 0;
 
     for (const row of records) {
-      if (row.length < 6) continue;
+      // DEBUG GUARD
+      if (row.length < 11) continue;
 
-      /**
-       * STRATEGI AMAN:
-       * Ambil kolom dari BELAKANG
-       */
+      const supplier_code = row[0]?.trim();
+      const supplier_name = row[1]?.trim();
+
+      // ambil dari belakang (AMAN)
       const forwarder = row.at(-1) || null;
       const topRaw = row.at(-2);
       const incoterm = row.at(-3) || "";
@@ -44,16 +47,12 @@ export async function POST(req: Request) {
       const pic = row.at(-7) || "";
       const country = row.at(-8) || "";
 
+      const address = row.slice(2, row.length - 8).join(", ").trim();
+
       const top =
         topRaw && !isNaN(Number(topRaw))
           ? Number(topRaw)
           : null;
-
-      const supplier_code = row[0];
-      const supplier_name = row[1];
-
-      // address = semua kolom antara supplier_name dan country
-      const address = row.slice(2, row.length - 8).join(", ").trim();
 
       if (!supplier_code || !supplier_name) continue;
 
