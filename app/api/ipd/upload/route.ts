@@ -44,6 +44,7 @@ export async function POST(req: Request) {
       columns: true,
       skip_empty_lines: true,
       trim: true,
+      delimiter: [",", ";"],
     }) as IPDCSV[];
 
     if (!records.length) {
