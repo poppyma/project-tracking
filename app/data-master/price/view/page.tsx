@@ -149,7 +149,7 @@ export default function ViewPricePage() {
               <th className="border px-2 py-1">IPD</th>
               <th className="border px-2 py-1">Description</th>
               <th className="border px-2 py-1">Steel Spec</th>
-              <th className="border px-2 py-1">Material Source</th>
+              <th className="border px-2 py-1">Steel Supplier</th>
               <th className="border px-2 py-1 text-right">Price</th>
             </tr>
           </thead>
