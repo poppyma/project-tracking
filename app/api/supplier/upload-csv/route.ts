@@ -53,6 +53,8 @@ export async function POST(req: Request) {
       columns: true,
       skip_empty_lines: true,
       trim: true,
+      delimiter: [",", ";"], 
+      relax_column_count: true,
     }) as SupplierCSV[];
 
     if (!records.length) {
