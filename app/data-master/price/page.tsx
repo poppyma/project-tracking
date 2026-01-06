@@ -1,5 +1,6 @@
 "use client";
 
+import { headers } from "next/headers";
 import { useEffect, useState } from "react";
 
 type Supplier = {
