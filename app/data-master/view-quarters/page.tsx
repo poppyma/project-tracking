@@ -92,7 +92,7 @@ export default function ViewPriceQuartersPage() {
   const ipds = Array.from(
     new Map(
       rows.map((r) => [
-        r.ipd || r.ipd_quotation,
+        r.ipd_quotation,
         {
           ipd: r.ipd || "-",
           description: r.description || "-",
