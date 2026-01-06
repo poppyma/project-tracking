@@ -14,9 +14,10 @@ type Supplier = {
 };
 
 type Row = {
-  ipd: string;
-  description: string;
-  material_source: string;
+  ipd_quotation: string;
+  ipd: string | null;
+  description: string | null;
+  material_source: string | null;
   quarter: string;
   price: string;
 };
@@ -26,18 +27,8 @@ const STORAGE_KEY = "view_siis_supplier_state";
 
 /* ================= MONTHS ================= */
 const MONTHS = [
-  "JANUARY",
-  "FEBRUARY",
-  "MARCH",
-  "APRIL",
-  "MAY",
-  "JUNE",
-  "JULY",
-  "AUGUST",
-  "SEPTEMBER",
-  "OCTOBER",
-  "NOVEMBER",
-  "DECEMBER",
+  "JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE",
+  "JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER",
 ];
 
 /* ================= QUARTER → MONTH MAP ================= */
@@ -62,39 +53,31 @@ export default function ViewSIISPage() {
       .catch(console.error);
   }, []);
 
-  /* ================= RESTORE SUPPLIER ONLY ================= */
+  /* ================= RESTORE SUPPLIER ================= */
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
-
     try {
       const parsed = JSON.parse(saved);
-      if (parsed?.supplier) {
-        setSupplier(parsed.supplier);
-      }
-    } catch (err) {
-      console.error("Restore SIIS state error:", err);
-    }
+      if (parsed?.supplier) setSupplier(parsed.supplier);
+    } catch {}
   }, []);
 
-  /* ================= FETCH DATA WHEN SUPPLIER READY ================= */
+  /* ================= FETCH WHEN SUPPLIER READY ================= */
   useEffect(() => {
     if (!supplier?.id) return;
-
     fetchSIISData(supplier.id);
   }, [supplier?.id]);
 
-  /* ================= SAVE SUPPLIER STATE ================= */
+  /* ================= SAVE STATE ================= */
   useEffect(() => {
     if (!supplier) return;
-
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ supplier })
     );
   }, [supplier]);
 
-  /* ================= FETCH SIIS DATA ================= */
   async function fetchSIISData(supplierId: string) {
     try {
       const res = await fetch(
@@ -106,12 +89,9 @@ export default function ViewSIISPage() {
 
       setRows(data);
 
-      const qs = Array.from(
-        new Set(data.map((r) => r.quarter))
-      );
+      const qs = Array.from(new Set(data.map((r) => r.quarter)));
       setSelectedQuarter(qs.length === 1 ? qs[0] : "");
-    } catch (err) {
-      console.error("Fetch SIIS error:", err);
+    } catch {
       setRows([]);
     }
   }
@@ -128,17 +108,17 @@ export default function ViewSIISPage() {
     return rows.filter((r) => r.quarter === selectedQuarter);
   }, [rows, selectedQuarter]);
 
-  /* ================= GROUP IPD ================= */
+  /* ================= GROUP IPD (KEY = ipd_quotation) ================= */
   const ipds = useMemo(
     () =>
       Array.from(
         new Map(
           filteredRows.map((r) => [
-            r.ipd,
+            r.ipd_quotation,
             {
-              ipd: r.ipd,
-              description: r.description,
-              material_source: r.material_source,
+              ipd: r.ipd || "-",
+              description: r.description || "-",
+              material_source: r.material_source || "-",
             },
           ])
         ).values()
@@ -147,13 +127,16 @@ export default function ViewSIISPage() {
   );
 
   /* ================= GET MONTH PRICE ================= */
-  function getMonthPrice(ipd: string, monthIndex: number) {
+  function getMonthPrice(ipdQuotation: string, monthIndex: number) {
     for (const r of filteredRows) {
       const q = r.quarter.split("-")[0];
       const months = QUARTER_MONTH_MAP[q];
       if (!months) continue;
 
-      if (months.includes(monthIndex) && r.ipd === ipd) {
+      if (
+        months.includes(monthIndex) &&
+        r.ipd_quotation === ipdQuotation
+      ) {
         return Number(r.price || 0);
       }
     }
@@ -196,7 +179,6 @@ export default function ViewSIISPage() {
 
           <div className="flex items-center gap-2">
             <span>PRICE VALIDITY:</span>
-
             {quarters.length <= 1 ? (
               <strong>{quarters[0]}</strong>
             ) : (
@@ -207,9 +189,7 @@ export default function ViewSIISPage() {
                   setSelectedQuarter(e.target.value)
                 }
               >
-                <option value="">
-                  -- Select Quarter --
-                </option>
+                <option value="">-- Select Quarter --</option>
                 {quarters.map((q) => (
                   <option key={q} value={q}>
                     {q}
@@ -230,9 +210,7 @@ export default function ViewSIISPage() {
                 <th className="border px-2">No</th>
                 <th className="border px-2">IPD</th>
                 <th className="border px-2">DESC</th>
-                <th className="border px-2">
-                  Material Source
-                </th>
+                <th className="border px-2">Material Source</th>
                 {MONTHS.map((m) => (
                   <th key={m} className="border px-2">
                     {m}
@@ -243,24 +221,27 @@ export default function ViewSIISPage() {
 
             <tbody>
               {ipds.map((i, idx) => (
-                <tr key={i.ipd}>
+                <tr key={i.ipd + idx}>
                   <td className="border px-2 text-center">
                     {idx + 1}
                   </td>
                   <td className="border px-2">{i.ipd}</td>
-                  <td className="border px-2">
-                    {i.description}
-                  </td>
-                  <td className="border px-2">
-                    {i.material_source}
-                  </td>
+                  <td className="border px-2">{i.description}</td>
+                  <td className="border px-2">{i.material_source}</td>
 
                   {MONTHS.map((_, mIdx) => (
                     <td
                       key={mIdx}
                       className="border px-2 text-right"
                     >
-                      {getMonthPrice(i.ipd, mIdx).toFixed(4)}
+                      {getMonthPrice(
+                        rows.find(
+                          (r) =>
+                            r.ipd === i.ipd &&
+                            r.material_source === i.material_source
+                        )?.ipd_quotation || "",
+                        mIdx
+                      ).toFixed(4)}
                     </td>
                   ))}
                 </tr>
