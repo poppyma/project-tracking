@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     }
 
     /* ================================
-       PARSE CSV
+       READ & PARSE CSV
     ================================ */
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -53,8 +53,9 @@ export async function POST(req: Request) {
       columns: true,
       skip_empty_lines: true,
       trim: true,
-      delimiter: [",", ";"], 
-      relax_column_count: true,
+      delimiter: [",", ";"],          // 🔥 FIX Excel Indonesia
+      relax_column_count: true,       // 🔥 Toleransi kolom
+      bom: true,                      // 🔥 Hilangkan UTF-8 BOM
     }) as SupplierCSV[];
 
     if (!records.length) {
@@ -75,6 +76,19 @@ export async function POST(req: Request) {
       if (!row.supplier_code || !row.supplier_name) {
         skipped++;
         continue;
+      }
+
+      /* ================================
+         SAFE PARSE TOP (INTEGER)
+      ================================ */
+      let topValue: number | null = null;
+      if (row.top !== undefined && row.top !== null && row.top !== "") {
+        const parsed = Number(
+          String(row.top).replace(/[^0-9]/g, "")
+        );
+        if (!Number.isNaN(parsed)) {
+          topValue = parsed;
+        }
       }
 
       await query(
@@ -106,7 +120,7 @@ export async function POST(req: Request) {
           row.category ?? null,
           row.currency ?? null,
           row.incoterm ?? null,
-          row.top ? Number(row.top) : null,
+          topValue,               // ✅ TIDAK PERNAH NaN
           row.forwarder ?? null,
         ]
       );
