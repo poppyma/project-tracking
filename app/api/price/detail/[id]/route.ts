@@ -49,18 +49,17 @@ export async function PUT(
       SET
         steel_spec = $1,
         material_source = $2,
-        tube_route = $3,
-        price = $4
-      WHERE id = $5
+        price = $3
+      WHERE id = $4
       `,
       [
         body.steel_spec ?? null,
         body.material_source ?? null,
-        body.tube_route ?? null,
         finalPrice,
         id,
       ]
     );
+
 
     return NextResponse.json({ success: true });
   } catch (err) {

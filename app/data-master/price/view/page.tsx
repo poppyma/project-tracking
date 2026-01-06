@@ -111,10 +111,8 @@ export default function ViewPricePage() {
         body: JSON.stringify({
           steel_spec: editRow.steel_spec ?? null,
           material_source: editRow.material_source ?? null,
-          tube_route: null,
           price: editRow.price,
-        })
-
+        }),
       });
 
       if (!res.ok) throw new Error();
@@ -126,6 +124,7 @@ export default function ViewPricePage() {
       alert("Gagal update data");
     }
   }
+
 
   /* ================= DELETE ================= */
   async function handleDelete(id: string) {
