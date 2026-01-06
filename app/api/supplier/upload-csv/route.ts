@@ -2,95 +2,100 @@ import { NextResponse } from "next/server";
 import { parse } from "csv-parse/sync";
 import { query } from "@/lib/db";
 
-/* ================================
-   TYPE CSV SUPPLIER
-================================ */
-type SupplierCSV = {
-  supplier_code?: string;
-  supplier_name?: string;
-  address?: string;
-  country?: string;
-  pic?: string;
-  email?: string;
-  category?: string;
-  currency?: string;
-  incoterm?: string;
-  top?: string;
-  forwarder?: string;
+type SupplierRow = {
+  supplier_code: string;
+  supplier_name: string;
+  address: string;
+  country: string;
+  pic: string;
+  email: string;
+  category: string;
+  currency: string;
+  incoterm: string;
+  top: number | null;
+  forwarder: string | null;
 };
 
-/* ================================
-   POST : UPLOAD CSV SUPPLIER
-================================ */
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
-    /* ================================
-       VALIDASI FILE
-    ================================ */
     if (!file) {
-      return NextResponse.json(
-        { message: "File tidak ditemukan" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "File tidak ditemukan" }, { status: 400 });
     }
 
-    if (!file.name.toLowerCase().endsWith(".csv")) {
-      return NextResponse.json(
-        { message: "Format file harus .csv" },
-        { status: 400 }
-      );
-    }
-
-    /* ================================
-       READ & PARSE CSV
-    ================================ */
     const buffer = Buffer.from(await file.arrayBuffer());
 
+    /**
+     * ===========================
+     * PARSE CSV (LONGGAR)
+     * ===========================
+     */
     const records = parse(buffer, {
-      columns: true,
       skip_empty_lines: true,
       trim: true,
-      delimiter: [",", ";"],          // 🔥 FIX Excel Indonesia
-      relax_column_count: true,       // 🔥 Toleransi kolom
-      bom: true,                      // 🔥 Hilangkan UTF-8 BOM
-    }) as SupplierCSV[];
+      relax_column_count: true,
+    }) as string[][];
 
-    if (!records.length) {
-      return NextResponse.json(
-        { message: "File CSV kosong" },
-        { status: 400 }
-      );
+    if (records.length <= 1) {
+      return NextResponse.json({ message: "CSV kosong" }, { status: 400 });
     }
 
-    /* ================================
-       INSERT DATA
-    ================================ */
+    // Header dibuang
+    records.shift();
+
     let inserted = 0;
-    let skipped = 0;
 
     for (const row of records) {
-      // VALIDASI WAJIB
-      if (!row.supplier_code || !row.supplier_name) {
-        skipped++;
-        continue;
-      }
+      if (row.length < 6) continue;
 
-      /* ================================
-         SAFE PARSE TOP (INTEGER)
-      ================================ */
-      let topValue: number | null = null;
-      if (row.top !== undefined && row.top !== null && row.top !== "") {
-        const parsed = Number(
-          String(row.top).replace(/[^0-9]/g, "")
-        );
-        if (!Number.isNaN(parsed)) {
-          topValue = parsed;
-        }
-      }
+      /**
+       * ===========================
+       * NORMALISASI ROW
+       * ===========================
+       * Expected logical order:
+       * 0 supplier_code
+       * 1 supplier_name
+       * 2 address (BISA >1 KOLOM)
+       * ? country
+       * ? pic
+       * ? email
+       * ? category
+       * ? currency
+       * ? incoterm
+       * ? top
+       * ? forwarder
+       */
 
+      const supplier_code = row[0];
+      const supplier_name = row[1];
+
+      // COUNTRY biasanya hanya 1 kata: Japan, Indonesia, dll
+      const countryIndex = row.findIndex((v) =>
+        ["japan", "indonesia", "china", "thailand"].includes(v.toLowerCase())
+      );
+
+      if (countryIndex === -1) continue;
+
+      const address = row.slice(2, countryIndex).join(", ").trim();
+      const country = row[countryIndex];
+      const pic = row[countryIndex + 1] ?? "";
+      const email = row[countryIndex + 2] ?? "";
+      const category = row[countryIndex + 3] ?? "";
+      const currency = row[countryIndex + 4] ?? "";
+      const incoterm = row[countryIndex + 5] ?? "";
+
+      const topRaw = row[countryIndex + 6];
+      const top = topRaw && !isNaN(Number(topRaw)) ? Number(topRaw) : null;
+
+      const forwarder = row[countryIndex + 7] ?? null;
+
+      /**
+       * ===========================
+       * INSERT DATABASE
+       * ===========================
+       */
       await query(
         `
         INSERT INTO supplier_master (
@@ -106,22 +111,20 @@ export async function POST(req: Request) {
           top,
           forwarder
         )
-        VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
-        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
         `,
         [
-          row.supplier_code,
-          row.supplier_name,
-          row.address ?? null,
-          row.country ?? null,
-          row.pic ?? null,
-          row.email ?? null,
-          row.category ?? null,
-          row.currency ?? null,
-          row.incoterm ?? null,
-          topValue,               // ✅ TIDAK PERNAH NaN
-          row.forwarder ?? null,
+          supplier_code,
+          supplier_name,
+          address,
+          country,
+          pic,
+          email,
+          category,
+          currency,
+          incoterm,
+          top,
+          forwarder,
         ]
       );
 
@@ -130,10 +133,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Upload CSV supplier berhasil",
-      total_rows: records.length,
-      inserted_rows: inserted,
-      skipped_rows: skipped,
+      message: "Upload supplier CSV berhasil",
+      inserted,
     });
   } catch (error: any) {
     console.error("UPLOAD SUPPLIER CSV ERROR:", error);
