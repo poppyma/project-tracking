@@ -2,20 +2,6 @@ import { NextResponse } from "next/server";
 import { parse } from "csv-parse/sync";
 import { query } from "@/lib/db";
 
-type SupplierRow = {
-  supplier_code: string;
-  supplier_name: string;
-  address: string;
-  country: string;
-  pic: string;
-  email: string;
-  category: string;
-  currency: string;
-  incoterm: string;
-  top: number | null;
-  forwarder: string | null;
-};
-
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -27,11 +13,6 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    /**
-     * ===========================
-     * PARSE CSV (LONGGAR)
-     * ===========================
-     */
     const records = parse(buffer, {
       skip_empty_lines: true,
       trim: true,
@@ -42,7 +23,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "CSV kosong" }, { status: 400 });
     }
 
-    // Header dibuang
+    // buang header
     records.shift();
 
     let inserted = 0;
@@ -51,51 +32,31 @@ export async function POST(req: Request) {
       if (row.length < 6) continue;
 
       /**
-       * ===========================
-       * NORMALISASI ROW
-       * ===========================
-       * Expected logical order:
-       * 0 supplier_code
-       * 1 supplier_name
-       * 2 address (BISA >1 KOLOM)
-       * ? country
-       * ? pic
-       * ? email
-       * ? category
-       * ? currency
-       * ? incoterm
-       * ? top
-       * ? forwarder
+       * STRATEGI AMAN:
+       * Ambil kolom dari BELAKANG
        */
+      const forwarder = row.at(-1) || null;
+      const topRaw = row.at(-2);
+      const incoterm = row.at(-3) || "";
+      const currency = row.at(-4) || "";
+      const category = row.at(-5) || "";
+      const email = row.at(-6) || "";
+      const pic = row.at(-7) || "";
+      const country = row.at(-8) || "";
+
+      const top =
+        topRaw && !isNaN(Number(topRaw))
+          ? Number(topRaw)
+          : null;
 
       const supplier_code = row[0];
       const supplier_name = row[1];
 
-      // COUNTRY biasanya hanya 1 kata: Japan, Indonesia, dll
-      const countryIndex = row.findIndex((v) =>
-        ["japan", "indonesia", "china", "thailand"].includes(v.toLowerCase())
-      );
+      // address = semua kolom antara supplier_name dan country
+      const address = row.slice(2, row.length - 8).join(", ").trim();
 
-      if (countryIndex === -1) continue;
+      if (!supplier_code || !supplier_name) continue;
 
-      const address = row.slice(2, countryIndex).join(", ").trim();
-      const country = row[countryIndex];
-      const pic = row[countryIndex + 1] ?? "";
-      const email = row[countryIndex + 2] ?? "";
-      const category = row[countryIndex + 3] ?? "";
-      const currency = row[countryIndex + 4] ?? "";
-      const incoterm = row[countryIndex + 5] ?? "";
-
-      const topRaw = row[countryIndex + 6];
-      const top = topRaw && !isNaN(Number(topRaw)) ? Number(topRaw) : null;
-
-      const forwarder = row[countryIndex + 7] ?? null;
-
-      /**
-       * ===========================
-       * INSERT DATABASE
-       * ===========================
-       */
       await query(
         `
         INSERT INTO supplier_master (
