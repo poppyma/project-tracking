@@ -160,7 +160,7 @@ export default function ViewPriceQuartersPage() {
               <th className="border px-2">No</th>
               <th className="border px-2">IPD</th>
               <th className="border px-2">DESC</th>
-              <th className="border px-2">Material Source</th>
+              <th className="border px-2">Steel Supplier</th>
               {QUARTERS.map((q) => (
                 <th key={q} className="border px-2">
                   {q}

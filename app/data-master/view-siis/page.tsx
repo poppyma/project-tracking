@@ -305,7 +305,7 @@ export default function ViewSIISPage() {
                 <th className="border px-2">No</th>
                 <th className="border px-2">IPD</th>
                 <th className="border px-2">DESC</th>
-                <th className="border px-2">Material Source</th>
+                <th className="border px-2">Steel Supplier</th>
                 {MONTHS.map((m) => (
                   <th key={m} className="border px-2">
                     {m}
