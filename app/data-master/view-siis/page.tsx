@@ -247,6 +247,23 @@ export default function ViewSIISPage() {
         ))}
       </select>
 
+      {/* ===== SUPPLIER DETAIL ===== */}
+      {supplier && (
+        <div className="border p-3 bg-gray-50 space-y-1">
+          <div><strong>SUPPLIER:</strong> {supplier.supplier_name}</div>
+          <div><strong>ADDRESS:</strong> {supplier.address}</div>
+          <div><strong>CURRENCY:</strong> {supplier.currency}</div>
+          <div><strong>INCOTERMS:</strong> {supplier.incoterm}</div>
+          <div><strong>TERMS OF PAYMENT:</strong> {supplier.top}</div>
+
+          {selectedQuarter && (
+            <div>
+              <strong>PRICE VALIDITY:</strong> {selectedQuarter}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ===== APPROVAL INPUT ===== */}
       <div className="border p-2 bg-gray-50 space-y-2">
         <strong>Approval</strong>
