@@ -43,39 +43,6 @@ export default function InputIPDPage() {
     }
   }
 
-  async function handleUploadCSV(e: React.ChangeEvent<HTMLInputElement>) {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      if (!file.name.endsWith(".csv")) {
-        alert("File harus berformat CSV");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      setLoading(true);
-
-      try {
-        const res = await fetch("/api/ipd/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) throw new Error();
-
-        alert("Upload CSV berhasil");
-        loadData();
-      } catch {
-        alert("Gagal upload CSV");
-      } finally {
-        setLoading(false);
-        e.target.value = "";
-      }
-    }
-
-
   useEffect(() => {
     loadData();
   }, []);
@@ -84,7 +51,7 @@ export default function InputIPDPage() {
     setPage(0);
   }, [search, filterFb, filterCommodity]);
 
-  /* SAVE / UPDATE */
+  /* SAVE */
   async function handleSubmit() {
     if (!form.ipd_siis) {
       alert("IPD SIIS wajib diisi");
@@ -94,18 +61,15 @@ export default function InputIPDPage() {
     setLoading(true);
 
     try {
-      const url = editId ? `/api/ipd/${editId}` : "/api/ipd";
-      const method = editId ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch("/api/ipd", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
 
       if (!res.ok) throw new Error();
 
-      alert(editId ? "Data berhasil diupdate" : "Data berhasil disimpan");
+      alert("Data berhasil disimpan");
       resetForm();
       loadData();
     } catch {
@@ -126,42 +90,11 @@ export default function InputIPDPage() {
     setShowForm(false);
   }
 
-  /* DELETE */
-  async function handleDelete(id: string) {
-    if (!confirm("Yakin hapus data ini?")) return;
-
-    setLoading(true);
-
-    try {
-      const res = await fetch(`/api/ipd/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-
-      alert("Data berhasil dihapus");
-      loadData();
-    } catch {
-      alert("Gagal menghapus data");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  /* EDIT */
-  function handleEdit(row: IPD) {
-    setForm({
-      ipd_siis: row.ipd_siis,
-      fb_type: row.fb_type,
-      commodity: row.commodity,
-      ipd_quotation: row.ipd_quotation,
-    });
-    setEditId(row.id);
-    setShowForm(true);
-  }
-
   /* FILTER */
   const filtered = data.filter((row) => {
     const s = search.toLowerCase();
     return (
-      (row.ipd_siis.toLowerCase().includes(s)) &&
+      row.ipd_siis.toLowerCase().includes(s) &&
       (filterFb ? row.fb_type === filterFb : true) &&
       (filterCommodity ? row.commodity === filterCommodity : true)
     );
@@ -178,32 +111,16 @@ export default function InputIPDPage() {
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
-  <h1 className="text-sm font-semibold">IPD Master</h1>
+        <h1 className="text-sm font-semibold">IPD Master</h1>
 
-  <div className="flex gap-2">
-    <label className="px-3 py-1.5 text-xs rounded bg-green-600 text-white cursor-pointer">
-      Upload CSV
-      <input
-        type="file"
-        accept=".csv"
-        onChange={handleUploadCSV}
-        className="hidden"
-      />
-    </label>
-
-    <button
-      onClick={() => {
-        setShowForm((v) => !v);
-        setEditId(null);
-      }}
-      className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
-      disabled={loading}
-    >
-      {showForm ? "Close" : "+ Add IPD"}
-    </button>
-  </div>
-</div>
-
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white"
+          disabled={loading}
+        >
+          {showForm ? "Close" : "+ Add IPD"}
+        </button>
+      </div>
 
       {/* FILTER */}
       <div className="flex gap-2 text-xs">
@@ -291,9 +208,9 @@ export default function InputIPDPage() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="px-4 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
+              className="px-4 py-1 bg-blue-600 text-white rounded"
             >
-              {loading ? "Saving..." : editId ? "Update" : "Save"}
+              Save
             </button>
           </div>
         </div>
@@ -304,12 +221,11 @@ export default function InputIPDPage() {
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-1 text-center w-10">No</th>
+              <th className="border px-2 py-1">No</th>
               <th className="border px-2 py-1">IPD SIIS</th>
               <th className="border px-2 py-1">FB Type</th>
-              <th className="border px-2 py-1">Comodity</th>
+              <th className="border px-2 py-1">Commodity</th>
               <th className="border px-2 py-1">IPD Quotation</th>
-              <th className="border px-2 py-1 text-center">Action</th>
             </tr>
           </thead>
 
@@ -323,55 +239,10 @@ export default function InputIPDPage() {
                 <td className="border px-2 py-1">{r.fb_type}</td>
                 <td className="border px-2 py-1">{r.commodity}</td>
                 <td className="border px-2 py-1">{r.ipd_quotation}</td>
-
-                <td className="border px-2 py-1">
-                  <div className="flex justify-center gap-2">
-                    {/* EDIT */}
-                    <button
-                      title="Edit"
-                      onClick={() => handleEdit(r)}
-                      className="p-1 rounded hover:bg-blue-100"
-                      disabled={loading}
-                    >
-                      ✏️
-                    </button>
-
-                    {/* DELETE */}
-                    <button
-                      title="Delete"
-                      onClick={() => handleDelete(r.id)}
-                      className="p-1 rounded hover:bg-red-100"
-                      disabled={loading}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </td>
               </tr>
             ))}
           </tbody>
         </table>
-
-        {/* PAGINATION */}
-        <div className="flex justify-between mt-2 text-xs">
-          <span>
-            Page {page + 1} of {totalPages || 1}
-          </span>
-          <div className="space-x-2">
-            <button
-              disabled={page === 0 || loading}
-              onClick={() => setPage(page - 1)}
-            >
-              Prev
-            </button>
-            <button
-              disabled={page >= totalPages - 1 || loading}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

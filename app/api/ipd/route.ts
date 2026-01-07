@@ -51,16 +51,17 @@ export async function POST(req: Request) {
       );
     }
 
-    await query(
+    const result = await query(
       `
       INSERT INTO ipd_master
       (ipd_siis, fb_type, commodity, ipd_quotation)
       VALUES ($1, $2, $3, $4)
+      RETURNING *
       `,
       [ipd_siis, fb_type, commodity, ipd_quotation]
     );
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(result.rows[0]);
   } catch (error) {
     console.error(error);
     return NextResponse.json(
