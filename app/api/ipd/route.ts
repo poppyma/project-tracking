@@ -54,8 +54,8 @@ export async function POST(req: Request) {
     await query(
       `
       INSERT INTO ipd_master
-      (ipd_siis, description, fb_type, commodity, ipd_quotation)
-      VALUES ($1, $2, $3, $4, $5)
+      (ipd_siis, fb_type, commodity, ipd_quotation)
+      VALUES ($1, $2, $3, $4)
       `,
       [ipd_siis, fb_type, commodity, ipd_quotation]
     );
