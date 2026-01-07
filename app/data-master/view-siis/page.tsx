@@ -194,6 +194,8 @@ export default function ViewSIISPage() {
       styles: { fontSize: 8 },
     });
 
+    const pageWidth = doc.internal.pageSize.getWidth();
+
     autoTable(doc, {
       body: [
         approvals.map(a => a.title),
@@ -202,9 +204,22 @@ export default function ViewSIISPage() {
         approvals.map(a => a.name),
       ],
       startY: (doc as any).lastAutoTable.finalY + 10,
+
+      // ⬅️ POSISI KANAN
+      margin: { left: pageWidth * 0.55 },
+
+      // ⬅️ UKURAN LEBIH KECIL
+      tableWidth: pageWidth * 0.4,
+
       theme: "grid",
-      styles: { halign: "center", minCellHeight: 12 },
+      styles: {
+        halign: "center",
+        fontSize: 9,
+        minCellHeight: 8,
+        cellPadding: 2,
+      },
     });
+
 
     doc.save(
       `SIIS_${supplier.supplier_code}_${selectedQuarter}.pdf`
