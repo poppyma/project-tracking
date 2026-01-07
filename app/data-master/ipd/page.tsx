@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 type IPD = {
   id: string;
   ipd_siis: string;
-  description: string;
   fb_type: string;
   commodity: string;
   ipd_quotation: string;
@@ -28,7 +27,6 @@ export default function InputIPDPage() {
 
   const [form, setForm] = useState({
     ipd_siis: "",
-    description: "",
     fb_type: "",
     commodity: "",
     ipd_quotation: "",
@@ -120,7 +118,6 @@ export default function InputIPDPage() {
   function resetForm() {
     setForm({
       ipd_siis: "",
-      description: "",
       fb_type: "",
       commodity: "",
       ipd_quotation: "",
@@ -152,7 +149,6 @@ export default function InputIPDPage() {
   function handleEdit(row: IPD) {
     setForm({
       ipd_siis: row.ipd_siis,
-      description: row.description,
       fb_type: row.fb_type,
       commodity: row.commodity,
       ipd_quotation: row.ipd_quotation,
@@ -165,8 +161,7 @@ export default function InputIPDPage() {
   const filtered = data.filter((row) => {
     const s = search.toLowerCase();
     return (
-      (row.ipd_siis.toLowerCase().includes(s) ||
-        row.description.toLowerCase().includes(s)) &&
+      (row.ipd_siis.toLowerCase().includes(s)) &&
       (filterFb ? row.fb_type === filterFb : true) &&
       (filterCommodity ? row.commodity === filterCommodity : true)
     );
@@ -267,15 +262,6 @@ export default function InputIPDPage() {
             ))}
           </select>
 
-          <input
-            className="input-dense"
-            placeholder="Description"
-            value={form.description}
-            onChange={(e) =>
-              setForm({ ...form, description: e.target.value })
-            }
-          />
-
           <select
             className="input-dense"
             value={form.commodity}
@@ -320,7 +306,6 @@ export default function InputIPDPage() {
             <tr>
               <th className="border px-2 py-1 text-center w-10">No</th>
               <th className="border px-2 py-1">IPD SIIS</th>
-              <th className="border px-2 py-1">Description</th>
               <th className="border px-2 py-1">FB Type</th>
               <th className="border px-2 py-1">Comodity</th>
               <th className="border px-2 py-1">IPD Quotation</th>
@@ -335,7 +320,6 @@ export default function InputIPDPage() {
                   {page * PAGE_SIZE + i + 1}
                 </td>
                 <td className="border px-2 py-1">{r.ipd_siis}</td>
-                <td className="border px-2 py-1">{r.description}</td>
                 <td className="border px-2 py-1">{r.fb_type}</td>
                 <td className="border px-2 py-1">{r.commodity}</td>
                 <td className="border px-2 py-1">{r.ipd_quotation}</td>

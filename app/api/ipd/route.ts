@@ -12,7 +12,6 @@ export async function GET() {
       SELECT
         id,
         ipd_siis,
-        description,
         fb_type,
         commodity,
         ipd_quotation,
@@ -40,7 +39,6 @@ export async function POST(req: Request) {
 
     const {
       ipd_siis,
-      description,
       fb_type,
       commodity,
       ipd_quotation,
@@ -59,7 +57,7 @@ export async function POST(req: Request) {
       (ipd_siis, description, fb_type, commodity, ipd_quotation)
       VALUES ($1, $2, $3, $4, $5)
       `,
-      [ipd_siis, description, fb_type, commodity, ipd_quotation]
+      [ipd_siis, fb_type, commodity, ipd_quotation]
     );
 
     return NextResponse.json({ success: true });
