@@ -14,25 +14,25 @@ export async function GET(req: Request) {
     }
 
     const result = await query(
-      `
-      SELECT
-        d.ipd_quotation,
-
-        m.ipd_siis AS ipd,
-
-        d.material_source,
-        h.quarter,
-        d.price
-      FROM price_header h
-      JOIN price_detail d
-        ON d.header_id = h.id
-      LEFT JOIN ipd_master m
-        ON m.ipd_quotation = d.ipd_quotation
-      WHERE h.supplier_id = $1
-      ORDER BY m.ipd_siis, h.quarter
-      `,
-      [supplier_id]
-    );
+    `
+    SELECT
+      d.ipd_quotation,
+      m.ipd_siis AS ipd,
+      d.material_source,
+      h.quarter,
+      d.price
+    FROM price_header h
+    JOIN price_detail d
+      ON d.header_id = h.id
+    LEFT JOIN ipd_master m
+      ON m.ipd_quotation = d.ipd_quotation
+    WHERE h.supplier_id = $1
+      AND m.ipd_siis IS NOT NULL
+      AND m.ipd_siis <> ''
+    ORDER BY m.ipd_siis, h.quarter
+    `,
+    [supplier_id]
+  );
 
     return NextResponse.json(result.rows);
   } catch (err) {

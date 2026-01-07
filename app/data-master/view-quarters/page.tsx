@@ -88,6 +88,10 @@ export default function ViewPriceQuartersPage() {
     fetchPriceQuarters(supplierId);
   }
 
+  function formatPrice(value: number) {
+    return value === 0 ? "-" : value.toFixed(4);
+  }
+
   /* ================= GROUP BY IPD ================= */
   const ipds = Array.from(
     new Map(
@@ -194,10 +198,10 @@ export default function ViewPriceQuartersPage() {
                   <td className="border px-2">{i.description}</td>
                   <td className="border px-2">{i.material_source}</td>
 
-                  <td className="border px-2">{q4.toFixed(4)}</td>
-                  <td className="border px-2">{q1.toFixed(4)}</td>
-                  <td className="border px-2">{q2.toFixed(4)}</td>
-                  <td className="border px-2">{q3.toFixed(4)}</td>
+                  <td className="border px-2 text-right">{formatPrice(q4)}</td>
+                  <td className="border px-2 text-right">{formatPrice(q1)}</td>
+                  <td className="border px-2 text-right">{formatPrice(q2)}</td>
+                  <td className="border px-2 text-right">{formatPrice(q3)}</td>
 
                   <td className="border px-2">{diff(q1, q4)}</td>
                   <td className="border px-2">{diff(q2, q1)}</td>
