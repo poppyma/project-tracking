@@ -169,7 +169,7 @@ export default function ViewSIISPage() {
       i.ipd,
       i.material_source,
       ...MONTHS.map((_, mIdx) =>
-        {formatPrice(getMonthPrice(i.ipd_quotation, mIdx))}
+      formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
       ),
     ]);
 
@@ -208,10 +208,12 @@ export default function ViewSIISPage() {
       i.ipd,
       i.material_source,
       ...MONTHS.map((_, mIdx) =>
-        getMonthPrice(i.ipd_quotation, mIdx).toFixed(4)
+        formatPrice(
+          getMonthPrice(i.ipd_quotation, mIdx)
+        )
       ),
     ]);
-
+    
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
@@ -332,10 +334,9 @@ export default function ViewSIISPage() {
                       key={mIdx}
                       className="border px-2 text-right"
                     >
-                      {getMonthPrice(
-                        i.ipd_quotation,
-                        mIdx
-                      ).toFixed(4)}
+                      {formatPrice(
+                        getMonthPrice(i.ipd_quotation, mIdx)
+                      )}
                     </td>
                   ))}
                 </tr>
