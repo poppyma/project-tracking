@@ -210,7 +210,7 @@ export default function ViewPricePage() {
           <thead className="bg-gray-100">
             <tr>
               <th className="border px-2 py-1">No</th>
-              <th className="border px-2 py-1">IPD</th>
+              <th className="border px-2 py-1">IPD SIIS</th>
               <th className="border px-2 py-1">Steel Spec</th>
               <th className="border px-2 py-1">Steel Supplier</th>
               <th className="border px-2 py-1 text-right">Price</th>
