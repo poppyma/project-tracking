@@ -93,16 +93,20 @@ export default function ViewPriceQuartersPage() {
 
   /* ================= GROUP BY IPD ================= */
   const ipds = Array.from(
-    new Map(
-      rows.map((r) => [
+  new Map(
+    rows
+      .filter(r => r.ipd && r.ipd.trim() !== "")
+      .map((r) => [
         r.ipd_quotation,
         {
-          ipd: r.ipd || "-",
+          ipd: r.ipd!,
           material_source: r.material_source || "-",
         },
       ])
-    ).values()
-  );
+  ).values()
+);
+
+  
 
   function getPrice(ipd: string, quarter: string) {
     const found = rows.find(
