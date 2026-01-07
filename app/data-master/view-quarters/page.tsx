@@ -16,7 +16,6 @@ type Supplier = {
 type Row = {
   ipd_quotation: string;
   ipd: string | null;
-  description: string | null;
   material_source: string | null;
   quarter: string;
   price: string;
@@ -99,7 +98,6 @@ export default function ViewPriceQuartersPage() {
         r.ipd_quotation,
         {
           ipd: r.ipd || "-",
-          description: r.description || "-",
           material_source: r.material_source || "-",
         },
       ])
@@ -163,7 +161,6 @@ export default function ViewPriceQuartersPage() {
             <tr>
               <th className="border px-2">No</th>
               <th className="border px-2">IPD</th>
-              <th className="border px-2">DESC</th>
               <th className="border px-2">Steel Supplier</th>
               {QUARTERS.map((q) => (
                 <th key={q} className="border px-2">
@@ -195,7 +192,6 @@ export default function ViewPriceQuartersPage() {
                     {idx + 1}
                   </td>
                   <td className="border px-2">{i.ipd}</td>
-                  <td className="border px-2">{i.description}</td>
                   <td className="border px-2">{i.material_source}</td>
 
                   <td className="border px-2 text-right">{formatPrice(q4)}</td>
