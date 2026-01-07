@@ -19,7 +19,6 @@ export async function GET(req: Request) {
         d.ipd_quotation,
 
         m.ipd_siis AS ipd,
-        m.description,
 
         d.material_source,
         h.quarter,

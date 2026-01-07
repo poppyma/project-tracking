@@ -36,7 +36,6 @@ export async function GET(req: Request) {
         d.ipd_quotation,
 
         m.ipd_siis,
-        m.description,
 
         d.steel_spec,
         d.material_source,
