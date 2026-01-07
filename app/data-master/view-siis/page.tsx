@@ -19,7 +19,6 @@ type Supplier = {
 type Row = {
   ipd_quotation: string;
   ipd: string | null;
-  description: string | null;
   material_source: string | null;
   quarter: string;
   price: string;
@@ -120,7 +119,6 @@ export default function ViewSIISPage() {
             {
               ipd_quotation: r.ipd_quotation,
               ipd: r.ipd || "-",
-              description: r.description || "-",
               material_source: r.material_source || "-",
             },
           ])
@@ -152,14 +150,12 @@ export default function ViewSIISPage() {
 
     const header = [
       "IPD",
-      "Description",
       "Material Source",
       ...MONTHS,
     ];
 
     const data = ipds.map((i) => [
       i.ipd,
-      i.description,
       i.material_source,
       ...MONTHS.map((_, mIdx) =>
         getMonthPrice(i.ipd_quotation, mIdx)
@@ -193,14 +189,12 @@ export default function ViewSIISPage() {
 
     const tableColumn = [
       "IPD",
-      "Description",
       "Material Source",
       ...MONTHS,
     ];
 
     const tableRows = ipds.map((i) => [
       i.ipd,
-      i.description,
       i.material_source,
       ...MONTHS.map((_, mIdx) =>
         getMonthPrice(i.ipd_quotation, mIdx).toFixed(4)
@@ -304,7 +298,6 @@ export default function ViewSIISPage() {
               <tr>
                 <th className="border px-2">No</th>
                 <th className="border px-2">IPD</th>
-                <th className="border px-2">DESC</th>
                 <th className="border px-2">Steel Supplier</th>
                 {MONTHS.map((m) => (
                   <th key={m} className="border px-2">
@@ -321,7 +314,6 @@ export default function ViewSIISPage() {
                     {idx + 1}
                   </td>
                   <td className="border px-2">{i.ipd}</td>
-                  <td className="border px-2">{i.description}</td>
                   <td className="border px-2">{i.material_source}</td>
 
                   {MONTHS.map((_, mIdx) => (
