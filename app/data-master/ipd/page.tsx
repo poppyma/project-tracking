@@ -209,7 +209,7 @@ export default function InputIPDPage() {
       <div className="flex gap-2 text-xs">
         <input
           className="input-dense w-48"
-          placeholder="Search IPD / Description"
+          placeholder="Search IPD"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
