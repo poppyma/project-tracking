@@ -23,7 +23,6 @@ type PriceRow = {
   ipd_quotation: string;
 
   ipd_siis: string | null;
-  description: string | null;
 
   steel_spec: string | null;
   material_source: string | null;
@@ -212,7 +211,6 @@ export default function ViewPricePage() {
             <tr>
               <th className="border px-2 py-1">No</th>
               <th className="border px-2 py-1">IPD</th>
-              <th className="border px-2 py-1">Description</th>
               <th className="border px-2 py-1">Steel Spec</th>
               <th className="border px-2 py-1">Steel Supplier</th>
               <th className="border px-2 py-1 text-right">Price</th>
@@ -246,20 +244,6 @@ export default function ViewPricePage() {
                         />
                       ) : (
                         r.ipd_siis || "-"
-                      )}
-                    </td>
-
-                    <td className="border px-2 py-1">
-                      {isEdit ? (
-                        <input
-                          className="w-full border px-1"
-                          value={editRow.description || ""}
-                          onChange={(e) =>
-                            setEditRow({ ...editRow, description: e.target.value })
-                          }
-                        />
-                      ) : (
-                        r.description || "-"
                       )}
                     </td>
 
