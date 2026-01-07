@@ -114,18 +114,29 @@ export default function ViewSIISPage() {
     () =>
       Array.from(
         new Map(
-          filteredRows.map((r) => [
-            r.ipd_quotation,
-            {
-              ipd_quotation: r.ipd_quotation,
-              ipd: r.ipd || "-",
-              material_source: r.material_source || "-",
-            },
-          ])
+          filteredRows
+            .filter(
+              r =>
+                r.ipd &&
+                r.ipd.trim() !== "" &&
+                r.ipd !== "-"
+            )
+            .map((r) => [
+              r.ipd_quotation,
+              {
+                ipd_quotation: r.ipd_quotation,
+                ipd: r.ipd as string,
+                material_source: r.material_source || "-",
+              },
+            ])
         ).values()
       ),
     [filteredRows]
   );
+
+  function formatPrice(v: number) {
+    return v === 0 ? "-" : v.toFixed(4);
+  }
 
   /* ================= GET MONTH PRICE ================= */
   function getMonthPrice(ipdQuotation: string, monthIndex: number) {
@@ -158,7 +169,7 @@ export default function ViewSIISPage() {
       i.ipd,
       i.material_source,
       ...MONTHS.map((_, mIdx) =>
-        getMonthPrice(i.ipd_quotation, mIdx)
+        {formatPrice(getMonthPrice(i.ipd_quotation, mIdx))}
       ),
     ]);
 
