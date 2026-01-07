@@ -29,10 +29,12 @@ export async function GET(req: Request) {
     WHERE h.supplier_id = $1
       AND m.ipd_siis IS NOT NULL
       AND m.ipd_siis <> ''
+      AND m.ipd_siis <> '-'
     ORDER BY m.ipd_siis, h.quarter
     `,
     [supplier_id]
   );
+
 
     return NextResponse.json(result.rows);
   } catch (err) {

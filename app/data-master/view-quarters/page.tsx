@@ -92,30 +92,35 @@ export default function ViewPriceQuartersPage() {
   }
 
   /* ================= GROUP BY IPD ================= */
-  const ipds = Array.from(
-  new Map(
-    rows
-      .filter(r => r.ipd && r.ipd.trim() !== "")
-      .map((r) => [
-        r.ipd_quotation,
-        {
-          ipd: r.ipd!,
-          material_source: r.material_source || "-",
-        },
-      ])
-  ).values()
-);
-
-  
+  const ipds: {
+    ipd: string;
+    material_source: string;
+  }[] = Array.from(
+    new Map(
+      rows
+        .filter(
+          r =>
+            r.ipd &&
+            r.ipd.trim() !== "" &&
+            r.ipd !== "-"
+        )
+        .map((r) => [
+          r.ipd,
+          {
+            ipd: r.ipd as string, // ⬅️ DIJAMIN STRING
+            material_source: r.material_source || "-",
+          },
+        ])
+    ).values()
+  );
 
   function getPrice(ipd: string, quarter: string) {
     const found = rows.find(
-      (r) =>
-        (r.ipd || r.ipd_quotation) === ipd &&
-        r.quarter === quarter
+      r => r.ipd === ipd && r.quarter === quarter
     );
     return found ? Number(found.price) : 0;
   }
+
 
   function diff(curr: number, prev: number) {
     if (prev === 0) return "0%";
