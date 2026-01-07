@@ -259,6 +259,47 @@ export default function ViewSIISPage() {
         ))}
       </div>
 
+      {/* ===== TABLE DATA ===== */}
+      {supplier && selectedQuarter && (
+        <div className="overflow-x-auto border">
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border px-2">No</th>
+                <th className="border px-2">IPD</th>
+                <th className="border px-2">Material Source</th>
+                {MONTHS.map(m => (
+                  <th key={m} className="border px-2">
+                    {m}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody>
+              {ipds.map((i, idx) => (
+                <tr key={i.ipd_quotation}>
+                  <td className="border px-2 text-center">{idx + 1}</td>
+                  <td className="border px-2">{i.ipd}</td>
+                  <td className="border px-2">{i.material_source}</td>
+
+                  {MONTHS.map((_, mIdx) => (
+                    <td
+                      key={mIdx}
+                      className="border px-2 text-right"
+                    >
+                      {formatPrice(
+                        getMonthPrice(i.ipd_quotation, mIdx)
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {selectedQuarter && (
         <div className="flex gap-2">
           <button onClick={downloadExcel} className="bg-green-600 text-white px-3 py-1 rounded">
