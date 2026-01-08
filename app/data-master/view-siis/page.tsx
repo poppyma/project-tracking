@@ -153,12 +153,9 @@ export default function ViewSIISPage() {
         const ref = XLSX.utils.encode_cell({ r, c });
         ws[ref] = ws[ref] || { t: "s", v: "" };
         ws[ref].s = {
-          alignment: { horizontal: "center" },
-          border: {
-            top: { style: "thin" },
-            bottom: { style: "thin" },
-            left: { style: "thin" },
-            right: { style: "thin" },
+          alignment: {
+            horizontal: "center",
+            vertical: "middle",
           },
         };
       }
@@ -197,29 +194,26 @@ export default function ViewSIISPage() {
     const pageWidth = doc.internal.pageSize.getWidth();
 
     autoTable(doc, {
-      body: [
-        approvals.map(a => a.title),
-        ["", "", ""],
-        ["", "", ""],
-        approvals.map(a => a.name),
-      ],
-      startY: (doc as any).lastAutoTable.finalY + 10,
+  body: [
+    approvals.map(a => a.title),
+    ["", "", ""],
+    ["", "", ""],
+    approvals.map(a => a.name),
+  ],
+  startY: (doc as any).lastAutoTable.finalY + 12,
 
-      // ⬅️ POSISI KANAN
-      margin: { left: pageWidth * 0.55 },
+  margin: { left: pageWidth * 0.5 },
+  tableWidth: pageWidth * 0.45,
 
-      // ⬅️ UKURAN LEBIH KECIL
-      tableWidth: pageWidth * 0.4,
+  theme: "plain", // ⬅️ TANPA GARIS
 
-      theme: "grid",
-      styles: {
-        halign: "center",
-        fontSize: 9,
-        minCellHeight: 8,
-        cellPadding: 2,
-      },
-    });
-
+  styles: {
+    halign: "center",
+    fontSize: 9,
+    minCellHeight: 12, // ⬅️ TTD LEBIH LEBAR
+    cellPadding: 4,
+  },
+});
 
     doc.save(
       `SIIS_${supplier.supplier_code}_${selectedQuarter}.pdf`
