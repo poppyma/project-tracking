@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       `
       INSERT INTO ipd_master
       (ipd_siis, customer,  fb_type, commodity, ipd_quotation)
-      VALUES ($1, $2, $3, $4)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *
       `,
       [ipd_siis, customer, fb_type, commodity, ipd_quotation]
