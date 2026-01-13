@@ -7,6 +7,7 @@ import { query } from "@/lib/db";
 ================================ */
 type IPDCSV = {
   ipd_siis: string;
+  customer: string;
   fb_type: string;
   commodity: string;
   ipd_quotation: string;
@@ -70,14 +71,16 @@ export async function POST(req: Request) {
           `
           INSERT INTO ipd_master (
             ipd_siis,
+            customer,
             fb_type,
             commodity,
             ipd_quotation
           )
-          VALUES ($1, $2, $3, $4)
+          VALUES ($1, $2, $3, $4, 5$)
           `,
           [
             row.ipd_siis,
+            row.customer,
             row.fb_type,
             row.commodity,
             row.ipd_quotation ?? "",

@@ -12,6 +12,7 @@ export async function GET() {
       SELECT
         id,
         ipd_siis,
+        customer,
         fb_type,
         commodity,
         ipd_quotation,
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
 
     const {
       ipd_siis,
+      customer,
       fb_type,
       commodity,
       ipd_quotation,
@@ -54,11 +56,11 @@ export async function POST(req: Request) {
     const result = await query(
       `
       INSERT INTO ipd_master
-      (ipd_siis, fb_type, commodity, ipd_quotation)
+      (ipd_siis, customer,  fb_type, commodity, ipd_quotation)
       VALUES ($1, $2, $3, $4)
       RETURNING *
       `,
-      [ipd_siis, fb_type, commodity, ipd_quotation]
+      [ipd_siis, customer, fb_type, commodity, ipd_quotation]
     );
 
     return NextResponse.json(result.rows[0]);

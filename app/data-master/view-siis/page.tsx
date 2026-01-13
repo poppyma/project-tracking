@@ -134,52 +134,51 @@ export default function ViewSIISPage() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "SIIS");
 
-    /* ===== APPROVAL EXCEL ===== */
     /* ===== APPROVAL EXCEL (BAWAH KANAN TABEL) ===== */
-const approvalRowStart = body.length + 4; // di bawah tabel
-const tableColCount = header.length;
-const approvalColStart = tableColCount - approvals.length; // ⬅️ FIX DI SINI
+    const approvalRowStart = body.length + 4; // di bawah tabel
+    const tableColCount = header.length;
+    const approvalColStart = tableColCount - approvals.length; // ⬅️ FIX DI SINI
 
-XLSX.utils.sheet_add_aoa(
-  ws,
-  [
-    approvals.map(a => a.title),
-    ["", "", ""],
-    approvals.map(a => a.name),
-  ],
-  { origin: { r: approvalRowStart, c: approvalColStart } }
-);
+    XLSX.utils.sheet_add_aoa(
+      ws,
+      [
+        approvals.map(a => a.title),
+        ["", "", ""],
+        approvals.map(a => a.name),
+      ],
+      { origin: { r: approvalRowStart, c: approvalColStart } }
+    );
 
-/* BORDER + ALIGNMENT */
-for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
-  for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
-    const ref = XLSX.utils.encode_cell({ r, c });
-    ws[ref] = ws[ref] || { t: "s", v: "" };
+    /* BORDER + ALIGNMENT */
+    for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
+      for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
+        const ref = XLSX.utils.encode_cell({ r, c });
+        ws[ref] = ws[ref] || { t: "s", v: "" };
 
-    ws[ref].s = {
-      alignment: {
-        horizontal: "center",
-        vertical: "center",
-        wrapText: true,
-      },
-      border: {
-        top:    { style: "thin" },
-        bottom: { style: "thin" },
-        left:   { style: "thin" },
-        right:  { style: "thin" },
-      },
-    };
-  }
-}
+        ws[ref].s = {
+          alignment: {
+            horizontal: "center",
+            vertical: "center",
+            wrapText: true,
+          },
+          border: {
+            top:    { style: "thin" },
+            bottom: { style: "thin" },
+            left:   { style: "thin" },
+            right:  { style: "thin" },
+          },
+        };
+      }
+    }
 
-/* TINGGI KOTAK TTD */
-ws["!rows"] = ws["!rows"] || [];
-ws["!rows"][approvalRowStart + 1] = { hpt: 60 };
- /* ⬅️ INI YANG TADI HILANG */
-  XLSX.writeFile(
-    wb,
-    `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
-  );
+    /* TINGGI KOTAK TTD */
+    ws["!rows"] = ws["!rows"] || [];
+    ws["!rows"][approvalRowStart + 1] = { hpt: 60 };
+    /* ⬅️ INI YANG TADI HILANG */
+      XLSX.writeFile(
+        wb,
+        `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
+      );
   }
   /* ================= EXPORT PDF ================= */
   function downloadPDF() {
