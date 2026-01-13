@@ -153,9 +153,12 @@ export default function ViewSIISPage() {
         const ref = XLSX.utils.encode_cell({ r, c });
         ws[ref] = ws[ref] || { t: "s", v: "" };
         ws[ref].s = {
-          alignment: {
-            horizontal: "center",
-            vertical: "middle",
+          alignment: { horizontal: "center" },
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
           },
         };
       }
@@ -193,27 +196,38 @@ export default function ViewSIISPage() {
 
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    autoTable(doc, {
+autoTable(doc, {
   body: [
     approvals.map(a => a.title),
-    ["", "", ""],
-    ["", "", ""],
+    ["", "", ""],   // area tanda tangan
+    ["", "", ""],   // area tanda tangan
     approvals.map(a => a.name),
   ],
-  startY: (doc as any).lastAutoTable.finalY + 12,
+  startY: (doc as any).lastAutoTable.finalY + 10,
 
-  margin: { left: pageWidth * 0.5 },
-  tableWidth: pageWidth * 0.45,
+  // posisi kanan
+  margin: { left: pageWidth * 0.55 },
+  tableWidth: pageWidth * 0.4,
 
-  theme: "plain", // ⬅️ TANPA GARIS
+  theme: "grid",
 
   styles: {
     halign: "center",
     fontSize: 9,
-    minCellHeight: 12, // ⬅️ TTD LEBIH LEBAR
-    cellPadding: 4,
+    cellPadding: 3,
+    lineWidth: 0.3,          // ⬅️ pastikan border terlihat
+    lineColor: [0, 0, 0],
+  },
+
+  didParseCell: function (data) {
+    // Baris 1 & 2 = area tanda tangan
+    if (data.row.index === 1 || data.row.index === 2) {
+      data.cell.styles.minCellHeight = 18; // ⬅️ kotak TTD besar
+    }
   },
 });
+
+
 
     doc.save(
       `SIIS_${supplier.supplier_code}_${selectedQuarter}.pdf`
