@@ -175,6 +175,11 @@ for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
 /* TINGGI KOTAK TTD */
 ws["!rows"] = ws["!rows"] || [];
 ws["!rows"][approvalRowStart + 1] = { hpt: 60 };
+ /* ⬅️ INI YANG TADI HILANG */
+  XLSX.writeFile(
+    wb,
+    `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
+  );
   }
   /* ================= EXPORT PDF ================= */
   function downloadPDF() {
