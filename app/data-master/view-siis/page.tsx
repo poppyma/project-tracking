@@ -209,7 +209,7 @@ autoTable(doc, {
       content: "",
       rowSpan: 1,
       styles: {
-        minCellHeight: 35, // ⬅️ tinggi kotak tanda tangan
+        minCellHeight: 20, // ⬅️ tinggi kotak tanda tangan
       },
     })),
 
