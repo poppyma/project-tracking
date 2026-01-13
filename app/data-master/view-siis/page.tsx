@@ -135,39 +135,45 @@ export default function ViewSIISPage() {
     XLSX.utils.book_append_sheet(wb, ws, "SIIS");
 
     /* ===== APPROVAL EXCEL ===== */
-    const startRow = body.length + 4;
+    /* ===== APPROVAL EXCEL (BAWAH KANAN – MIRIP PDF) ===== */
+const approvalRowStart = body.length + 4;     // bawah tabel
+const approvalColStart = header.length + 2;  // kanan tabel
 
-    XLSX.utils.sheet_add_aoa(
-      ws,
-      [
-        approvals.map(a => a.title),
-        ["", "", ""],
-        ["", "", ""],
-        approvals.map(a => a.name),
-      ],
-      { origin: { r: startRow, c: 1 } }
-    );
+XLSX.utils.sheet_add_aoa(
+  ws,
+  [
+    approvals.map(a => a.title), // BARIS 1: TITLE
+    ["", "", ""],                // BARIS 2: KOTAK TTD
+    approvals.map(a => a.name),  // BARIS 3: NAMA
+  ],
+  { origin: { r: approvalRowStart, c: approvalColStart } }
+);
 
-    for (let r = startRow; r <= startRow + 3; r++) {
-      for (let c = 1; c <= 3; c++) {
-        const ref = XLSX.utils.encode_cell({ r, c });
-        ws[ref] = ws[ref] || { t: "s", v: "" };
-        ws[ref].s = {
-          alignment: { horizontal: "center" },
-          border: {
-            top: { style: "thin" },
-            bottom: { style: "thin" },
-            left: { style: "thin" },
-            right: { style: "thin" },
-          },
-        };
-      }
-    }
+/* BORDER + ALIGNMENT */
+for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
+  for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
+    const ref = XLSX.utils.encode_cell({ r, c });
+    ws[ref] = ws[ref] || { t: "s", v: "" };
 
-    XLSX.writeFile(
-      wb,
-      `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
-    );
+    ws[ref].s = {
+      alignment: {
+        horizontal: "center",
+        vertical: "center",
+        wrapText: true,
+      },
+      border: {
+        top:    { style: "thin" },
+        bottom: { style: "thin" },
+        left:   { style: "thin" },
+        right:  { style: "thin" },
+      },
+    };
+  }
+}
+
+/* TINGGIKAN BARIS TTD (BIAR MIRIP PDF) */
+ws["!rows"] = ws["!rows"] || [];
+ws["!rows"][approvalRowStart + 1] = { hpt: 60 }; // tinggi kotak tanda tangan
   }
 
   /* ================= EXPORT PDF ================= */
@@ -196,45 +202,45 @@ export default function ViewSIISPage() {
 
     const pageWidth = doc.internal.pageSize.getWidth();
 
-autoTable(doc, {
-  body: [
-    // BARIS 1 — TITLE
-    approvals.map(a => ({
-      content: a.title,
-      styles: { halign: "center", fontStyle: "normal" },
-    })),
+    autoTable(doc, {
+      body: [
+        // BARIS 1 — TITLE
+        approvals.map(a => ({
+          content: a.title,
+          styles: { halign: "center", fontStyle: "normal" },
+        })),
 
-    // BARIS 2 — TTD (ROWSPAN)
-    approvals.map(() => ({
-      content: "",
-      rowSpan: 1,
+        // BARIS 2 — TTD (ROWSPAN)
+        approvals.map(() => ({
+          content: "",
+          rowSpan: 1,
+          styles: {
+            minCellHeight: 20, // ⬅️ tinggi kotak tanda tangan
+          },
+        })),
+
+        // BARIS 3 — NAMA
+        approvals.map(a => ({
+          content: a.name,
+          styles: { halign: "center" },
+        })),
+      ],
+
+      startY: (doc as any).lastAutoTable.finalY + 10,
+
+      // POSISI KANAN
+      margin: { left: pageWidth * 0.55 },
+      tableWidth: pageWidth * 0.4,
+
+      theme: "grid",
+
       styles: {
-        minCellHeight: 20, // ⬅️ tinggi kotak tanda tangan
+        fontSize: 9,
+        cellPadding: 3,
+        lineWidth: 0.4,
+        lineColor: [0, 0, 0],
       },
-    })),
-
-    // BARIS 3 — NAMA
-    approvals.map(a => ({
-      content: a.name,
-      styles: { halign: "center" },
-    })),
-  ],
-
-  startY: (doc as any).lastAutoTable.finalY + 10,
-
-  // POSISI KANAN
-  margin: { left: pageWidth * 0.55 },
-  tableWidth: pageWidth * 0.4,
-
-  theme: "grid",
-
-  styles: {
-    fontSize: 9,
-    cellPadding: 3,
-    lineWidth: 0.4,
-    lineColor: [0, 0, 0],
-  },
-});
+    });
 
 
 
