@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 type IPD = {
   id: string;
   ipd_siis: string;
-  customer: string;
+  supplier: string;
   fb_type: string;
   commodity: string;
   ipd_quotation: string;
@@ -28,7 +28,7 @@ export default function InputIPDPage() {
 
   const [form, setForm] = useState({
     ipd_siis: "",
-    customer: "",
+    supplier: "",
     fb_type: "",
     commodity: "",
     ipd_quotation: "",
@@ -120,7 +120,7 @@ export default function InputIPDPage() {
   function resetForm() {
     setForm({
       ipd_siis: "",
-      customer: "",
+      supplier: "",
       fb_type: "",
       commodity: "",
       ipd_quotation: "",
@@ -152,7 +152,7 @@ export default function InputIPDPage() {
   function handleEdit(row: IPD) {
     setForm({
       ipd_siis: row.ipd_siis,
-      customer: row.customer,
+      supplier: row.supplier,
       fb_type: row.fb_type,
       commodity: row.commodity,
       ipd_quotation: row.ipd_quotation,
@@ -255,10 +255,10 @@ export default function InputIPDPage() {
 
           <input
             className="input-dense"
-            placeholder="Customer"
-            value={form.customer}
+            placeholder="Supplier"
+            value={form.supplier}
             onChange={(e) =>
-              setForm({ ...form, customer: e.target.value })
+              setForm({ ...form, supplier: e.target.value })
             }
           />
 
@@ -319,7 +319,7 @@ export default function InputIPDPage() {
             <tr>
               <th className="border px-2 py-1 text-center w-10">No</th>
               <th className="border px-2 py-1">IPD SIIS</th>
-              <th className="border px-2 py-1">Customer</th>
+              <th className="border px-2 py-1">Supplier</th>
               <th className="border px-2 py-1">FB Type</th>
               <th className="border px-2 py-1">Comodity</th>
               <th className="border px-2 py-1">IPD Quotation</th>
@@ -334,7 +334,7 @@ export default function InputIPDPage() {
                   {page * PAGE_SIZE + i + 1}
                 </td>
                 <td className="border px-2 py-1">{r.ipd_siis}</td>
-                <td className="border px-2 py-1">{r.customer}</td>
+                <td className="border px-2 py-1">{r.supplier}</td>
                 <td className="border px-2 py-1">{r.fb_type}</td>
                 <td className="border px-2 py-1">{r.commodity}</td>
                 <td className="border px-2 py-1">{r.ipd_quotation}</td>

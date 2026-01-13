@@ -15,7 +15,7 @@ export async function PUT(
 
     const {
       ipd_siis,
-      customer,
+      supplier,
       fb_type,
       commodity,
       ipd_quotation,
@@ -26,7 +26,7 @@ export async function PUT(
       UPDATE ipd_master
       SET
         ipd_siis = $1,
-        customer = $2,
+        supplier = $2,
         fb_type = $3,
         commodity = $4,
         ipd_quotation = $5
@@ -34,7 +34,7 @@ export async function PUT(
       `,
       [
         ipd_siis,
-        customer,
+        supplier,
         fb_type,
         commodity,
         ipd_quotation,
