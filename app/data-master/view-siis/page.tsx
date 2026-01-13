@@ -119,62 +119,65 @@ export default function ViewSIISPage() {
 
   /* ================= EXPORT EXCEL ================= */
   function downloadExcel() {
-    if (!supplier || !selectedQuarter) return;
+  if (!supplier || !selectedQuarter) return;
 
-    const header = ["IPD", "Material Source", ...MONTHS];
-    const body = ipds.map(i => [
-      i.ipd,
-      i.material_source,
-      ...MONTHS.map((_, mIdx) =>
-        formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
-      ),
-    ]);
+  const header = ["IPD", "Material Source", ...MONTHS];
+  const body = ipds.map(i => [
+    i.ipd,
+    i.material_source,
+    ...MONTHS.map((_, mIdx) =>
+      formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
+    ),
+  ]);
 
-    const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "SIIS");
+  const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "SIIS");
 
-    /* ===== APPROVAL EXCEL ===== */
-    /* ===== APPROVAL EXCEL (BAWAH KANAN – MIRIP PDF) ===== */
-const approvalRowStart = body.length + 4;     // bawah tabel
-const approvalColStart = header.length + 2;  // kanan tabel
+  /* ===== APPROVAL EXCEL (BAWAH KANAN) ===== */
+  const approvalRowStart = body.length + 4;
+  const approvalColStart = header.length + 2;
 
-XLSX.utils.sheet_add_aoa(
-  ws,
-  [
-    approvals.map(a => a.title), // BARIS 1: TITLE
-    ["", "", ""],                // BARIS 2: KOTAK TTD
-    approvals.map(a => a.name),  // BARIS 3: NAMA
-  ],
-  { origin: { r: approvalRowStart, c: approvalColStart } }
-);
+  XLSX.utils.sheet_add_aoa(
+    ws,
+    [
+      approvals.map(a => a.title),
+      ["", "", ""],
+      approvals.map(a => a.name),
+    ],
+    { origin: { r: approvalRowStart, c: approvalColStart } }
+  );
 
-/* BORDER + ALIGNMENT */
-for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
-  for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
-    const ref = XLSX.utils.encode_cell({ r, c });
-    ws[ref] = ws[ref] || { t: "s", v: "" };
-
-    ws[ref].s = {
-      alignment: {
-        horizontal: "center",
-        vertical: "center",
-        wrapText: true,
-      },
-      border: {
-        top:    { style: "thin" },
-        bottom: { style: "thin" },
-        left:   { style: "thin" },
-        right:  { style: "thin" },
-      },
-    };
+  for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
+    for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
+      const ref = XLSX.utils.encode_cell({ r, c });
+      ws[ref] = ws[ref] || { t: "s", v: "" };
+      ws[ref].s = {
+        alignment: {
+          horizontal: "center",
+          vertical: "center",
+          wrapText: true,
+        },
+        border: {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        },
+      };
+    }
   }
+
+  ws["!rows"] = ws["!rows"] || [];
+  ws["!rows"][approvalRowStart + 1] = { hpt: 60 };
+
+  /* ⬅️ INI YANG TADI HILANG */
+  XLSX.writeFile(
+    wb,
+    `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
+  );
 }
 
-/* TINGGIKAN BARIS TTD (BIAR MIRIP PDF) */
-ws["!rows"] = ws["!rows"] || [];
-ws["!rows"][approvalRowStart + 1] = { hpt: 60 }; // tinggi kotak tanda tangan
-  }
 
   /* ================= EXPORT PDF ================= */
   function downloadPDF() {
