@@ -27,10 +27,10 @@ export async function PUT(
       SET
         ipd_siis = $1,
         customer = $2,
-        fb_type = $2,
-        commodity = $3,
-        ipd_quotation = $4
-      WHERE id = $5
+        fb_type = $3,
+        commodity = $4,
+        ipd_quotation = $5
+      WHERE id = $6
       `,
       [
         ipd_siis,
