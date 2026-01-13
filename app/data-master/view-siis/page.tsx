@@ -198,32 +198,41 @@ export default function ViewSIISPage() {
 
 autoTable(doc, {
   body: [
-    approvals.map(a => a.title),
-    ["", "", ""],   // area tanda tangan
-    ["", "", ""],   // area tanda tangan
-    approvals.map(a => a.name),
+    // BARIS 1 — TITLE
+    approvals.map(a => ({
+      content: a.title,
+      styles: { halign: "center", fontStyle: "normal" },
+    })),
+
+    // BARIS 2 — TTD (ROWSPAN)
+    approvals.map(() => ({
+      content: "",
+      rowSpan: 1,
+      styles: {
+        minCellHeight: 35, // ⬅️ tinggi kotak tanda tangan
+      },
+    })),
+
+    // BARIS 3 — NAMA
+    approvals.map(a => ({
+      content: a.name,
+      styles: { halign: "center" },
+    })),
   ],
+
   startY: (doc as any).lastAutoTable.finalY + 10,
 
-  // posisi kanan
+  // POSISI KANAN
   margin: { left: pageWidth * 0.55 },
   tableWidth: pageWidth * 0.4,
 
   theme: "grid",
 
   styles: {
-    halign: "center",
     fontSize: 9,
     cellPadding: 3,
-    lineWidth: 0.3,          // ⬅️ pastikan border terlihat
+    lineWidth: 0.4,
     lineColor: [0, 0, 0],
-  },
-
-  didParseCell: function (data) {
-    // Baris 1 & 2 = area tanda tangan
-    if (data.row.index === 1 || data.row.index === 2) {
-      data.cell.styles.minCellHeight = 18; // ⬅️ kotak TTD besar
-    }
   },
 });
 
