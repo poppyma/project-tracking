@@ -224,6 +224,7 @@ export default function InputIPDPage() {
 
     <label
       className={`px-3 py-1.5 text-xs rounded text-white cursor-pointer
+        flex items-center justify-center text-center
         ${!csvSupplier ? "bg-gray-400" : "bg-green-600"}`}
     >
       Upload CSV
