@@ -206,35 +206,35 @@ export default function InputIPDPage() {
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
-  <h1 className="text-sm font-semibold">IPD Master</h1>
+      <h1 className="text-sm font-semibold">IPD Master</h1>
 
-  <div className="flex gap-2">
-    <select
-  className="input-dense w-64"
-  value={csvSupplier}
-  onChange={(e) => setCsvSupplier(e.target.value)}
->
-  <option value="">-- Select Supplier --</option>
-  {suppliers.map((s) => (
-    <option key={s.id} value={s.supplier_name}>
-      {s.supplier_code} - {s.supplier_name}
-    </option>
-  ))}
-</select>
+      <div className="flex gap-2">
+        <select
+      className="input-dense w-64 pr-10"
+      value={csvSupplier}
+      onChange={(e) => setCsvSupplier(e.target.value)}
+    >
+      <option value="">-- Select Supplier --</option>
+      {suppliers.map((s) => (
+        <option key={s.id} value={s.supplier_name}>
+          {s.supplier_code} - {s.supplier_name}
+        </option>
+      ))}
+    </select>
 
-<label
-  className={`px-3 py-1.5 text-xs rounded text-white cursor-pointer
-    ${!csvSupplier ? "bg-gray-400" : "bg-green-600"}`}
->
-  Upload CSV
-  <input
-    type="file"
-    accept=".csv"
-    onChange={handleUploadCSV}
-    disabled={!csvSupplier}
-    className="hidden"
-  />
-</label>
+    <label
+      className={`px-3 py-1.5 text-xs rounded text-white cursor-pointer
+        ${!csvSupplier ? "bg-gray-400" : "bg-green-600"}`}
+    >
+      Upload CSV
+      <input
+        type="file"
+        accept=".csv"
+        onChange={handleUploadCSV}
+        disabled={!csvSupplier}
+        className="hidden"
+      />
+    </label>
 
 
     <button
