@@ -41,11 +41,15 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const records = parse(buffer, {
-      columns: true,
-      skip_empty_lines: true,
-      trim: true,
-      delimiter: [",", ";"],
-    }) as IPDCSV[];
+  columns: true,
+  skip_empty_lines: true,
+  trim: true,
+
+  delimiter: ",",        // 🔒 kunci delimiter
+  quote: '"',            // 🔥 support koma di dalam field
+  relax_quotes: true,    // aman kalau quote tidak sempurna
+  relax_column_count: true, // tidak crash kalau ada row agak rusak
+}) as IPDCSV[];
 
     if (!records.length) {
       return NextResponse.json(
