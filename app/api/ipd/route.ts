@@ -32,7 +32,7 @@ export async function GET() {
 }
 
 /* =========================
-   POST → tambah IPD
+   POST → tambah IPD (MANUAL)
 ========================= */
 export async function POST(req: Request) {
   try {
@@ -46,9 +46,9 @@ export async function POST(req: Request) {
       ipd_quotation,
     } = await req.json();
 
-    if (!ipd_siis) {
+    if (!ipd_siis || !supplier) {
       return NextResponse.json(
-        { error: "IPD SIIS is required" },
+        { error: "IPD SIIS dan Supplier wajib diisi" },
         { status: 400 }
       );
     }
@@ -56,11 +56,17 @@ export async function POST(req: Request) {
     const result = await query(
       `
       INSERT INTO ipd_master
-      (ipd_siis, supplier,  fb_type, commodity, ipd_quotation)
+        (ipd_siis, supplier, fb_type, commodity, ipd_quotation)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
       `,
-      [ipd_siis, supplier, fb_type, commodity, ipd_quotation]
+      [
+        ipd_siis.trim(),
+        supplier.trim(),
+        fb_type || null,
+        commodity || null,
+        ipd_quotation || null,
+      ]
     );
 
     return NextResponse.json(result.rows[0]);

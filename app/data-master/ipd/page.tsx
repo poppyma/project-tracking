@@ -67,13 +67,13 @@ export default function InputIPDPage() {
 
 
       if (!csvSupplier) {
-  alert("Pilih supplier terlebih dahulu");
-  return;
-}
+        alert("Pilih supplier terlebih dahulu");
+        return;
+      }
 
-const formData = new FormData();
-formData.append("file", file);
-formData.append("supplier", csvSupplier); // 🔥 INI KUNCINYA
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("supplier", csvSupplier); // 🔥 INI KUNCINYA
 
       setLoading(true);
 
@@ -295,14 +295,21 @@ formData.append("supplier", csvSupplier); // 🔥 INI KUNCINYA
             }
           />
 
-          <input
+          <select
             className="input-dense"
-            placeholder="Supplier"
             value={form.supplier}
             onChange={(e) =>
               setForm({ ...form, supplier: e.target.value })
             }
-          />
+          >
+            <option value="">-- Select Supplier --</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.supplier_name}>
+                {s.supplier_code} - {s.supplier_name}
+              </option>
+            ))}
+          </select>
+
 
           <select
             className="input-dense"
