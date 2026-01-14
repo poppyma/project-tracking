@@ -14,6 +14,53 @@ type IPDCSV = {
 };
 
 /* ================================
+   FIX CSV YANG RUSAK KARENA KOMA
+   (supplier tanpa quote)
+================================ */
+function fixBrokenCSV(csvText: string, expectedColumns: number) {
+  const lines = csvText.split(/\r?\n/);
+  if (lines.length <= 1) return csvText;
+
+  const header = lines[0];
+  const fixedLines: string[] = [header];
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // split pakai koma dulu
+    let parts = line.split(",");
+
+    // kalau kolom lebih banyak dari seharusnya
+    if (parts.length > expectedColumns) {
+      /*
+        Format IPD:
+        0 = ipd_siis
+        1 = supplier (BISA ADA KOMA)
+        2 = fb_type
+        3 = commodity
+        4 = ipd_quotation
+      */
+
+      const ipd_siis = parts[0];
+
+      // ambil kolom belakang (fb_type, commodity, ipd_quotation)
+      const tail = parts.slice(parts.length - 3);
+
+      // gabungkan semua yang di tengah jadi supplier
+      const supplierParts = parts.slice(1, parts.length - 3);
+      const supplier = supplierParts.join(",");
+
+      parts = [ipd_siis, supplier, ...tail];
+    }
+
+    fixedLines.push(parts.join(","));
+  }
+
+  return fixedLines.join("\n");
+}
+
+/* ================================
    POST : UPLOAD CSV
 ================================ */
 export async function POST(req: Request) {
@@ -36,22 +83,27 @@ export async function POST(req: Request) {
     }
 
     /* ================================
-       READ & PARSE CSV
+       READ FILE AS TEXT
     ================================ */
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const rawText = Buffer.from(await file.arrayBuffer()).toString("utf-8");
 
-    const records = parse(buffer, {
+    // IPD CSV punya 5 kolom
+    const fixedText = fixBrokenCSV(rawText, 5);
+
+    /* ================================
+       PARSE CSV
+    ================================ */
+    const records = parse(fixedText, {
       columns: true,
       skip_empty_lines: true,
       trim: true,
 
-      delimiter: [",", ";"], // 🔥 AUTO DETECT
+      delimiter: [",", ";"], // support CSV Indonesia / EU
       quote: '"',
       relax_quotes: true,
       relax_column_count: true,
-      bom: true,
+      bom: true, // CSV Excel
     }) as any[];
-
 
     if (!records.length) {
       return NextResponse.json(
@@ -97,7 +149,6 @@ export async function POST(req: Request) {
     for (const raw of records) {
       const row = normalize(raw);
 
-      // basic validation
       if (!row.ipd_siis || !row.fb_type || !row.commodity) {
         console.warn("SKIP ROW:", raw);
         continue;
