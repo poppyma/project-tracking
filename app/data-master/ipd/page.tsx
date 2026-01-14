@@ -11,6 +11,13 @@ type IPD = {
   ipd_quotation: string;
 };
 
+type Supplier = {
+  id: string;
+  supplier_code: string;
+  supplier_name: string;
+};
+
+
 const PAGE_SIZE = 50;
 const FB_TYPES = ["DGBB", "HBU-1"];
 const COMMODITIES = ["Cage", "Ring", "Balls", "Seal", "Shield"];
@@ -25,6 +32,10 @@ export default function InputIPDPage() {
   const [search, setSearch] = useState("");
   const [filterFb, setFilterFb] = useState("");
   const [filterCommodity, setFilterCommodity] = useState("");
+  
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [csvSupplier, setCsvSupplier] = useState("");
+
 
   const [form, setForm] = useState({
     ipd_siis: "",
@@ -54,8 +65,15 @@ export default function InputIPDPage() {
         return;
       }
 
-      const formData = new FormData();
-      formData.append("file", file);
+
+      if (!csvSupplier) {
+  alert("Pilih supplier terlebih dahulu");
+  return;
+}
+
+const formData = new FormData();
+formData.append("file", file);
+formData.append("supplier", csvSupplier); // 🔥 INI KUNCINYA
 
       setLoading(true);
 
@@ -77,6 +95,12 @@ export default function InputIPDPage() {
       }
     }
 
+
+  useEffect(() => {
+    fetch("/api/supplier")
+      .then((r) => r.json())
+      .then(setSuppliers);
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -185,15 +209,33 @@ export default function InputIPDPage() {
   <h1 className="text-sm font-semibold">IPD Master</h1>
 
   <div className="flex gap-2">
-    <label className="px-3 py-1.5 text-xs rounded bg-green-600 text-white cursor-pointer">
-      Upload CSV
-      <input
-        type="file"
-        accept=".csv"
-        onChange={handleUploadCSV}
-        className="hidden"
-      />
-    </label>
+    <select
+  className="input-dense w-64"
+  value={csvSupplier}
+  onChange={(e) => setCsvSupplier(e.target.value)}
+>
+  <option value="">-- Select Supplier --</option>
+  {suppliers.map((s) => (
+    <option key={s.id} value={s.supplier_name}>
+      {s.supplier_code} - {s.supplier_name}
+    </option>
+  ))}
+</select>
+
+<label
+  className={`px-3 py-1.5 text-xs rounded text-white cursor-pointer
+    ${!csvSupplier ? "bg-gray-400" : "bg-green-600"}`}
+>
+  Upload CSV
+  <input
+    type="file"
+    accept=".csv"
+    onChange={handleUploadCSV}
+    disabled={!csvSupplier}
+    className="hidden"
+  />
+</label>
+
 
     <button
       onClick={() => {
