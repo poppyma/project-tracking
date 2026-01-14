@@ -45,12 +45,13 @@ export async function POST(req: Request) {
       skip_empty_lines: true,
       trim: true,
 
-      delimiter: ",",          // kunci delimiter
-      quote: '"',              // support koma di dalam field
+      delimiter: [",", ";"], // 🔥 AUTO DETECT
+      quote: '"',
       relax_quotes: true,
       relax_column_count: true,
-      bom: true,               // PENTING untuk CSV Excel
+      bom: true,
     }) as any[];
+
 
     if (!records.length) {
       return NextResponse.json(
