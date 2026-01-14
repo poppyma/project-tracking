@@ -43,11 +43,19 @@ export async function GET(req: Request) {
       FROM price_header h
       JOIN price_detail d
         ON d.header_id = h.id
+
+      JOIN supplier_master s
+        ON s.id = h.supplier_id
+
       LEFT JOIN ipd_master m
         ON m.ipd_quotation = d.ipd_quotation
+      AND UPPER(m.supplier) = UPPER(s.supplier_name)
+
       WHERE h.supplier_id = $1
       ${quarter ? "AND h.quarter = $2" : ""}
-      ORDER BY h.start_date DESC, m.ipd_siis
+
+      ORDER BY h.start_date DESC, m.ipd_siis;
+
     `;
 
     const params = quarter ? [supplier_id, quarter] : [supplier_id];
