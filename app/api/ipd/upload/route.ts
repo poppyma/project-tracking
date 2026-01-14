@@ -28,7 +28,12 @@ export async function POST(req: Request) {
     let inserted = 0;
 
     for (const row of records) {
-      if (!row.ipd_siis || !row.fb_type || !row.commodity) continue;
+      if (!row.ipd_siis) continue;
+
+      const ipd_siis = row.ipd_siis.trim();
+      const fb_type = row.fb_type?.trim() || "-";
+      const commodity = row.commodity?.trim() || "-";
+      const ipd_quotation = row.ipd_quotation?.trim() || "-";
 
       await query(
         `
@@ -41,13 +46,13 @@ export async function POST(req: Request) {
         )
         VALUES ($1, $2, $3, $4, $5)
         `,
-        [
-          row.ipd_siis.trim(),
-          supplier, // ✅ DARI DROPDOWN
-          row.fb_type.trim(),
-          row.commodity.trim(),
-          row.ipd_quotation?.trim() ?? "",
-        ]
+         [
+            ipd_siis,
+            supplier,        // dari dropdown
+            fb_type,         // default "-"
+            commodity,       // default "-"
+            ipd_quotation,   // default "-"
+          ]
       );
 
       inserted++;
