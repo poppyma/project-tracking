@@ -132,6 +132,28 @@ export default function ViewSIISPage() {
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+
+  /* ================= AUTO COLUMN WIDTH ================= */
+const allRows = [header, ...body];
+
+ws["!cols"] = allRows[0].map((_, colIdx) => {
+  let maxLength = 10; // minimal width
+
+  for (const row of allRows) {
+    const cellValue = row[colIdx];
+    if (cellValue) {
+      const cellLength = cellValue.toString().length;
+      if (cellLength > maxLength) {
+        maxLength = cellLength;
+      }
+    }
+  }
+
+  return {
+    wch: Math.min(maxLength + 2, 30), // batas max biar ga kegedean
+  };
+});
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "SIIS");
 
