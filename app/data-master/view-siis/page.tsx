@@ -347,7 +347,7 @@ function downloadPDF() {
       fontSize: 9,
       cellPadding: 4,
       lineColor: [0, 0, 0], // HITAM
-      lineWidth: 0.6,      // LEBIH TEBAL
+      lineWidth: 0.1,      // LEBIH TEBAL
     },
   });
 
