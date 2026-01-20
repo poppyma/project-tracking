@@ -114,7 +114,7 @@ export default function ViewSIISPage() {
   }
 
   function formatPrice(v: number) {
-    return v === 0 ? "-" : v.toFixed(4);
+    return v === 0 ? "-" : v.toFixed(3);
   }
 function downloadExcel() {
   if (!supplier || !selectedQuarter) return;
