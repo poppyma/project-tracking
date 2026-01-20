@@ -332,7 +332,7 @@ function downloadPDF() {
       approvals.map(() => ({
         content: "",
         styles: {
-          minCellHeight: 40, // ⬅️ INI KUNCINYA
+          minCellHeight: 20, // ⬅️ INI KUNCINYA
         },
       })),
 
