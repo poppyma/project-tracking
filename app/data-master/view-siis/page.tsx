@@ -171,6 +171,33 @@ export default function ViewSIISPage() {
       }
     }
 
+    // ================== BORDER TABEL UTAMA ==================
+const headerRow = 0;
+const bodyRowStart = 1;
+const totalRows = body.length + 1; // header + body
+const totalCols = header.length;
+
+for (let r = headerRow; r < totalRows; r++) {
+  for (let c = 0; c < totalCols; c++) {
+    const ref = XLSX.utils.encode_cell({ r, c });
+    ws[ref] = ws[ref] || { t: "s", v: "" };
+
+    ws[ref].s = {
+      ...(ws[ref].s || {}),
+      border: {
+        top:    { style: "thin" },
+        bottom: { style: "thin" },
+        left:   { style: "thin" },
+        right:  { style: "thin" },
+      },
+      alignment: {
+        vertical: "center",
+        horizontal: c >= 2 ? "right" : "left",
+      },
+    };
+  }
+}
+
     /* TINGGI KOTAK TTD */
     ws["!rows"] = ws["!rows"] || [];
     ws["!rows"][approvalRowStart + 1] = { hpt: 60 };
