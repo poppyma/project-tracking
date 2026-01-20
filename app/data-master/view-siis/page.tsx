@@ -50,9 +50,9 @@ export default function ViewSIISPage() {
 
   /* ===== APPROVAL STATE ===== */
   const [approvals, setApprovals] = useState<Approval[]>([
-    { title: "Factory Manager", name: "Mohammad Saddiq" },
-    { title: "Finance Controller", name: "Dwi Ari Nuryasini" },
-    { title: "Purchasing Manager", name: "Mochris Lestari" },
+    { title: "Factory Manager", name: "Mohammad Saadiq" },
+    { title: "Finance Controller", name: "Dwi Ana Nursiyani" },
+    { title: "Purchasing Manager", name: "Mochrita Lestari" },
   ]);
 
   /* ================= LOAD SUPPLIER ================= */
@@ -346,6 +346,8 @@ function downloadPDF() {
     styles: {
       fontSize: 9,
       cellPadding: 4,
+      lineColor: [0, 0, 0], // HITAM
+      lineWidth: 0.6,      // LEBIH TEBAL
     },
   });
 
