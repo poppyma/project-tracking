@@ -323,9 +323,13 @@ function downloadPDF() {
 
     body: [
       // BARIS TITLE
-      approvals.map(a => ({
+       approvals.map(a => ({
         content: a.title,
-        styles: { halign: "center" },
+        styles: {
+          halign: "center",
+          cellPadding: 2,      // ⬅️ kecilkan padding
+          fontSize: 9,
+        },
       })),
 
       // BARIS TTD (TINGGI)
