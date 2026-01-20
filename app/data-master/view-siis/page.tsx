@@ -131,8 +131,10 @@ function downloadExcel() {
   ];
 
   /* ================= TABLE DATA ================= */
-  const header = ["IPD", "Material Source", ...MONTHS];
-  const body = ipds.map(i => [
+  const header = ["No", "IPD", "Material Source", ...MONTHS];
+
+  const body = ipds.map((i, idx) => [
+    idx + 1,               // ⬅️ NOMOR
     i.ipd,
     i.material_source,
     ...MONTHS.map((_, mIdx) =>
@@ -141,25 +143,32 @@ function downloadExcel() {
   ]);
 
   const startTableRow = supplierInfo.length;
+
   const ws = XLSX.utils.aoa_to_sheet([
     ...supplierInfo,
     header,
     ...body,
   ]);
 
-  /* ================= AUTO COLUMN WIDTH ================= */
+  /* ================= AUTO COLUMN WIDTH (REAL AUTOFIT) ================= */
   const allRows = [header, ...body];
+
   ws["!cols"] = allRows[0].map((_, colIdx) => {
-    let maxLength = 10;
+    let maxLength = header[colIdx].toString().length;
+
     for (const row of allRows) {
-      if (row[colIdx]) {
+      const cell = row[colIdx];
+      if (cell !== null && cell !== undefined) {
         maxLength = Math.max(
           maxLength,
-          row[colIdx].toString().length
+          cell.toString().length
         );
       }
     }
-    return { wch: Math.min(maxLength + 2, 30) };
+
+    return {
+      wch: Math.min(maxLength + 2, 35),
+    };
   });
 
   const wb = XLSX.utils.book_new();
@@ -167,11 +176,12 @@ function downloadExcel() {
 
   /* ================= STYLE SUPPLIER INFO ================= */
   for (let r = 0; r < supplierInfo.length - 1; r++) {
-    const labelCell = XLSX.utils.encode_cell({ r, c: 0 });
-    ws[labelCell].s = { font: { bold: true } };
+    ws[XLSX.utils.encode_cell({ r, c: 0 })].s = {
+      font: { bold: true },
+    };
   }
 
-  /* ================= BORDER TABLE ================= */
+  /* ================= BORDER + ALIGNMENT TABLE ================= */
   const totalRows = body.length + 1;
   const totalCols = header.length;
 
@@ -183,6 +193,7 @@ function downloadExcel() {
       });
 
       ws[ref] = ws[ref] || { t: "s", v: "" };
+
       ws[ref].s = {
         border: {
           top: { style: "thin" },
@@ -193,7 +204,11 @@ function downloadExcel() {
         alignment: {
           vertical: "center",
           horizontal:
-            c <= 1 ? "left" : "right",
+            c === 0
+              ? "center"   // No
+              : c <= 2
+              ? "left"     // IPD + Material
+              : "right",   // Month values
         },
       };
 
@@ -220,12 +235,8 @@ function downloadExcel() {
 
   for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
     for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
-      const ref = XLSX.utils.encode_cell({ r, c });
-      ws[ref].s = {
-        alignment: {
-          horizontal: "center",
-          vertical: "center",
-        },
+      ws[XLSX.utils.encode_cell({ r, c })].s = {
+        alignment: { horizontal: "center", vertical: "center" },
         border: {
           top: { style: "thin" },
           bottom: { style: "thin" },
@@ -245,13 +256,14 @@ function downloadExcel() {
   );
 }
 
+
 function downloadPDF() {
   if (!supplier || !selectedQuarter) return;
 
   const doc = new jsPDF("l", "mm", "a4");
   let y = 12;
 
-  /* ================= SUPPLIER INFO ================= */
+  /* ================= TITLE ================= */
   doc.setFontSize(12);
   doc.text(
     `SIIS PRICE - ${supplier.supplier_name}`,
@@ -272,7 +284,7 @@ function downloadPDF() {
   ];
 
   info.forEach(([k, v]) => {
-    doc.text(`${k}`, 14, y);
+    doc.text(k, 14, y);
     doc.text(`: ${v}`, 50, y);
     y += 5;
   });
@@ -280,8 +292,9 @@ function downloadPDF() {
   /* ================= TABLE ================= */
   autoTable(doc, {
     startY: y + 4,
-    head: [["IPD", "Material Source", ...MONTHS]],
-    body: ipds.map(i => [
+    head: [["No", "IPD", "Material Source", ...MONTHS]],
+    body: ipds.map((i, idx) => [
+      idx + 1,
       i.ipd,
       i.material_source,
       ...MONTHS.map((_, mIdx) =>
@@ -292,6 +305,10 @@ function downloadPDF() {
     headStyles: {
       fillColor: [40, 130, 190],
       textColor: 255,
+      halign: "center",
+    },
+    columnStyles: {
+      0: { halign: "center", cellWidth: 10 },
     },
   });
 
