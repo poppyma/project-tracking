@@ -116,12 +116,21 @@ export default function ViewSIISPage() {
   function formatPrice(v: number) {
     return v === 0 ? "-" : v.toFixed(4);
   }
-
-  /* ================= EXPORT EXCEL ================= */
-  function downloadExcel() {
+function downloadExcel() {
   if (!supplier || !selectedQuarter) return;
 
-  /* ================= DATA ================= */
+  /* ================= SUPPLIER INFO ================= */
+  const supplierInfo = [
+    ["SUPPLIER", supplier.supplier_name],
+    ["ADDRESS", supplier.address],
+    ["CURRENCY", supplier.currency],
+    ["INCOTERMS", supplier.incoterm],
+    ["TERMS OF PAYMENT", `${supplier.top} days after BL date`],
+    ["PRICE VALIDITY", selectedQuarter],
+    [],
+  ];
+
+  /* ================= TABLE DATA ================= */
   const header = ["IPD", "Material Source", ...MONTHS];
   const body = ipds.map(i => [
     i.ipd,
@@ -131,70 +140,72 @@ export default function ViewSIISPage() {
     ),
   ]);
 
-  const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+  const startTableRow = supplierInfo.length;
+  const ws = XLSX.utils.aoa_to_sheet([
+    ...supplierInfo,
+    header,
+    ...body,
+  ]);
 
   /* ================= AUTO COLUMN WIDTH ================= */
-const allRows = [header, ...body];
-
-ws["!cols"] = allRows[0].map((_, colIdx) => {
-  let maxLength = 10; // minimal width
-
-  for (const row of allRows) {
-    const cellValue = row[colIdx];
-    if (cellValue) {
-      const cellLength = cellValue.toString().length;
-      if (cellLength > maxLength) {
-        maxLength = cellLength;
+  const allRows = [header, ...body];
+  ws["!cols"] = allRows[0].map((_, colIdx) => {
+    let maxLength = 10;
+    for (const row of allRows) {
+      if (row[colIdx]) {
+        maxLength = Math.max(
+          maxLength,
+          row[colIdx].toString().length
+        );
       }
     }
-  }
-
-  return {
-    wch: Math.min(maxLength + 2, 30), // batas max biar ga kegedean
-  };
-});
+    return { wch: Math.min(maxLength + 2, 30) };
+  });
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "SIIS");
 
-  /* ================= BORDER TABEL UTAMA ================= */
-  const totalRows = body.length + 1; // header + body
+  /* ================= STYLE SUPPLIER INFO ================= */
+  for (let r = 0; r < supplierInfo.length - 1; r++) {
+    const labelCell = XLSX.utils.encode_cell({ r, c: 0 });
+    ws[labelCell].s = { font: { bold: true } };
+  }
+
+  /* ================= BORDER TABLE ================= */
+  const totalRows = body.length + 1;
   const totalCols = header.length;
 
   for (let r = 0; r < totalRows; r++) {
     for (let c = 0; c < totalCols; c++) {
-      const ref = XLSX.utils.encode_cell({ r, c });
-      ws[ref] = ws[ref] || { t: "s", v: "" };
+      const ref = XLSX.utils.encode_cell({
+        r: startTableRow + r,
+        c,
+      });
 
+      ws[ref] = ws[ref] || { t: "s", v: "" };
       ws[ref].s = {
-        ...(ws[ref].s || {}),
         border: {
-          top:    { style: "thin" },
+          top: { style: "thin" },
           bottom: { style: "thin" },
-          left:   { style: "thin" },
-          right:  { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
         },
         alignment: {
           vertical: "center",
           horizontal:
-            c === 0 || c === 1 ? "left" : "right",
+            c <= 1 ? "left" : "right",
         },
       };
 
-      // HEADER STYLE
       if (r === 0) {
         ws[ref].s.font = { bold: true };
-        ws[ref].s.alignment = {
-          horizontal: "center",
-          vertical: "center",
-          wrapText: true,
-        };
+        ws[ref].s.alignment.horizontal = "center";
       }
     }
   }
 
-  /* ================= APPROVAL (TTD) ================= */
-  const approvalRowStart = body.length + 4;
+  /* ================= APPROVAL ================= */
+  const approvalRowStart = startTableRow + body.length + 3;
   const approvalColStart = header.length - approvals.length;
 
   XLSX.utils.sheet_add_aoa(
@@ -210,107 +221,105 @@ ws["!cols"] = allRows[0].map((_, colIdx) => {
   for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
     for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
       const ref = XLSX.utils.encode_cell({ r, c });
-      ws[ref] = ws[ref] || { t: "s", v: "" };
-
       ws[ref].s = {
         alignment: {
           horizontal: "center",
           vertical: "center",
-          wrapText: true,
         },
         border: {
-          top:    { style: "thin" },
+          top: { style: "thin" },
           bottom: { style: "thin" },
-          left:   { style: "thin" },
-          right:  { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
         },
       };
     }
   }
 
-  /* ================= TINGGI KOTAK TTD ================= */
   ws["!rows"] = ws["!rows"] || [];
   ws["!rows"][approvalRowStart + 1] = { hpt: 60 };
 
-  /* ================= EXPORT ================= */
   XLSX.writeFile(
     wb,
     `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
   );
 }
 
-  /* ================= EXPORT PDF ================= */
-  function downloadPDF() {
-    if (!supplier || !selectedQuarter) return;
+function downloadPDF() {
+  if (!supplier || !selectedQuarter) return;
 
-    const doc = new jsPDF("l", "mm", "a4");
+  const doc = new jsPDF("l", "mm", "a4");
+  let y = 12;
 
-    doc.setFontSize(12);
-    doc.text(`SIIS PRICE - ${supplier.supplier_name}`, 14, 10);
-    doc.setFontSize(10);
-    doc.text(`Quarter: ${selectedQuarter}`, 14, 16);
+  /* ================= SUPPLIER INFO ================= */
+  doc.setFontSize(12);
+  doc.text(
+    `SIIS PRICE - ${supplier.supplier_name}`,
+    14,
+    y
+  );
 
-    autoTable(doc, {
-      head: [["IPD", "Material Source", ...MONTHS]],
-      body: ipds.map(i => [
-        i.ipd,
-        i.material_source,
-        ...MONTHS.map((_, mIdx) =>
-          formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
-        ),
-      ]),
-      startY: 22,
-      styles: { fontSize: 8 },
-    });
+  y += 6;
+  doc.setFontSize(9);
 
-    const pageWidth = doc.internal.pageSize.getWidth();
+  const info = [
+    ["SUPPLIER", supplier.supplier_name],
+    ["ADDRESS", supplier.address],
+    ["CURRENCY", supplier.currency],
+    ["INCOTERMS", supplier.incoterm],
+    ["TERMS OF PAYMENT", `${supplier.top} days after BL date`],
+    ["PRICE VALIDITY", selectedQuarter],
+  ];
 
-    autoTable(doc, {
-      body: [
-        // BARIS 1 — TITLE
-        approvals.map(a => ({
-          content: a.title,
-          styles: { halign: "center", fontStyle: "normal" },
-        })),
+  info.forEach(([k, v]) => {
+    doc.text(`${k}`, 14, y);
+    doc.text(`: ${v}`, 50, y);
+    y += 5;
+  });
 
-        // BARIS 2 — TTD (ROWSPAN)
-        approvals.map(() => ({
-          content: "",
-          rowSpan: 1,
-          styles: {
-            minCellHeight: 20, // ⬅️ tinggi kotak tanda tangan
-          },
-        })),
+  /* ================= TABLE ================= */
+  autoTable(doc, {
+    startY: y + 4,
+    head: [["IPD", "Material Source", ...MONTHS]],
+    body: ipds.map(i => [
+      i.ipd,
+      i.material_source,
+      ...MONTHS.map((_, mIdx) =>
+        formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
+      ),
+    ]),
+    styles: { fontSize: 8 },
+    headStyles: {
+      fillColor: [40, 130, 190],
+      textColor: 255,
+    },
+  });
 
-        // BARIS 3 — NAMA
-        approvals.map(a => ({
-          content: a.name,
-          styles: { halign: "center" },
-        })),
-      ],
+  /* ================= APPROVAL ================= */
+  const pageWidth = doc.internal.pageSize.getWidth();
 
-      startY: (doc as any).lastAutoTable.finalY + 10,
+  autoTable(doc, {
+    startY: (doc as any).lastAutoTable.finalY + 12,
+    margin: { left: pageWidth * 0.55 },
+    tableWidth: pageWidth * 0.4,
+    theme: "grid",
+    body: [
+      approvals.map(a => a.title),
+      approvals.map(() => ""),
+      approvals.map(a => a.name),
+    ],
+    styles: {
+      fontSize: 9,
+      halign: "center",
+      cellPadding: 4,
+    },
+  });
 
-      // POSISI KANAN
-      margin: { left: pageWidth * 0.55 },
-      tableWidth: pageWidth * 0.4,
+  doc.save(
+    `SIIS_${supplier.supplier_code}_${selectedQuarter}.pdf`
+  );
+}
 
-      theme: "grid",
-
-      styles: {
-        fontSize: 9,
-        cellPadding: 3,
-        lineWidth: 0.4,
-        lineColor: [0, 0, 0],
-      },
-    });
-
-
-
-    doc.save(
-      `SIIS_${supplier.supplier_code}_${selectedQuarter}.pdf`
-    );
-  }
 
   return (
     <div className="p-4 text-xs space-y-4">
