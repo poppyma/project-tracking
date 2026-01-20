@@ -119,94 +119,104 @@ export default function ViewSIISPage() {
 
   /* ================= EXPORT EXCEL ================= */
   function downloadExcel() {
-    if (!supplier || !selectedQuarter) return;
+  if (!supplier || !selectedQuarter) return;
 
-    const header = ["IPD", "Material Source", ...MONTHS];
-    const body = ipds.map(i => [
-      i.ipd,
-      i.material_source,
-      ...MONTHS.map((_, mIdx) =>
-        formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
-      ),
-    ]);
+  /* ================= DATA ================= */
+  const header = ["IPD", "Material Source", ...MONTHS];
+  const body = ipds.map(i => [
+    i.ipd,
+    i.material_source,
+    ...MONTHS.map((_, mIdx) =>
+      formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
+    ),
+  ]);
 
-    const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "SIIS");
+  const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "SIIS");
 
-    /* ===== APPROVAL EXCEL (BAWAH KANAN TABEL) ===== */
-    const approvalRowStart = body.length + 4; // di bawah tabel
-    const tableColCount = header.length;
-    const approvalColStart = tableColCount - approvals.length; // ⬅️ FIX DI SINI
+  /* ================= BORDER TABEL UTAMA ================= */
+  const totalRows = body.length + 1; // header + body
+  const totalCols = header.length;
 
-    XLSX.utils.sheet_add_aoa(
-      ws,
-      [
-        approvals.map(a => a.title),
-        ["", "", ""],
-        approvals.map(a => a.name),
-      ],
-      { origin: { r: approvalRowStart, c: approvalColStart } }
-    );
+  for (let r = 0; r < totalRows; r++) {
+    for (let c = 0; c < totalCols; c++) {
+      const ref = XLSX.utils.encode_cell({ r, c });
+      ws[ref] = ws[ref] || { t: "s", v: "" };
 
-    /* BORDER + ALIGNMENT */
-    for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
-      for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
-        const ref = XLSX.utils.encode_cell({ r, c });
-        ws[ref] = ws[ref] || { t: "s", v: "" };
+      ws[ref].s = {
+        ...(ws[ref].s || {}),
+        border: {
+          top:    { style: "thin" },
+          bottom: { style: "thin" },
+          left:   { style: "thin" },
+          right:  { style: "thin" },
+        },
+        alignment: {
+          vertical: "center",
+          horizontal:
+            c === 0 || c === 1 ? "left" : "right",
+        },
+      };
 
-        ws[ref].s = {
-          alignment: {
-            horizontal: "center",
-            vertical: "center",
-            wrapText: true,
-          },
-          border: {
-            top:    { style: "thin" },
-            bottom: { style: "thin" },
-            left:   { style: "thin" },
-            right:  { style: "thin" },
-          },
+      // HEADER STYLE
+      if (r === 0) {
+        ws[ref].s.font = { bold: true };
+        ws[ref].s.alignment = {
+          horizontal: "center",
+          vertical: "center",
+          wrapText: true,
         };
       }
     }
-
-    // ================== BORDER TABEL UTAMA ==================
-const headerRow = 0;
-const bodyRowStart = 1;
-const totalRows = body.length + 1; // header + body
-const totalCols = header.length;
-
-for (let r = headerRow; r < totalRows; r++) {
-  for (let c = 0; c < totalCols; c++) {
-    const ref = XLSX.utils.encode_cell({ r, c });
-    ws[ref] = ws[ref] || { t: "s", v: "" };
-
-    ws[ref].s = {
-      ...(ws[ref].s || {}),
-      border: {
-        top:    { style: "thin" },
-        bottom: { style: "thin" },
-        left:   { style: "thin" },
-        right:  { style: "thin" },
-      },
-      alignment: {
-        vertical: "center",
-        horizontal: c >= 2 ? "right" : "left",
-      },
-    };
   }
+
+  /* ================= APPROVAL (TTD) ================= */
+  const approvalRowStart = body.length + 4;
+  const approvalColStart = header.length - approvals.length;
+
+  XLSX.utils.sheet_add_aoa(
+    ws,
+    [
+      approvals.map(a => a.title),
+      ["", "", ""],
+      approvals.map(a => a.name),
+    ],
+    { origin: { r: approvalRowStart, c: approvalColStart } }
+  );
+
+  for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
+    for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
+      const ref = XLSX.utils.encode_cell({ r, c });
+      ws[ref] = ws[ref] || { t: "s", v: "" };
+
+      ws[ref].s = {
+        alignment: {
+          horizontal: "center",
+          vertical: "center",
+          wrapText: true,
+        },
+        border: {
+          top:    { style: "thin" },
+          bottom: { style: "thin" },
+          left:   { style: "thin" },
+          right:  { style: "thin" },
+        },
+      };
+    }
+  }
+
+  /* ================= TINGGI KOTAK TTD ================= */
+  ws["!rows"] = ws["!rows"] || [];
+  ws["!rows"][approvalRowStart + 1] = { hpt: 60 };
+
+  /* ================= EXPORT ================= */
+  XLSX.writeFile(
+    wb,
+    `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
+  );
 }
 
-    /* TINGGI KOTAK TTD */
-    ws["!rows"] = ws["!rows"] || [];
-    ws["!rows"][approvalRowStart + 1] = { hpt: 60 };
-    /* ⬅️ INI YANG TADI HILANG */
-      XLSX.writeFile(
-        wb,
-        `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
-      );
-  }
   /* ================= EXPORT PDF ================= */
   function downloadPDF() {
     if (!supplier || !selectedQuarter) return;
