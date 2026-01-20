@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
