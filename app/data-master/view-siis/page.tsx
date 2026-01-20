@@ -343,7 +343,11 @@ function downloadPDF() {
       // BARIS NAMA
       approvals.map(a => ({
         content: a.name,
-        styles: { halign: "center" },
+        styles: {
+          halign: "center",
+          cellPadding: 2,      // ⬅️ kecilkan padding
+          fontSize: 9,
+        },
       })),
     ],
 
@@ -351,7 +355,6 @@ function downloadPDF() {
       fontSize: 9,
       cellPadding: 4,
       lineColor: [0, 0, 0], // HITAM
-      lineWidth: 0.1,      // LEBIH TEBAL
     },
   });
 
