@@ -312,7 +312,7 @@ function downloadPDF() {
     },
   });
 
-  /* ================= APPROVAL ================= */
+  /* ================= APPROVAL (TTD PANJANG) ================= */
   const pageWidth = doc.internal.pageSize.getWidth();
 
   autoTable(doc, {
@@ -320,14 +320,31 @@ function downloadPDF() {
     margin: { left: pageWidth * 0.55 },
     tableWidth: pageWidth * 0.4,
     theme: "grid",
+
     body: [
-      approvals.map(a => a.title),
-      approvals.map(() => ""),
-      approvals.map(a => a.name),
+      // BARIS TITLE
+      approvals.map(a => ({
+        content: a.title,
+        styles: { halign: "center" },
+      })),
+
+      // BARIS TTD (TINGGI)
+      approvals.map(() => ({
+        content: "",
+        styles: {
+          minCellHeight: 40, // ⬅️ INI KUNCINYA
+        },
+      })),
+
+      // BARIS NAMA
+      approvals.map(a => ({
+        content: a.name,
+        styles: { halign: "center" },
+      })),
     ],
+
     styles: {
       fontSize: 9,
-      halign: "center",
       cellPadding: 4,
     },
   });
@@ -336,6 +353,7 @@ function downloadPDF() {
     `SIIS_${supplier.supplier_code}_${selectedQuarter}.pdf`
   );
 }
+
 
 
   return (
