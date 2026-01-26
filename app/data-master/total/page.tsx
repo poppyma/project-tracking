@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Row = {
+  supplier_id: string;
   supplier_code: string;
   supplier_name: string;
   quarter: string;
@@ -25,23 +26,27 @@ export default function ViewTotalIPDPage() {
       .then(setRows);
   }, []);
 
-  // ambil supplier unik
+  // 🔑 supplier unik berdasarkan supplier_id (STREAM A & C beda)
   const suppliers = Array.from(
     new Map(
       rows.map((r) => [
-        r.supplier_code,
-        { supplier_code: r.supplier_code, supplier_name: r.supplier_name },
+        r.supplier_id,
+        {
+          supplier_id: r.supplier_id,
+          supplier_code: r.supplier_code,
+          supplier_name: r.supplier_name,
+        },
       ])
     ).values()
   );
 
-  function getValue(code: string, quarter: string) {
+  function getValue(supplierId: string, quarter: string) {
     const found = rows.find(
       (r) =>
-        r.supplier_code === code &&
+        r.supplier_id === supplierId &&
         r.quarter === quarter
     );
-    return found ? found.total_ipd : "0";
+    return found ? Number(found.total_ipd) : 0;
   }
 
   return (
@@ -76,7 +81,7 @@ export default function ViewTotalIPDPage() {
             </tr>
           ) : (
             suppliers.map((s, i) => (
-              <tr key={s.supplier_code}>
+              <tr key={s.supplier_id}>
                 <td className="border px-2 py-1 text-center">
                   {i + 1}
                 </td>
@@ -88,9 +93,7 @@ export default function ViewTotalIPDPage() {
                 </td>
 
                 {QUARTERS.map((q) => {
-                  const value = getValue(s.supplier_code, q);
-                  const num = Number(value);
-
+                  const num = getValue(s.supplier_id, q);
                   return (
                     <td
                       key={q}
@@ -102,7 +105,6 @@ export default function ViewTotalIPDPage() {
                     </td>
                   );
                 })}
-
               </tr>
             ))
           )}
