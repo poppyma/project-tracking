@@ -445,51 +445,53 @@ export default function InputIPDPage() {
           </thead>
 
           <tbody>
-            {pagedData.map((r, i) => (
-              <tr key={r.id}>
-                <td className="border px-2 py-1 text-center">
-  <div className="flex items-center justify-center gap-1">
-    <input
-      type="checkbox"
-      checked={selectedIds.includes(r.id)}
-      onChange={() => toggleSelect(r.id)}
-    />
-    <span>{page * PAGE_SIZE + i + 1}</span>
-  </div>
-</td>
+  {pagedData.map((r, i) => (
+    <tr key={r.id}>
+      {/* CHECKBOX COLUMN */}
+      <td className="border px-2 py-1 text-center">
+        <input
+          type="checkbox"
+          checked={selectedIds.includes(r.id)}
+          onChange={() => toggleSelect(r.id)}
+        />
+      </td>
 
-                <td className="border px-2 py-1">{r.ipd_siis}</td>
-                <td className="border px-2 py-1">{r.supplier}</td>
-                <td className="border px-2 py-1">{r.fb_type}</td>
-                <td className="border px-2 py-1">{r.commodity}</td>
-                <td className="border px-2 py-1">{r.ipd_quotation}</td>
+      {/* NO COLUMN */}
+      <td className="border px-2 py-1 text-center">
+        {page * PAGE_SIZE + i + 1}
+      </td>
 
-                <td className="border px-2 py-1">
-                  <div className="flex justify-center gap-2">
-                    {/* EDIT */}
-                    <button
-                      title="Edit"
-                      onClick={() => handleEdit(r)}
-                      className="p-1 rounded hover:bg-blue-100"
-                      disabled={loading}
-                    >
-                      ✏️
-                    </button>
+      <td className="border px-2 py-1">{r.ipd_siis}</td>
+      <td className="border px-2 py-1">{r.supplier}</td>
+      <td className="border px-2 py-1">{r.fb_type}</td>
+      <td className="border px-2 py-1">{r.commodity}</td>
+      <td className="border px-2 py-1">{r.ipd_quotation}</td>
 
-                    {/* DELETE */}
-                    <button
-                      title="Delete"
-                      onClick={() => handleDelete(r.id)}
-                      className="p-1 rounded hover:bg-red-100"
-                      disabled={loading}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+      <td className="border px-2 py-1">
+        <div className="flex justify-center gap-2">
+          <button
+            title="Edit"
+            onClick={() => handleEdit(r)}
+            className="p-1 rounded hover:bg-blue-100"
+            disabled={loading}
+          >
+            ✏️
+          </button>
+
+          <button
+            title="Delete"
+            onClick={() => handleDelete(r.id)}
+            className="p-1 rounded hover:bg-red-100"
+            disabled={loading}
+          >
+            🗑️
+          </button>
+        </div>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
         </table>
 
         {/* PAGINATION */}
