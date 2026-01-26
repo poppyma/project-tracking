@@ -88,7 +88,7 @@ export default function ViewPricePage() {
     if (!confirm(`Hapus ${selectedIds.length} data?`)) return;
 
     try {
-      const res = await fetch("/api/price/detail/bulk-delete", {
+      const res = await fetch("/api/price/bulk-delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: selectedIds }),
