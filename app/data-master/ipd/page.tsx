@@ -29,6 +29,7 @@ export default function InputIPDPage() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [filterSupplier, setFilterSupplier] = useState("");
 
   const [search, setSearch] = useState("");
   const [filterFb, setFilterFb] = useState("");
@@ -152,7 +153,7 @@ export default function InputIPDPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [search, filterFb, filterCommodity]);
+  }, [search, filterFb, filterCommodity, filterSupplier]);
 
   /* SAVE / UPDATE */
   async function handleSubmit() {
@@ -231,13 +232,15 @@ export default function InputIPDPage() {
 
   /* FILTER */
   const filtered = data.filter((row) => {
-    const s = search.toLowerCase();
-    return (
-      (row.ipd_siis.toLowerCase().includes(s)) &&
-      (filterFb ? row.fb_type === filterFb : true) &&
-      (filterCommodity ? row.commodity === filterCommodity : true)
-    );
-  });
+  const s = search.toLowerCase();
+
+  return (
+    row.ipd_siis.toLowerCase().includes(s) &&
+    (filterFb ? row.fb_type === filterFb : true) &&
+    (filterCommodity ? row.commodity === filterCommodity : true) &&
+    (filterSupplier ? row.supplier === filterSupplier : true)
+  );
+});
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const pagedData = filtered.slice(
@@ -337,6 +340,21 @@ export default function InputIPDPage() {
             <option key={c}>{c}</option>
           ))}
         </select>
+
+        <select
+          className="input-dense w-64"
+          value={filterSupplier}
+          onChange={(e) => setFilterSupplier(e.target.value)}
+        >
+          <option value="">All Supplier</option>
+
+          {suppliers.map((s) => (
+            <option key={s.id} value={s.supplier_name}>
+              {s.supplier_code} - {s.supplier_name}
+            </option>
+          ))}
+        </select>
+
       </div>
 
       {/* FORM */}
