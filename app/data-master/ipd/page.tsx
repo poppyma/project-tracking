@@ -320,6 +320,20 @@ export default function InputIPDPage() {
         />
 
         <select
+          className="input-dense w-64"
+          value={filterSupplier}
+          onChange={(e) => setFilterSupplier(e.target.value)}
+        >
+          <option value="">All Supplier</option>
+
+          {suppliers.map((s) => (
+            <option key={s.id} value={s.supplier_name}>
+              {s.supplier_code} - {s.supplier_name}
+            </option>
+          ))}
+        </select>
+
+        <select
           className="input-dense w-32"
           value={filterFb}
           onChange={(e) => setFilterFb(e.target.value)}
@@ -341,19 +355,6 @@ export default function InputIPDPage() {
           ))}
         </select>
 
-        <select
-          className="input-dense w-64"
-          value={filterSupplier}
-          onChange={(e) => setFilterSupplier(e.target.value)}
-        >
-          <option value="">All Supplier</option>
-
-          {suppliers.map((s) => (
-            <option key={s.id} value={s.supplier_name}>
-              {s.supplier_code} - {s.supplier_name}
-            </option>
-          ))}
-        </select>
 
       </div>
 
