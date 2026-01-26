@@ -28,6 +28,7 @@ export default function InputSupplierPage() {
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     supplier_code: "",
@@ -42,6 +43,51 @@ export default function InputSupplierPage() {
     top: "",
     forwarder: "",
   });
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
+    );
+  }
+
+  function toggleSelectAllCurrentPage() {
+    const pageIds = pagedData.map((r) => r.id);
+    const allSelected = pageIds.every((id) => selectedIds.includes(id));
+
+    setSelectedIds((prev) =>
+      allSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...new Set([...prev, ...pageIds])]
+    );
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.length === 0) return;
+
+    if (!confirm(`Hapus ${selectedIds.length} supplier?`)) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/supplier/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      alert("Supplier berhasil dihapus");
+      setSelectedIds([]);
+      loadData();
+    } catch {
+      alert("Gagal menghapus supplier");
+    } finally {
+      setLoading(false);
+    }
+  }
+
 
   /* ================= LOAD DATA ================= */
   async function loadData() {
@@ -230,6 +276,16 @@ export default function InputSupplierPage() {
         </div>
       </div>
       
+      {selectedIds.length > 0 && (
+        <button
+          onClick={handleBulkDelete}
+          className="px-3 py-1.5 text-xs rounded bg-red-600 text-white"
+          disabled={loading}
+        >
+          Delete Selected ({selectedIds.length})
+        </button>
+      )}
+
       <input
         type="file"
         accept=".csv"
@@ -323,6 +379,16 @@ export default function InputSupplierPage() {
 
           <thead className="bg-gray-100">
             <tr>
+              <th className="border px-2 py-1 text-center w-10">
+                <input
+                  type="checkbox"
+                  checked={
+                    pagedData.length > 0 &&
+                    pagedData.every((r) => selectedIds.includes(r.id))
+                  }
+                  onChange={toggleSelectAllCurrentPage}
+                />
+              </th>
               <th className="border px-2 py-1 text-center w-10">No</th>
               <th className="border px-2 py-1">Supplier Code</th>
               <th className="border px-2 py-1">Supplier Name</th>
@@ -342,6 +408,14 @@ export default function InputSupplierPage() {
           <tbody>
             {pagedData.map((r, i) => (
               <tr key={r.id}>
+                {/* CHECKBOX */}
+                <td className="border px-2 py-1 text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(r.id)}
+                    onChange={() => toggleSelect(r.id)}
+                  />
+                </td>
                 <td className="border px-2 py-1 text-center">
                   {page * PAGE_SIZE + i + 1}
                 </td>
