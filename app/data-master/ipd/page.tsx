@@ -25,6 +25,10 @@ const COMMODITIES = ["Cage", "Ring", "Balls", "Seal", "Shield"];
 export default function InputIPDPage() {
   const [data, setData] = useState<IPD[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingTable, setLoadingTable] = useState(false);
+  const [uploadingCSV, setUploadingCSV] = useState(false);
+  const [savingIPD, setSavingIPD] = useState(false);
+  const [deletingIPD, setDeletingIPD] = useState(false);
   const [page, setPage] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -66,30 +70,30 @@ export default function InputIPDPage() {
     );
   }
 
-  async function handleBulkDelete() {
-  if (selectedIds.length === 0) return;
+    async function handleBulkDelete() {
+      if (selectedIds.length === 0) return;
 
-  if (!confirm(`Hapus ${selectedIds.length} data IPD?`)) return;
+      if (!confirm(`Hapus ${selectedIds.length} data IPD?`)) return;
 
-  setLoading(true);
-  try {
-    await fetch("/api/ipd/bulk-delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: selectedIds }),
-    });
+      setLoading(true);
+      try {
+        await fetch("/api/ipd/bulk-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: selectedIds }),
+        });
 
-    alert("Data berhasil dihapus");
-    setSelectedIds([]);
-    loadData();
-  } catch {
-    alert("Gagal menghapus data");
-  } finally {
-    setLoading(false);
-  }
-}
+        alert("Data berhasil dihapus");
+        setSelectedIds([]);
+        loadData();
+      } catch {
+        alert("Gagal menghapus data");
+      } finally {
+        setLoading(false);
+      }
+    }
 
-
+  
   /* LOAD DATA */
   async function loadData() {
     try {
@@ -120,7 +124,7 @@ export default function InputIPDPage() {
       formData.append("file", file);
       formData.append("supplier", csvSupplier); // 🔥 INI KUNCINYA
 
-      setLoading(true);
+      setUploadingCSV(true);
 
       try {
         const res = await fetch("/api/ipd/upload", {
@@ -135,7 +139,7 @@ export default function InputIPDPage() {
       } catch {
         alert("Gagal upload CSV");
       } finally {
-        setLoading(false);
+        setUploadingCSV(false);
         e.target.value = "";
       }
     }
@@ -270,19 +274,21 @@ export default function InputIPDPage() {
     </select>
 
     <label
-      className={`px-3 py-1.5 text-xs rounded text-white cursor-pointer
-        flex items-center justify-center text-center
-        ${!csvSupplier ? "bg-gray-400" : "bg-green-600"}`}
-    >
-      Upload CSV
-      <input
-        type="file"
-        accept=".csv"
-        onChange={handleUploadCSV}
-        disabled={!csvSupplier}
-        className="hidden"
-      />
-    </label>
+  className={`px-3 py-1.5 text-xs rounded text-white cursor-pointer
+    ${!csvSupplier || uploadingCSV ? "bg-gray-400" : "bg-green-600"}
+  `}
+>
+  {uploadingCSV ? "Uploading..." : "Upload CSV"}
+
+  <input
+    type="file"
+    accept=".csv"
+    onChange={handleUploadCSV}
+    disabled={!csvSupplier || uploadingCSV}
+    className="hidden"
+  />
+</label>
+
 
 
     <button
