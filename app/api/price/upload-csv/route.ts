@@ -7,12 +7,15 @@ export async function POST(req: Request) {
     const formData = await req.formData();
 
     const file = formData.get("file") as File | null;
-    const supplier_code = formData.get("supplier_code") as string | null;
+    const supplier_id = formData.get("supplier_id") as string | null;
     const start_date = formData.get("start_date") as string | null;
     const end_date = formData.get("end_date") as string | null;
     const quarter = formData.get("quarter") as string | null;
 
-    if (!file || !supplier_code || !start_date || !end_date || !quarter) {
+    /* =========================
+       VALIDATION
+    ========================= */
+    if (!file || !supplier_id || !start_date || !end_date || !quarter) {
       return NextResponse.json(
         { message: "Form upload tidak lengkap" },
         { status: 400 }
@@ -23,12 +26,13 @@ export async function POST(req: Request) {
        PARSE CSV
     ========================= */
     const csvText = await file.text();
+
     const parsed = Papa.parse(csvText, {
       header: true,
       skipEmptyLines: true,
     });
 
-    if (parsed.errors.length) {
+    if (parsed.errors.length > 0) {
       return NextResponse.json(
         { message: "CSV format error" },
         { status: 400 }
@@ -36,23 +40,7 @@ export async function POST(req: Request) {
     }
 
     /* =========================
-       AMBIL SUPPLIER
-    ========================= */
-    const supplierRes = await query(
-      `SELECT id FROM supplier_master WHERE supplier_code = $1`,
-      [supplier_code]
-    );
-
-    const supplier_id = supplierRes.rows[0]?.id;
-    if (!supplier_id) {
-      return NextResponse.json(
-        { message: "Supplier tidak ditemukan" },
-        { status: 400 }
-      );
-    }
-
-    /* =========================
-       INSERT HEADER
+       INSERT PRICE HEADER
     ========================= */
     const headerRes = await query(
       `
@@ -67,8 +55,7 @@ export async function POST(req: Request) {
     const header_id = headerRes.rows[0].id;
 
     /* =========================
-       INSERT DETAIL
-       (TANPA description)
+       INSERT PRICE DETAIL
     ========================= */
     let inserted = 0;
 
@@ -93,12 +80,15 @@ export async function POST(req: Request) {
       inserted++;
     }
 
+    /* =========================
+       RESPONSE
+    ========================= */
     return NextResponse.json({
       success: true,
       inserted,
     });
-  } catch (e) {
-    console.error("UPLOAD CSV ERROR:", e);
+  } catch (error) {
+    console.error("UPLOAD CSV ERROR:", error);
     return NextResponse.json(
       { message: "Upload gagal" },
       { status: 500 }
