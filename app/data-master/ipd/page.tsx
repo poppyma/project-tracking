@@ -28,6 +28,7 @@ export default function InputIPDPage() {
   const [page, setPage] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [search, setSearch] = useState("");
   const [filterFb, setFilterFb] = useState("");
@@ -44,6 +45,49 @@ export default function InputIPDPage() {
     commodity: "",
     ipd_quotation: "",
   });
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
+    );
+  }
+
+  function toggleSelectAllCurrentPage() {
+    const pageIds = pagedData.map((r) => r.id);
+    const allSelected = pageIds.every((id) => selectedIds.includes(id));
+
+    setSelectedIds((prev) =>
+      allSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...new Set([...prev, ...pageIds])]
+    );
+  }
+
+  async function handleBulkDelete() {
+  if (selectedIds.length === 0) return;
+
+  if (!confirm(`Hapus ${selectedIds.length} data IPD?`)) return;
+
+  setLoading(true);
+  try {
+    await fetch("/api/ipd/bulk-delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: selectedIds }),
+    });
+
+    alert("Data berhasil dihapus");
+    setSelectedIds([]);
+    loadData();
+  } catch {
+    alert("Gagal menghapus data");
+  } finally {
+    setLoading(false);
+  }
+}
+
 
   /* LOAD DATA */
   async function loadData() {
@@ -252,6 +296,17 @@ export default function InputIPDPage() {
 </div>
 
 
+{selectedIds.length > 0 && (
+  <button
+    onClick={handleBulkDelete}
+    className="px-3 py-1.5 text-xs rounded bg-red-600 text-white"
+  >
+    Delete Selected ({selectedIds.length})
+  </button>
+)}
+
+
+
       {/* FILTER */}
       <div className="flex gap-2 text-xs">
         <input
@@ -369,6 +424,16 @@ export default function InputIPDPage() {
         <table className="w-full border text-xs">
           <thead className="bg-gray-100">
             <tr>
+              <th className="border px-2 py-1 text-center w-14">
+                <input
+                  type="checkbox"
+                  checked={
+                    pagedData.length > 0 &&
+                    pagedData.every((r) => selectedIds.includes(r.id))
+                  }
+                  onChange={toggleSelectAllCurrentPage}
+                />
+              </th>
               <th className="border px-2 py-1 text-center w-10">No</th>
               <th className="border px-2 py-1">IPD SIIS</th>
               <th className="border px-2 py-1">Supplier</th>
@@ -383,8 +448,16 @@ export default function InputIPDPage() {
             {pagedData.map((r, i) => (
               <tr key={r.id}>
                 <td className="border px-2 py-1 text-center">
-                  {page * PAGE_SIZE + i + 1}
-                </td>
+  <div className="flex items-center justify-center gap-1">
+    <input
+      type="checkbox"
+      checked={selectedIds.includes(r.id)}
+      onChange={() => toggleSelect(r.id)}
+    />
+    <span>{page * PAGE_SIZE + i + 1}</span>
+  </div>
+</td>
+
                 <td className="border px-2 py-1">{r.ipd_siis}</td>
                 <td className="border px-2 py-1">{r.supplier}</td>
                 <td className="border px-2 py-1">{r.fb_type}</td>
