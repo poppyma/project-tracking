@@ -55,7 +55,8 @@ export default function PricePage() {
     try {
       const formData = new FormData();
       formData.append("file", priceFile);
-      formData.append("supplier_code", selectedSupplier.supplier_code);
+      //formData.append("supplier_code", selectedSupplier.supplier_code);
+      formData.append("supplier_id", selectedSupplier.id);
       formData.append("start_date", startDate);
       formData.append("end_date", endDate);
       formData.append("quarter", quarter);
