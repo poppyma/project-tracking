@@ -41,7 +41,16 @@ export default function InputIPDPage() {
   
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [csvSupplier, setCsvSupplier] = useState("");
+  const $fillable = ['name', 'description', 'image', 'price', 'stock',];
+  const [data1, setData1] = useState([])
+  const [form1, setform1] = useState({
+    supplier_id: "",
+    supplier_code: "",
+    ipd_siis: "",
+    commodity: "",
+    ipd_quotation: "",
 
+  });
 
   const [form, setForm] = useState({
     ipd_siis: "",
