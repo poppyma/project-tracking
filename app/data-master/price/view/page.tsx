@@ -38,12 +38,16 @@ export default function ViewPricePage() {
   const [selectedQuarter, setSelectedQuarter] = useState("");
   const [rows, setRows] = useState<PriceRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   /* ===== EDIT STATE ===== */
   const [editId, setEditId] = useState<string | null>(null);
   const [editRow, setEditRow] = useState<Partial<PriceRow>>({});
 
   const headerInfo = rows.length > 0 ? rows[0] : null;
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [selectedSupplier, selectedQuarter]);
 
   /* ================= LOAD SUPPLIER ================= */
   useEffect(() => {
@@ -60,6 +64,45 @@ export default function ViewPricePage() {
       .then((r) => r.json())
       .then(setQuarters);
   }, [selectedSupplier]);
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
+    );
+  }
+
+  function toggleSelectAll() {
+    if (rows.length === 0) return;
+
+    const allIds = rows.map((r) => r.detail_id);
+    const allSelected = allIds.every((id) => selectedIds.includes(id));
+
+    setSelectedIds(allSelected ? [] : allIds);
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.length === 0) return;
+
+    if (!confirm(`Hapus ${selectedIds.length} data?`)) return;
+
+    try {
+      const res = await fetch("/api/price/detail/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      alert("Data berhasil dihapus");
+      setSelectedIds([]);
+      fetchPrice();
+    } catch {
+      alert("Gagal bulk delete");
+    }
+  }
 
   /* ================= FETCH PRICE ================= */
   async function fetchPrice() {
@@ -204,11 +247,32 @@ export default function ViewPricePage() {
         </div>
       )}
 
+      {selectedIds.length > 0 && (
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={handleBulkDelete}
+            className="bg-red-600 text-white px-3 py-1 rounded text-xs"
+          >
+            Delete Selected ({selectedIds.length})
+          </button>
+        </div>
+      )}
+
       {/* TABLE */}
       <div className="overflow-x-auto">
         <table className="min-w-[1200px] border text-xs">
           <thead className="bg-gray-100">
             <tr>
+              <th className="border px-2 py-1 text-center w-10">
+                <input
+                  type="checkbox"
+                  checked={
+                    rows.length > 0 &&
+                    rows.every((r) => selectedIds.includes(r.detail_id))
+                  }
+                  onChange={toggleSelectAll}
+                />
+              </th>
               <th className="border px-2 py-1">No</th>
               <th className="border px-2 py-1">IPD SIIS</th>
               <th className="border px-2 py-1">Steel Spec</th>
@@ -231,6 +295,14 @@ export default function ViewPricePage() {
 
                 return (
                   <tr key={r.detail_id}>
+                    {/* CHECKBOX */}
+                    <td className="border px-2 py-1 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(r.detail_id)}
+                        onChange={() => toggleSelect(r.detail_id)}
+                      />
+                    </td>
                     <td className="border px-2 py-1 text-center">{i + 1}</td>
 
                     <td className="border px-2 py-1">
