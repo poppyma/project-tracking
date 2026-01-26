@@ -39,7 +39,7 @@ export default function InputIPDPage() {
 
   const [form, setForm] = useState({
     ipd_siis: "",
-    supplier: "",
+    supplier_id: "",
     fb_type: "",
     commodity: "",
     ipd_quotation: "",
@@ -144,7 +144,7 @@ export default function InputIPDPage() {
   function resetForm() {
     setForm({
       ipd_siis: "",
-      supplier: "",
+      supplier_id: "",
       fb_type: "",
       commodity: "",
       ipd_quotation: "",
@@ -176,7 +176,7 @@ export default function InputIPDPage() {
   function handleEdit(row: IPD) {
     setForm({
       ipd_siis: row.ipd_siis,
-      supplier: row.supplier,
+      supplier_id: row.supplier,
       fb_type: row.fb_type,
       commodity: row.commodity,
       ipd_quotation: row.ipd_quotation,
@@ -298,18 +298,20 @@ export default function InputIPDPage() {
 
           <select
             className="input-dense"
-            value={form.supplier}
+            value={form.supplier_id}
             onChange={(e) =>
-              setForm({ ...form, supplier: e.target.value })
+              setForm({ ...form, supplier_id: e.target.value })
             }
           >
             <option value="">-- Select Supplier --</option>
+
             {suppliers.map((s) => (
-              <option key={s.id} value={s.supplier_name}>
+              <option key={s.id} value={s.id}>
                 {s.supplier_code} - {s.supplier_name}
               </option>
             ))}
           </select>
+
 
 
           <select
