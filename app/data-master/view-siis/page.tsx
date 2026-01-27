@@ -133,11 +133,12 @@ function downloadExcel() {
   ];
 
   /* ================= TABLE DATA ================= */
-  const header = ["No", "IPD", "Material Source", ...MONTHS];
+  const header = ["No", "DESC", "IPD", "Material Source", ...MONTHS];
 
   const body = ipds.map((i, idx) => [
     idx + 1,               // ⬅️ NOMOR
     i.ipd,
+    i.desc,
     i.material_source,
     ...MONTHS.map((_, mIdx) =>
       formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
@@ -294,10 +295,11 @@ function downloadPDF() {
   /* ================= TABLE ================= */
   autoTable(doc, {
     startY: y + 4,
-    head: [["No", "IPD", "Material Source", ...MONTHS]],
+    head: [["No", "DESC", "IPD", "Material Source", ...MONTHS]],
     body: ipds.map((i, idx) => [
       idx + 1,
       i.ipd,
+      i.desc,
       i.material_source,
       ...MONTHS.map((_, mIdx) =>
         formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
