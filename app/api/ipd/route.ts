@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
     const {
       ipd_siis,
-      supplier_id,
+      supplier_id, // isinya NAMA supplier
       desc,
       fb_type,
       commodity,
@@ -59,20 +59,12 @@ export async function POST(req: Request) {
       `
       INSERT INTO ipd_master
         (ipd_siis, supplier, "DESC", fb_type, commodity, ipd_quotation)
-      SELECT
-        $1,
-        s.supplier_name,
-        $3,
-        $4,
-        $5,
-        $6
-      FROM supplier s
-      WHERE s.id = $2
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
       `,
       [
         ipd_siis.trim(),
-        supplier_id,
+        supplier_id.trim(), // langsung simpan text supplier
         desc || null,
         fb_type || null,
         commodity || null,
@@ -89,4 +81,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
