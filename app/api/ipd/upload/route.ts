@@ -34,7 +34,10 @@ export async function POST(req: Request) {
       const fb_type = row.fb_type?.trim() || "-";
       const commodity = row.commodity?.trim() || "-";
       const ipd_quotation = row.ipd_quotation?.trim() || "-";
-      const desc = row.desc?.trim() || null;
+      const desc =
+        row.DESC?.trim() ||
+        row.desc?.trim() ||
+        null;
 
       await query(
         `
