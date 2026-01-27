@@ -41,14 +41,14 @@ export async function POST(req: Request) {
 
     const {
       ipd_siis,
-      supplier,
+      supplier_id,
       desc,
       fb_type,
       commodity,
       ipd_quotation,
     } = await req.json();
 
-    if (!ipd_siis || !supplier) {
+    if (!ipd_siis || !supplier_id) {
       return NextResponse.json(
         { error: "IPD SIIS dan Supplier wajib diisi" },
         { status: 400 }
@@ -59,12 +59,20 @@ export async function POST(req: Request) {
       `
       INSERT INTO ipd_master
         (ipd_siis, supplier, "DESC", fb_type, commodity, ipd_quotation)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      SELECT
+        $1,
+        s.supplier_name,
+        $3,
+        $4,
+        $5,
+        $6
+      FROM supplier s
+      WHERE s.id = $2
       RETURNING *
       `,
       [
         ipd_siis.trim(),
-        supplier.trim(),
+        supplier_id,
         desc || null,
         fb_type || null,
         commodity || null,
@@ -74,10 +82,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result.rows[0]);
   } catch (error) {
-    console.error(error);
+    console.error("POST IPD ERROR:", error);
     return NextResponse.json(
       { error: "Failed to insert IPD data" },
       { status: 500 }
     );
   }
 }
+
