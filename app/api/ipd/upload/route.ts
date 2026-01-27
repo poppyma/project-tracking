@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         INSERT INTO ipd_master (
           ipd_siis,
           supplier,
-          "desc",
+          "DESC",
           fb_type,
           commodity,
           ipd_quotation

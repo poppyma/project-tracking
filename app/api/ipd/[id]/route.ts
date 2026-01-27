@@ -28,7 +28,7 @@ export async function PUT(
       SET
         ipd_siis = $1,
         supplier = $2,
-        "desc" = $3,
+        "DESC" = $3,
         fb_type = $4,
         commodity = $5,
         ipd_quotation = $6

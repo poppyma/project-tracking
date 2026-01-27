@@ -13,7 +13,7 @@ export async function GET() {
         id,
         ipd_siis,
         supplier,
-        "desc",
+        "DESC" AS desc,
         fb_type,
         commodity,
         ipd_quotation,
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     const result = await query(
       `
       INSERT INTO ipd_master
-        (ipd_siis, supplier, "desc", fb_type, commodity, ipd_quotation)
+        (ipd_siis, supplier, "DESC", fb_type, commodity, ipd_quotation)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
       `,
