@@ -6,6 +6,7 @@ type IPD = {
   id: string;
   ipd_siis: string;
   supplier: string;
+  desc: string | null;
   fb_type: string;
   commodity: string;
   ipd_quotation: string;
@@ -45,6 +46,7 @@ export default function InputIPDPage() {
   const [form, setForm] = useState({
     ipd_siis: "",
     supplier_id: "",
+    desc: "",
     fb_type: "",
     commodity: "",
     ipd_quotation: "",
@@ -193,6 +195,7 @@ export default function InputIPDPage() {
     setForm({
       ipd_siis: "",
       supplier_id: "",
+      desc: "",
       fb_type: "",
       commodity: "",
       ipd_quotation: "",
@@ -225,6 +228,7 @@ export default function InputIPDPage() {
     setForm({
       ipd_siis: row.ipd_siis,
       supplier_id: row.supplier,
+      desc: row.desc ?? "",
       fb_type: row.fb_type,
       commodity: row.commodity,
       ipd_quotation: row.ipd_quotation,
@@ -391,8 +395,15 @@ export default function InputIPDPage() {
             ))}
           </select>
 
-
-
+          <input
+              className="input-dense col-span-2"
+              placeholder="Desc"
+              value={form.desc}
+              onChange={(e) =>
+                setForm({ ...form, desc: e.target.value })
+              }
+            />
+            
           <select
             className="input-dense"
             value={form.fb_type}
@@ -461,6 +472,7 @@ export default function InputIPDPage() {
               <th className="border px-2 py-1 text-center w-10">No</th>
               <th className="border px-2 py-1">IPD SIIS</th>
               <th className="border px-2 py-1">Supplier</th>
+              <th className="border px-2 py-1">Desc</th>
               <th className="border px-2 py-1">FB Type</th>
               <th className="border px-2 py-1">Comodity</th>
               <th className="border px-2 py-1">IPD Quotation</th>
@@ -487,6 +499,7 @@ export default function InputIPDPage() {
 
       <td className="border px-2 py-1">{r.ipd_siis}</td>
       <td className="border px-2 py-1">{r.supplier}</td>
+      <td className="border px-2 py-1">{r.desc || "-"}</td>
       <td className="border px-2 py-1">{r.fb_type}</td>
       <td className="border px-2 py-1">{r.commodity}</td>
       <td className="border px-2 py-1">{r.ipd_quotation}</td>

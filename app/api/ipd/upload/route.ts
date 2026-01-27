@@ -34,21 +34,24 @@ export async function POST(req: Request) {
       const fb_type = row.fb_type?.trim() || "-";
       const commodity = row.commodity?.trim() || "-";
       const ipd_quotation = row.ipd_quotation?.trim() || "-";
+      const desc = row.desc?.trim() || null;
 
       await query(
         `
         INSERT INTO ipd_master (
           ipd_siis,
           supplier,
+          "desc",
           fb_type,
           commodity,
           ipd_quotation
         )
-        VALUES ($1, $2, $3, $4, $5)
+        VALUES ($1, $2, $3, $4, $5, $6)
         `,
          [
             ipd_siis,
             supplier,        // dari dropdown
+            desc,
             fb_type,         // default "-"
             commodity,       // default "-"
             ipd_quotation,   // default "-"
