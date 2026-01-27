@@ -133,7 +133,7 @@ function downloadExcel() {
   ];
 
   /* ================= TABLE DATA ================= */
-  const header = ["No", "DESC", "IPD", "Material Source", ...MONTHS];
+  const header = ["No", "IPD", "DESC", "Material Source", ...MONTHS];
 
   const body = ipds.map((i, idx) => [
     idx + 1,               // ⬅️ NOMOR
@@ -295,7 +295,7 @@ function downloadPDF() {
   /* ================= TABLE ================= */
   autoTable(doc, {
     startY: y + 4,
-    head: [["No", "DESC", "IPD", "Material Source", ...MONTHS]],
+    head: [["No", "IPD", "DESC", "Material Source", ...MONTHS]],
     body: ipds.map((i, idx) => [
       idx + 1,
       i.ipd,
