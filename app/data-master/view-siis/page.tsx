@@ -19,6 +19,7 @@ type Supplier = {
 type Row = {
   ipd_quotation: string;
   ipd: string | null;
+  desc: string | null;              
   material_source: string | null;
   quarter: string;
   price: string;
@@ -94,6 +95,7 @@ export default function ViewSIISPage() {
               {
                 ipd_quotation: r.ipd_quotation,
                 ipd: r.ipd as string,
+                desc: r.desc || "-", 
                 material_source: r.material_source || "-",
               },
             ])
@@ -438,6 +440,7 @@ function downloadPDF() {
               <tr>
                 <th className="border px-2">No</th>
                 <th className="border px-2">IPD</th>
+                <th className="border px-2">DESC</th> 
                 <th className="border px-2">Material Source</th>
                 {MONTHS.map(m => (
                   <th key={m} className="border px-2">
@@ -452,8 +455,8 @@ function downloadPDF() {
                 <tr key={i.ipd_quotation}>
                   <td className="border px-2 text-center">{idx + 1}</td>
                   <td className="border px-2">{i.ipd}</td>
+                  <td className="border px-2">{i.desc}</td> 
                   <td className="border px-2">{i.material_source}</td>
-
                   {MONTHS.map((_, mIdx) => (
                     <td
                       key={mIdx}

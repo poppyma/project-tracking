@@ -18,6 +18,7 @@ export async function GET(req: Request) {
       SELECT
         d.ipd_quotation,
         m.ipd_siis AS ipd,
+        m."DESC" AS desc,
         d.material_source,
         h.quarter,
         d.price
