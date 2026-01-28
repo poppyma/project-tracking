@@ -115,149 +115,158 @@ export default function ViewSIISPage() {
     return 0;
   }
 
+  // function formatPrice(v: number) {
+  //   return v === 0 ? "-" : v.toFixed(3);
+  // }
+
   function formatPrice(v: number) {
-    return v === 0 ? "-" : v.toFixed(3);
+    if (!v || v === 0) return "-";
+
+    return v
+      .toFixed(3)      // tetap 3 desimal
+      .replace(".", ","); // titik → koma
   }
-function downloadExcel() {
-  if (!supplier || !selectedQuarter) return;
 
-  /* ================= SUPPLIER INFO ================= */
-  const supplierInfo = [
-    ["SUPPLIER", supplier.supplier_name],
-    ["ADDRESS", supplier.address],
-    ["CURRENCY", supplier.currency],
-    ["INCOTERMS", supplier.incoterm],
-    ["TERMS OF PAYMENT", `${supplier.top} days after BL date`],
-    ["PRICE VALIDITY", selectedQuarter],
-    [],
-  ];
+  function downloadExcel() {
+    if (!supplier || !selectedQuarter) return;
 
-  /* ================= TABLE DATA ================= */
-  const header = ["No", "IPD", "DESC", "Material Source", ...MONTHS];
+    /* ================= SUPPLIER INFO ================= */
+    const supplierInfo = [
+      ["SUPPLIER", supplier.supplier_name],
+      ["ADDRESS", supplier.address],
+      ["CURRENCY", supplier.currency],
+      ["INCOTERMS", supplier.incoterm],
+      ["TERMS OF PAYMENT", `${supplier.top} days after BL date`],
+      ["PRICE VALIDITY", selectedQuarter],
+      [],
+    ];
 
-  const body = ipds.map((i, idx) => [
-    idx + 1,               // ⬅️ NOMOR
-    i.ipd,
-    i.desc,
-    i.material_source,
-    ...MONTHS.map((_, mIdx) =>
-      formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
-    ),
-  ]);
+    /* ================= TABLE DATA ================= */
+    const header = ["No", "IPD", "DESC", "Material Source", ...MONTHS];
 
-  const startTableRow = supplierInfo.length;
+    const body = ipds.map((i, idx) => [
+      idx + 1,               
+      i.ipd,
+      i.desc,
+      i.material_source,
+      ...MONTHS.map((_, mIdx) =>
+        formatPrice(getMonthPrice(i.ipd_quotation, mIdx))
+      ),
+    ]);
 
-  const ws = XLSX.utils.aoa_to_sheet([
-    ...supplierInfo,
-    header,
-    ...body,
-  ]);
+    const startTableRow = supplierInfo.length;
 
-  /* ================= AUTO COLUMN WIDTH (REAL AUTOFIT) ================= */
-  const allRows = [header, ...body];
+    const ws = XLSX.utils.aoa_to_sheet([
+      ...supplierInfo,
+      header,
+      ...body,
+    ]);
 
-  ws["!cols"] = allRows[0].map((_, colIdx) => {
-    let maxLength = header[colIdx].toString().length;
+    /* ================= AUTO COLUMN WIDTH (REAL AUTOFIT) ================= */
+    const allRows = [header, ...body];
 
-    for (const row of allRows) {
-      const cell = row[colIdx];
-      if (cell !== null && cell !== undefined) {
-        maxLength = Math.max(
-          maxLength,
-          cell.toString().length
-        );
+    ws["!cols"] = allRows[0].map((_, colIdx) => {
+      let maxLength = header[colIdx].toString().length;
+
+      for (const row of allRows) {
+        const cell = row[colIdx];
+        if (cell !== null && cell !== undefined) {
+          maxLength = Math.max(
+            maxLength,
+            cell.toString().length
+          );
+        }
+      }
+
+      return {
+        wch: Math.min(maxLength + 2, 35),
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "SIIS");
+
+    /* ================= STYLE SUPPLIER INFO ================= */
+    for (let r = 0; r < supplierInfo.length - 1; r++) {
+      ws[XLSX.utils.encode_cell({ r, c: 0 })].s = {
+        font: { bold: true },
+      };
+    }
+
+    /* ================= BORDER + ALIGNMENT TABLE ================= */
+    const totalRows = body.length + 1;
+    const totalCols = header.length;
+
+    for (let r = 0; r < totalRows; r++) {
+      for (let c = 0; c < totalCols; c++) {
+        const ref = XLSX.utils.encode_cell({
+          r: startTableRow + r,
+          c,
+        });
+
+        ws[ref] = ws[ref] || { t: "s", v: "" };
+
+        ws[ref].s = {
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          },
+          alignment: {
+            vertical: "center",
+            horizontal:
+              c === 0
+                ? "center"   // No
+                : c <= 2
+                ? "left"     // IPD + Material
+                : "right",   // Month values
+          },
+        };
+
+        if (r === 0) {
+          ws[ref].s.font = { bold: true };
+          ws[ref].s.alignment.horizontal = "center";
+        }
       }
     }
 
-    return {
-      wch: Math.min(maxLength + 2, 35),
-    };
-  });
+    /* ================= APPROVAL ================= */
+    const approvalRowStart = startTableRow + body.length + 3;
+    const approvalColStart = header.length - approvals.length;
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "SIIS");
+    XLSX.utils.sheet_add_aoa(
+      ws,
+      [
+        approvals.map(a => a.title),
+        ["", "", ""],
+        approvals.map(a => a.name),
+      ],
+      { origin: { r: approvalRowStart, c: approvalColStart } }
+    );
 
-  /* ================= STYLE SUPPLIER INFO ================= */
-  for (let r = 0; r < supplierInfo.length - 1; r++) {
-    ws[XLSX.utils.encode_cell({ r, c: 0 })].s = {
-      font: { bold: true },
-    };
-  }
-
-  /* ================= BORDER + ALIGNMENT TABLE ================= */
-  const totalRows = body.length + 1;
-  const totalCols = header.length;
-
-  for (let r = 0; r < totalRows; r++) {
-    for (let c = 0; c < totalCols; c++) {
-      const ref = XLSX.utils.encode_cell({
-        r: startTableRow + r,
-        c,
-      });
-
-      ws[ref] = ws[ref] || { t: "s", v: "" };
-
-      ws[ref].s = {
-        border: {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" },
-        },
-        alignment: {
-          vertical: "center",
-          horizontal:
-            c === 0
-              ? "center"   // No
-              : c <= 2
-              ? "left"     // IPD + Material
-              : "right",   // Month values
-        },
-      };
-
-      if (r === 0) {
-        ws[ref].s.font = { bold: true };
-        ws[ref].s.alignment.horizontal = "center";
+    for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
+      for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
+        ws[XLSX.utils.encode_cell({ r, c })].s = {
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          },
+        };
       }
     }
+
+    ws["!rows"] = ws["!rows"] || [];
+    ws["!rows"][approvalRowStart + 1] = { hpt: 60 };
+
+    XLSX.writeFile(
+      wb,
+      `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
+    );
   }
-
-  /* ================= APPROVAL ================= */
-  const approvalRowStart = startTableRow + body.length + 3;
-  const approvalColStart = header.length - approvals.length;
-
-  XLSX.utils.sheet_add_aoa(
-    ws,
-    [
-      approvals.map(a => a.title),
-      ["", "", ""],
-      approvals.map(a => a.name),
-    ],
-    { origin: { r: approvalRowStart, c: approvalColStart } }
-  );
-
-  for (let r = approvalRowStart; r <= approvalRowStart + 2; r++) {
-    for (let c = approvalColStart; c < approvalColStart + approvals.length; c++) {
-      ws[XLSX.utils.encode_cell({ r, c })].s = {
-        alignment: { horizontal: "center", vertical: "center" },
-        border: {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" },
-        },
-      };
-    }
-  }
-
-  ws["!rows"] = ws["!rows"] || [];
-  ws["!rows"][approvalRowStart + 1] = { hpt: 60 };
-
-  XLSX.writeFile(
-    wb,
-    `SIIS_${supplier.supplier_code}_${selectedQuarter}.xlsx`
-  );
-}
 
 
 function downloadPDF() {
