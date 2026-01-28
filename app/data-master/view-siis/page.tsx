@@ -123,7 +123,7 @@ export default function ViewSIISPage() {
     if (!v || v === 0) return "-";
 
     return v
-      .toFixed(3)      // tetap 3 desimal
+      .toFixed(4)      // tetap 3 desimal
       .replace(".", ","); // titik → koma
   }
 
