@@ -256,8 +256,13 @@ export default function InputSupplierPage() {
           {/* Upload CSV */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-3 py-1.5 text-xs rounded bg-green-600 text-white"
             disabled={uploading}
+            className={`
+              px-3 py-1.5 text-xs rounded text-white
+              ${uploading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700"}
+            `}
           >
             {uploading ? "Uploading..." : "Upload CSV"}
           </button>
