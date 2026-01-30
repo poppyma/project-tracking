@@ -10,16 +10,18 @@ export async function GET() {
 
     const result = await query(`
       SELECT
-        id,
-        ipd_siis,
-        supplier,
-        "DESC" AS desc,
-        fb_type,
-        commodity,
-        ipd_quotation,
-        created_at
-      FROM ipd_master
-      ORDER BY created_at DESC
+        im.id,
+        im.ipd_siis,
+        s.supplier_name AS supplier,
+        im."DESC" AS desc,
+        im.fb_type,
+        im.commodity,
+        im.ipd_quotation,
+        im.created_at
+      FROM ipd_master im
+      LEFT JOIN supplier s
+        ON im.supplier = s.id
+      ORDER BY im.created_at DESC
     `);
 
     return NextResponse.json(result.rows);
@@ -31,6 +33,7 @@ export async function GET() {
     );
   }
 }
+
 
 /* =========================
    POST → tambah IPD (MANUAL)
