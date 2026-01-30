@@ -164,7 +164,12 @@ function isStartsWith(path: string) {
                 {/* TRACKING */}
                 <Link
                   href="/"
-                  className="flex items-center gap-4 py-3 px-4 rounded-xl hover:bg-white/10"
+                  className={`
+                    flex items-center gap-4 py-3 px-4 rounded-xl
+                    ${isExact("/")
+                      ? "bg-white/20 text-white font-semibold"
+                      : "hover:bg-white/10"}
+                  `}
                 >
                   <img
                     src="/monitoring-icon.png"
