@@ -42,19 +42,19 @@ export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
+  const [saving, setSaving] = useState(false);
 
   const [materialInput, setMaterialInput] = useState("");
   const [materials, setMaterials] = useState([
-  { material: "", component: "", qty: "", uom: "", supplier: "" },
-]);
-
-
-const addRow = () => {
-  setMaterials([
-    ...materials,
     { material: "", component: "", qty: "", uom: "", supplier: "" },
   ]);
-};
+
+  const addRow = () => {
+    setMaterials([
+      ...materials,
+      { material: "", component: "", qty: "", uom: "", supplier: "" },
+    ]);
+  };
 
 
 const deleteRow = (index: number) => {
@@ -922,14 +922,24 @@ async function openAttachments(statusIndex: number) {
   }, [searchQuery, sortConfig]);
 
   
-const [form, setForm] = useState({
-  name: "",
-  customer: "",
-  application: "",
-  productLine: "",
-  anualVolume: "",
-  estSop: "",
-});
+  const [form, setForm] = useState({
+    name: "",
+    customer: "",
+    application: "",
+    productLine: "",
+    anualVolume: "",
+    estSop: "",
+  });
+
+  const canSave =
+  form.name.trim() &&
+  form.customer.trim() &&
+  form.application.trim() &&
+  form.productLine.trim() &&
+  form.anualVolume.trim() &&
+  form.estSop &&
+  materials.length > 0;
+
 
 const [errors, setErrors] = useState({
   name: "",
@@ -950,7 +960,7 @@ const options = [
   "Ball",
   "Grease",
 ];
-const handleSaveProject = () => {
+const handleSaveProject = () => async() => {
   let newErrors = {
     name: form.name ? "" : "Project Name is required",
     customer: form.customer ? "" : "Customer is required",
@@ -966,7 +976,13 @@ const handleSaveProject = () => {
   const isValid = Object.values(newErrors).every(x => x === "");
   if (!isValid) return;
 
-  handleSave();  
+  try {
+    setSaving(true);
+    await handleSave();   
+  } finally {
+    setSaving(false);
+  }
+    
 };
   if (sortConfig) {
     filteredProjects.sort((a, b) => {
@@ -1650,7 +1666,21 @@ const handleSaveProject = () => {
 
             <div className="modal-actions">
               <button className="btn secondary" onClick={() => { setShowModal(false); resetForm(); }}>Cancel</button>
-              <button className="btn" onClick={handleSaveProject}>Save</button>
+              {/* <button className="btn" onClick={handleSaveProject}>Save</button> */}
+
+              <button
+                onClick={handleSaveProject}
+                disabled={!canSave || saving}
+                className={`
+                  btn
+                  ${!canSave || saving
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"}
+                `}
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
+
             </div>
           </div>
         </div>
