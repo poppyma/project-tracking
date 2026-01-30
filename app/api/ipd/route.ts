@@ -10,16 +10,19 @@ export async function GET() {
 
     const result = await query(`
       SELECT
-        id,
-        ipd_siis,
-        supplier,
-        "DESC" AS desc,
-        fb_type,
-        commodity,
-        ipd_quotation,
-        created_at
-      FROM ipd_master
-      ORDER BY created_at DESC
+        im.id,
+        im.ipd_siis,
+        sm.id AS supplier_id,              -- ⬅️ PENTING
+        sm.supplier_name AS supplier,      -- ⬅️ untuk tampilan
+        im."DESC" AS desc,
+        im.fb_type,
+        im.commodity,
+        im.ipd_quotation,
+        im.created_at
+      FROM ipd_master im
+      LEFT JOIN supplier_master sm
+        ON sm.supplier_name = im.supplier
+      ORDER BY im.created_at DESC
     `);
 
     return NextResponse.json(result.rows);
@@ -31,6 +34,7 @@ export async function GET() {
     );
   }
 }
+
 
 /* =========================
    POST → tambah IPD (MANUAL)

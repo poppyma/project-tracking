@@ -10,39 +10,24 @@ export async function PUT(
 ) {
   try {
     await initTables();
-
     const { id } = await context.params;
 
     const {
       ipd_siis,
-      supplier_id, // ⬅️ UUID dari frontend
+      supplier_id, // ⬅️ UUID
       desc,
       fb_type,
       commodity,
       ipd_quotation,
     } = await req.json();
 
-    if (!ipd_siis || !supplier_id) {
-      return NextResponse.json(
-        { error: "IPD SIIS dan Supplier wajib diisi" },
-        { status: 400 }
-      );
-    }
-
-    // 🔥 lookup supplier_name
+    // lookup nama supplier
     const supplierRes = await query(
       `SELECT supplier_name FROM supplier_master WHERE id = $1`,
       [supplier_id]
     );
 
-    if (supplierRes.rowCount === 0) {
-      return NextResponse.json(
-        { error: "Supplier tidak ditemukan" },
-        { status: 400 }
-      );
-    }
-
-    const supplier_name = supplierRes.rows[0].supplier_name;
+    const supplier_name = supplierRes.rows[0]?.supplier_name;
 
     await query(
       `
@@ -58,7 +43,7 @@ export async function PUT(
       `,
       [
         ipd_siis,
-        supplier_name, // ⬅️ SIMPAN NAMA
+        supplier_name,
         desc || null,
         fb_type || null,
         commodity || null,

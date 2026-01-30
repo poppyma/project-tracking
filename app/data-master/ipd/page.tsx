@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 type IPD = {
   id: string;
   ipd_siis: string;
+  supplier_id: string; 
   supplier: string;
   desc: string | null;
   fb_type: string;
@@ -227,7 +228,7 @@ export default function InputIPDPage() {
   function handleEdit(row: IPD) {
     setForm({
       ipd_siis: row.ipd_siis,
-      supplier_id: row.supplier,
+      supplier_id: row.supplier_id,
       desc: row.desc ?? "",
       fb_type: row.fb_type,
       commodity: row.commodity,
