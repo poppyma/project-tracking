@@ -3,6 +3,7 @@
 import "./globals.css";
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function RootLayout({
   children,
@@ -11,6 +12,11 @@ export default function RootLayout({
 }) {
   const [dataMasterOpen, setDataMasterOpen] = useState(true);
   const [bomOpen, setBomOpen] = useState(true);
+  const pathname = usePathname();
+
+  function isActive(path: string) {
+    return pathname === path || pathname.startsWith(path + "/");
+  }
 
   return (
     <html lang="en">
@@ -62,10 +68,16 @@ export default function RootLayout({
                   <div className="ml-10 border-l border-white/20 pl-4 flex flex-col gap-1">
                     <Link
                       href="/data-master/ipd"
-                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                      className={`
+                        py-2 px-3 text-sm rounded-lg
+                        ${isActive("/data-master/ipd")
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-white/80 hover:bg-white/10"}
+                      `}
                     >
                       Input IPD
                     </Link>
+
 
                     <Link
                       href="/data-master/supplier"
