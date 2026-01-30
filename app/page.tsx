@@ -960,7 +960,7 @@ const options = [
   "Ball",
   "Grease",
 ];
-const handleSaveProject = () => async() => {
+const handleSaveProject = async() => {
   let newErrors = {
     name: form.name ? "" : "Project Name is required",
     customer: form.customer ? "" : "Customer is required",
