@@ -20,7 +20,7 @@ export async function GET() {
         im.created_at
       FROM ipd_master im
       LEFT JOIN supplier_master sm
-        ON im.supplier = sm.id
+        ON im.supplier::uuid = sm.id
       ORDER BY im.created_at DESC
     `);
 
