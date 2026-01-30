@@ -163,20 +163,20 @@ function isHome() {
 
                 {/* TRACKING */}
                 <Link
-  href="/"
-  className={`
-    flex items-center gap-4 py-3 px-4 rounded-xl
-    ${isHome()
-      ? "bg-white/20 text-white font-semibold"
-      : "text-white/80 hover:bg-white/10"}
-  `}
->
-  <img
-    src="/monitoring-icon.png"
-    className="w-7 h-7"
-  />
-  <span className="font-semibold">Tracking</span>
-</Link>
+                  href="/"
+                  className={`
+                    flex items-center gap-4 py-3 px-4 rounded-xl
+                    ${isHome()
+                      ? "bg-white/20 text-white font-semibold"
+                      : "text-white/80 hover:bg-white/10"}
+                  `}
+                >
+                  <img
+                    src="/monitoring-icon.png"
+                    className="w-7 h-7"
+                  />
+                  <span className="font-semibold">Tracking</span>
+                </Link>
 
 
                 {/* BOM COST */}
@@ -213,21 +213,36 @@ function isHome() {
                   <div className="ml-10 border-l border-white/20 pl-4 flex flex-col gap-1">
                     <Link
                       href="/bom-cost"
-                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                      className={`
+                        py-2 px-3 text-sm rounded-lg
+                        ${isExact("/bom-cost")
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-white/80 hover:bg-white/10"}
+                      `}
                     >
                       Input Bom Cost
                     </Link>
 
                     <Link
                       href="/bom-cost/bp"
-                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                      className={`
+                        py-2 px-3 text-sm rounded-lg
+                        ${isExact("/bom-cost/bp")
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-white/80 hover:bg-white/10"}
+                      `}
                     >
                       Data BP
                     </Link>
 
-                    <Link
+                     <Link
                       href="/bom-cost/summary"
-                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                      className={`
+                        py-2 px-3 text-sm rounded-lg
+                        ${isExact("/bom-cost/summary")
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-white/80 hover:bg-white/10"}
+                      `}
                     >
                       Bom Cost List
                     </Link>
