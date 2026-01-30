@@ -193,7 +193,12 @@ export default function PricePage() {
       <button
         onClick={handleUpload}
         disabled={loading}
-        className="bg-blue-600 text-white px-6 py-2 rounded"
+        className={`
+          px-6 py-2 rounded text-white
+          ${loading
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700"}
+        `}
       >
         {loading ? "Uploading..." : "Upload Price CSV"}
       </button>
