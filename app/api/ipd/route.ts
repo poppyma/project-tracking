@@ -12,15 +12,15 @@ export async function GET() {
       SELECT
         im.id,
         im.ipd_siis,
-        s.supplier_name AS supplier,
+        sm.supplier_name AS supplier,
         im."DESC" AS desc,
         im.fb_type,
         im.commodity,
         im.ipd_quotation,
         im.created_at
       FROM ipd_master im
-      LEFT JOIN supplier s
-        ON im.supplier = s.id
+      LEFT JOIN supplier_master sm
+        ON im.supplier = sm.id
       ORDER BY im.created_at DESC
     `);
 
