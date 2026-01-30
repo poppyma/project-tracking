@@ -10,18 +10,16 @@ export async function GET() {
 
     const result = await query(`
       SELECT
-        im.id,
-        im.ipd_siis,
-        sm.supplier_name AS supplier,
-        im."DESC" AS desc,
-        im.fb_type,
-        im.commodity,
-        im.ipd_quotation,
-        im.created_at
-      FROM ipd_master im
-      LEFT JOIN supplier_master sm
-        ON im.supplier::uuid = sm.id
-      ORDER BY im.created_at DESC
+        id,
+        ipd_siis,
+        supplier,
+        "DESC" AS desc,
+        fb_type,
+        commodity,
+        ipd_quotation,
+        created_at
+      FROM ipd_master
+      ORDER BY created_at DESC
     `);
 
     return NextResponse.json(result.rows);
@@ -34,7 +32,6 @@ export async function GET() {
   }
 }
 
-
 /* =========================
    POST → tambah IPD (MANUAL)
 ========================= */
@@ -44,14 +41,14 @@ export async function POST(req: Request) {
 
     const {
       ipd_siis,
-      supplier_id, // isinya NAMA supplier
+      supplier_name, // isinya NAMA supplier
       desc,
       fb_type,
       commodity,
       ipd_quotation,
     } = await req.json();
 
-    if (!ipd_siis || !supplier_id) {
+    if (!ipd_siis || !supplier_name) {
       return NextResponse.json(
         { error: "IPD SIIS dan Supplier wajib diisi" },
         { status: 400 }
@@ -67,7 +64,7 @@ export async function POST(req: Request) {
       `,
       [
         ipd_siis.trim(),
-        supplier_id.trim(), // langsung simpan text supplier
+        supplier_name.trim(), // langsung simpan text supplier
         desc || null,
         fb_type || null,
         commodity || null,
