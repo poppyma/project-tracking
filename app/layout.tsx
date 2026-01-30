@@ -78,45 +78,74 @@ export default function RootLayout({
                       Input IPD
                     </Link>
 
-
                     <Link
                       href="/data-master/supplier"
-                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                      className={`
+                        py-2 px-3 text-sm rounded-lg
+                        ${isActive("/data-master/supplier")
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-white/80 hover:bg-white/10"}
+                      `}
                     >
                       Input Supplier
                     </Link>
 
                     <Link
                       href="/data-master/price"
-                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                      className={`
+                        py-2 px-3 text-sm rounded-lg
+                        ${isActive("/data-master/price")
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-white/80 hover:bg-white/10"}
+                      `}
                     >
                       Input Price
                     </Link>
 
                     <Link
                       href="/data-master/price/view"
-                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                      className={`
+                        py-2 px-3 text-sm rounded-lg
+                        ${isActive("/data-master/price/view")
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-white/80 hover:bg-white/10"}
+                      `}
                     >
-                      View Price 
+                      View Price
                     </Link>
 
                     <Link
                       href="/data-master/total"
-                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                      className={`
+                        py-2 px-3 text-sm rounded-lg
+                        ${isActive("/data-master/total")
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-white/80 hover:bg-white/10"}
+                      `}
                     >
-                      View Total IPD 
+                      View Total IPD
                     </Link>
 
                     <Link
                       href="/data-master/view-quarters"
-                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                      className={`
+                        py-2 px-3 text-sm rounded-lg
+                        ${isActive("/data-master/view-quarters")
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-white/80 hover:bg-white/10"}
+                      `}
                     >
                       View Quarters
                     </Link>
-
+                    
                     <Link
                       href="/data-master/view-siis"
-                      className="py-2 px-3 text-sm rounded-lg text-white/80 hover:bg-white/10"
+                      className={`
+                        py-2 px-3 text-sm rounded-lg
+                        ${isActive("/data-master/view-siis")
+                          ? "bg-white/20 text-white font-semibold"
+                          : "text-white/80 hover:bg-white/10"}
+                      `}
                     >
                       SIIS
                     </Link>
