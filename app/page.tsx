@@ -43,6 +43,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [savingRemark, setSavingRemark] = useState(false);
 
   const [materialInput, setMaterialInput] = useState("");
   const [materials, setMaterials] = useState([
@@ -206,6 +207,68 @@ function resetForm() {
   setMaterials([]);
   setMaterialInput("");
 }
+
+async function handleSaveRemark() {
+  try {
+    setSavingRemark(true);
+
+    if (!selectedProjectId) {
+      alert("Pilih project terlebih dahulu");
+      return;
+    }
+
+    const si = remarkModal.statusIndex;
+    const text = (remarkModal.text || "").trim();
+
+    if (si == null) {
+      alert("Invalid column");
+      return;
+    }
+
+    if (!text) {
+      alert("Masukkan remark terlebih dahulu");
+      return;
+    }
+
+    const res = await fetch("/api/remarks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId: selectedProjectId,
+        statusIndex: si,
+        text,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || "Gagal menyimpan remark");
+
+    // refresh remarks
+    try {
+      const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
+      if (r.ok) {
+        const list = await r.json();
+        const grouped: Record<number, any[]> = {};
+        (list || []).forEach((it: any) => {
+          const idx = Number(it.status_index);
+          grouped[idx] = grouped[idx] || [];
+          grouped[idx].push(it);
+        });
+        setRemarksMap(grouped);
+      }
+    } catch (err) {
+      console.error("Failed to refresh remarks", err);
+    }
+
+    setRemarkModal({ open: false });
+  } catch (err: any) {
+    console.error(err);
+    alert(err?.message || "Gagal menyimpan remark");
+  } finally {
+    setSavingRemark(false);
+  }
+}
+
 
 async function reloadProjects() {
   try {
@@ -2113,40 +2176,13 @@ const handleSaveProject = async() => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
               <button className="btn secondary" onClick={() => setRemarkModal({ open: false })}>Cancel</button>
-              <button className="btn" onClick={async () => {
-                try {
-                  if (!selectedProjectId) { alert('Pilih project terlebih dahulu'); return; }
-                  const si = remarkModal.statusIndex;
-                  const text = (remarkModal.text || '').trim();
-                  if (si == null) { alert('Invalid column'); return; }
-                  if (!text) { alert('Masukkan remark terlebih dahulu'); return; }
-                  const res = await fetch('/api/remarks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: selectedProjectId, statusIndex: si, text }) });
-                  const data = await res.json();
-                  if (!res.ok) throw new Error(data?.error || 'Gagal menyimpan remark');
-
-                  // refresh remarks for selected project
-                  try {
-                    const r = await fetch(`/api/remarks?projectId=${selectedProjectId}`);
-                    if (r.ok) {
-                      const list = await r.json();
-                      const grouped: Record<number, any[]> = {};
-                      (list || []).forEach((it: any) => {
-                        const idx = Number(it.status_index);
-                        grouped[idx] = grouped[idx] || [];
-                        grouped[idx].push(it);
-                      });
-                      setRemarksMap(grouped);
-                    }
-                  } catch (err) {
-                    console.error('Failed to refresh remarks', err);
-                  }
-
-                  setRemarkModal({ open: false });
-                } catch (err: any) {
-                  console.error(err);
-                  alert(err?.message || 'Gagal menyimpan remark');
-                }
-              }}>Save</button>
+              <button
+                className="btn"
+                onClick={handleSaveRemark}
+                disabled={savingRemark}
+              >
+                {savingRemark ? "Saving..." : "Save"}
+              </button>
             </div>
           </div>
         </div>
