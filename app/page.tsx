@@ -341,32 +341,39 @@ async function handleSave() {
 async function saveEditProject() {
   if (!editProject) return;
 
-  const payload = {
-    name: form.name,
-    customer: form.customer,
-    application: form.application,
-    productLine: form.productLine,
-    anualVolume: form.anualVolume,
-    estSop: form.estSop,
-    materials,
-  };
+  try {
+    setSavingEdit(true);
 
-  const res = await fetch(`/api/projects?id=${editProject.id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+    const payload = {
+      name: form.name,
+      customer: form.customer,
+      application: form.application,
+      productLine: form.productLine,
+      anualVolume: form.anualVolume,
+      estSop: form.estSop,
+      materials,
+    };
 
-  if (!res.ok) {
-    alert("Gagal update project");
-    return;
+    const res = await fetch(`/api/projects?id=${editProject.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      alert("Gagal update project");
+      return;
+    }
+
+    await reloadProjects();
+    setShowEditModal(false);
+    setEditProject(null);
+    alert("Project berhasil diedit!");
+  } finally {
+    setSavingEdit(false);
   }
-
-  await reloadProjects();
-  setShowEditModal(false);
-  setEditProject(null);
-  alert("Project berhasil diedit!");
 }
+
 
 
 function addMaterial() {
@@ -397,6 +404,7 @@ function addMaterial() {
   const [remarksModal, setRemarksModal] = useState<{ open: boolean; statusIndex?: number; items?: any[]; editingId?: number; editingText?: string }>({ open: false });
 
   const [statuses, setStatuses] = useState<Record<number, boolean[][]>>({});
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
   if (editProject) {
@@ -1905,9 +1913,14 @@ const handleSaveProject = async() => {
         </button>
 
 
-        <button className="btn" onClick={saveEditProject}>
-          Save
+        <button
+          className="btn"
+          onClick={saveEditProject}
+          disabled={savingEdit}
+        >
+          {savingEdit ? "Saving..." : "Save"}
         </button>
+
       </div>
 
     </div>
