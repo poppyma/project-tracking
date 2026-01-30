@@ -18,6 +18,15 @@ export default function RootLayout({
     return pathname === path || pathname.startsWith(path + "/");
   }
 
+  function isExact(path: string) {
+  return pathname === path;
+}
+
+function isStartsWith(path: string) {
+  return pathname === path || pathname.startsWith(path + "/");
+}
+
+
   return (
     <html lang="en">
       <head>
@@ -70,7 +79,7 @@ export default function RootLayout({
                       href="/data-master/ipd"
                       className={`
                         py-2 px-3 text-sm rounded-lg
-                        ${isActive("/data-master/ipd")
+                        ${isExact("/data-master/ipd")
                           ? "bg-white/20 text-white font-semibold"
                           : "text-white/80 hover:bg-white/10"}
                       `}
@@ -82,7 +91,7 @@ export default function RootLayout({
                       href="/data-master/supplier"
                       className={`
                         py-2 px-3 text-sm rounded-lg
-                        ${isActive("/data-master/supplier")
+                        ${isExact("/data-master/supplier")
                           ? "bg-white/20 text-white font-semibold"
                           : "text-white/80 hover:bg-white/10"}
                       `}
@@ -94,7 +103,7 @@ export default function RootLayout({
                       href="/data-master/price"
                       className={`
                         py-2 px-3 text-sm rounded-lg
-                        ${isActive("/data-master/price")
+                        ${isExact("/data-master/price")
                           ? "bg-white/20 text-white font-semibold"
                           : "text-white/80 hover:bg-white/10"}
                       `}
@@ -106,7 +115,7 @@ export default function RootLayout({
                       href="/data-master/price/view"
                       className={`
                         py-2 px-3 text-sm rounded-lg
-                        ${isActive("/data-master/price/view")
+                        ${isStartsWith("/data-master/price/view")
                           ? "bg-white/20 text-white font-semibold"
                           : "text-white/80 hover:bg-white/10"}
                       `}
@@ -118,7 +127,7 @@ export default function RootLayout({
                       href="/data-master/total"
                       className={`
                         py-2 px-3 text-sm rounded-lg
-                        ${isActive("/data-master/total")
+                        ${isExact("/data-master/total")
                           ? "bg-white/20 text-white font-semibold"
                           : "text-white/80 hover:bg-white/10"}
                       `}
@@ -130,7 +139,7 @@ export default function RootLayout({
                       href="/data-master/view-quarters"
                       className={`
                         py-2 px-3 text-sm rounded-lg
-                        ${isActive("/data-master/view-quarters")
+                        ${isExact("/data-master/view-quarters")
                           ? "bg-white/20 text-white font-semibold"
                           : "text-white/80 hover:bg-white/10"}
                       `}
@@ -142,7 +151,7 @@ export default function RootLayout({
                       href="/data-master/view-siis"
                       className={`
                         py-2 px-3 text-sm rounded-lg
-                        ${isActive("/data-master/view-siis")
+                        ${isExact("/data-master/view-siis")
                           ? "bg-white/20 text-white font-semibold"
                           : "text-white/80 hover:bg-white/10"}
                       `}
