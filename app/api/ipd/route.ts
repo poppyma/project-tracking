@@ -41,20 +41,36 @@ export async function POST(req: Request) {
 
     const {
       ipd_siis,
-      supplier_name, // isinya NAMA supplier
+      supplier_id, // ⬅️ UUID dari frontend
       desc,
       fb_type,
       commodity,
       ipd_quotation,
     } = await req.json();
 
-    if (!ipd_siis || !supplier_name) {
+    if (!ipd_siis || !supplier_id) {
       return NextResponse.json(
         { error: "IPD SIIS dan Supplier wajib diisi" },
         { status: 400 }
       );
     }
 
+    // 🔥 Ambil NAMA supplier dari supplier_master
+    const supplierRes = await query(
+      `SELECT supplier_name FROM supplier_master WHERE id = $1`,
+      [supplier_id]
+    );
+
+    if (supplierRes.rowCount === 0) {
+      return NextResponse.json(
+        { error: "Supplier tidak ditemukan" },
+        { status: 400 }
+      );
+    }
+
+    const supplier_name = supplierRes.rows[0].supplier_name;
+
+    // 🔥 Simpan NAMA supplier ke ipd_master
     const result = await query(
       `
       INSERT INTO ipd_master
@@ -64,7 +80,7 @@ export async function POST(req: Request) {
       `,
       [
         ipd_siis.trim(),
-        supplier_name.trim(), // langsung simpan text supplier
+        supplier_name,
         desc || null,
         fb_type || null,
         commodity || null,
