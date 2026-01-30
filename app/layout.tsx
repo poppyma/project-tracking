@@ -14,16 +14,16 @@ export default function RootLayout({
   const [bomOpen, setBomOpen] = useState(true);
   const pathname = usePathname();
 
-  function isActive(path: string) {
-    return pathname === path || pathname.startsWith(path + "/");
-  }
-
   function isExact(path: string) {
   return pathname === path;
 }
 
 function isStartsWith(path: string) {
   return pathname === path || pathname.startsWith(path + "/");
+}
+
+function isHome() {
+  return pathname === "/" || pathname === "";
 }
 
 
@@ -163,20 +163,21 @@ function isStartsWith(path: string) {
 
                 {/* TRACKING */}
                 <Link
-                  href="/"
-                  className={`
-                    flex items-center gap-4 py-3 px-4 rounded-xl
-                    ${isExact("/")
-                      ? "bg-white/20 text-white font-semibold"
-                      : "hover:bg-white/10"}
-                  `}
-                >
-                  <img
-                    src="/monitoring-icon.png"
-                    className="w-7 h-7"
-                  />
-                  <span className="font-semibold">Tracking</span>
-                </Link>
+  href="/"
+  className={`
+    flex items-center gap-4 py-3 px-4 rounded-xl
+    ${isHome()
+      ? "bg-white/20 text-white font-semibold"
+      : "text-white/80 hover:bg-white/10"}
+  `}
+>
+  <img
+    src="/monitoring-icon.png"
+    className="w-7 h-7"
+  />
+  <span className="font-semibold">Tracking</span>
+</Link>
+
 
                 {/* BOM COST */}
                 <button
