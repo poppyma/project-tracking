@@ -97,15 +97,19 @@ export default function InputIPDPage() {
 
   
   /* LOAD DATA */
-  async function loadData() {
-    try {
-      const res = await fetch("/api/ipd");
-      if (!res.ok) throw new Error();
-      setData(await res.json());
-    } catch {
-      alert("Gagal mengambil data IPD");
-    }
+ async function loadData() {
+  try {
+    setLoadingTable(true);
+    const res = await fetch("/api/ipd");
+    if (!res.ok) throw new Error();
+    setData(await res.json());
+  } catch {
+    alert("Gagal mengambil data IPD");
+  } finally {
+    setLoadingTable(false);
   }
+}
+
 
   async function handleUploadCSV(e: React.ChangeEvent<HTMLInputElement>) {
       const file = e.target.files?.[0];
@@ -482,53 +486,66 @@ export default function InputIPDPage() {
           </thead>
 
           <tbody>
-  {pagedData.map((r, i) => (
-    <tr key={r.id}>
-      {/* CHECKBOX COLUMN */}
-      <td className="border px-2 py-1 text-center">
-        <input
-          type="checkbox"
-          checked={selectedIds.includes(r.id)}
-          onChange={() => toggleSelect(r.id)}
-        />
-      </td>
-
-      {/* NO COLUMN */}
-      <td className="border px-2 py-1 text-center">
-        {page * PAGE_SIZE + i + 1}
-      </td>
-
-      <td className="border px-2 py-1">{r.ipd_siis}</td>
-      <td className="border px-2 py-1">{r.supplier}</td>
-      <td className="border px-2 py-1">{r.desc || "-"}</td>
-      <td className="border px-2 py-1">{r.fb_type}</td>
-      <td className="border px-2 py-1">{r.commodity}</td>
-      <td className="border px-2 py-1">{r.ipd_quotation}</td>
-
-      <td className="border px-2 py-1">
-        <div className="flex justify-center gap-2">
-          <button
-            title="Edit"
-            onClick={() => handleEdit(r)}
-            className="p-1 rounded hover:bg-blue-100"
-            disabled={loading}
-          >
-            ✏️
-          </button>
-
-          <button
-            title="Delete"
-            onClick={() => handleDelete(r.id)}
-            className="p-1 rounded hover:bg-red-100"
-            disabled={loading}
-          >
-            🗑️
-          </button>
-        </div>
+  {loadingTable ? (
+    <tr>
+      <td colSpan={9} className="text-center py-6 text-gray-500">
+        Loading data IPD...
       </td>
     </tr>
-  ))}
+  ) : pagedData.length === 0 ? (
+    <tr>
+      <td colSpan={9} className="text-center py-6 text-gray-400">
+        Tidak ada data yang ditemukan
+      </td>
+    </tr>
+  ) : (
+    pagedData.map((r, i) => (
+      <tr key={r.id}>
+        <td className="border px-2 py-1 text-center">
+          <input
+            type="checkbox"
+            checked={selectedIds.includes(r.id)}
+            onChange={() => toggleSelect(r.id)}
+          />
+        </td>
+
+        <td className="border px-2 py-1 text-center">
+          {page * PAGE_SIZE + i + 1}
+        </td>
+
+        <td className="border px-2 py-1">{r.ipd_siis}</td>
+        <td className="border px-2 py-1">{r.supplier}</td>
+        <td className="border px-2 py-1">{r.desc || "-"}</td>
+        <td className="border px-2 py-1">{r.fb_type}</td>
+        <td className="border px-2 py-1">{r.commodity}</td>
+        <td className="border px-2 py-1">{r.ipd_quotation}</td>
+
+        <td className="border px-2 py-1">
+          <div className="flex justify-center gap-2">
+            <button
+              title="Edit"
+              onClick={() => handleEdit(r)}
+              className="p-1 rounded hover:bg-blue-100"
+              disabled={loading}
+            >
+              ✏️
+            </button>
+
+            <button
+              title="Delete"
+              onClick={() => handleDelete(r.id)}
+              className="p-1 rounded hover:bg-red-100"
+              disabled={loading}
+            >
+              🗑️
+            </button>
+          </div>
+        </td>
+      </tr>
+    ))
+  )}
 </tbody>
+
 
         </table>
 
