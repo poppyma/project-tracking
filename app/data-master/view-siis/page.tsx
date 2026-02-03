@@ -48,6 +48,7 @@ export default function ViewSIISPage() {
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [selectedQuarter, setSelectedQuarter] = useState("");
+  const [loadingTable, setLoadingTable] = useState(false);
 
   /* ===== APPROVAL STATE ===== */
   const [approvals, setApprovals] = useState<Approval[]>([
@@ -65,14 +66,20 @@ export default function ViewSIISPage() {
 
   useEffect(() => {
     if (!supplier?.id) return;
+
+    setLoadingTable(true);
+
     fetch(`/api/siis?supplier_id=${supplier.id}`, { cache: "no-store" })
       .then(r => r.json())
       .then((data: Row[]) => {
         setRows(data);
         const qs = [...new Set(data.map(r => r.quarter))];
         setSelectedQuarter(qs[0] || "");
-      });
+      })
+      .finally(() => setLoadingTable(false));
+
   }, [supplier]);
+
 
   const quarters = useMemo(
     () => [...new Set(rows.map(r => r.quarter))],
@@ -462,25 +469,41 @@ function downloadPDF() {
             </thead>
 
             <tbody>
-              {ipds.map((i, idx) => (
-                <tr key={i.ipd_quotation}>
-                  <td className="border px-2 text-center">{idx + 1}</td>
-                  <td className="border px-2">{i.ipd}</td>
-                  <td className="border px-2">{i.desc}</td> 
-                  <td className="border px-2">{i.material_source}</td>
-                  {MONTHS.map((_, mIdx) => (
-                    <td
-                      key={mIdx}
-                      className="border px-2 text-right"
-                    >
-                      {formatPrice(
-                        getMonthPrice(i.ipd_quotation, mIdx)
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+  {!supplier ? (
+    <tr>
+      <td colSpan={16} className="text-center py-8 text-gray-400 italic">
+        Pilih supplier terlebih dahulu
+      </td>
+    </tr>
+  ) : loadingTable ? (
+    <tr>
+      <td colSpan={16} className="text-center py-8 text-gray-500">
+        Loading data SIIS...
+      </td>
+    </tr>
+  ) : ipds.length === 0 ? (
+    <tr>
+      <td colSpan={16} className="text-center py-8 text-gray-400 italic">
+        📭 Tidak ada data SIIS pada quarter ini
+      </td>
+    </tr>
+  ) : (
+    ipds.map((i, idx) => (
+      <tr key={i.ipd_quotation}>
+        <td className="border px-2 text-center">{idx + 1}</td>
+        <td className="border px-2">{i.ipd}</td>
+        <td className="border px-2">{i.desc}</td>
+        <td className="border px-2">{i.material_source}</td>
+        {MONTHS.map((_, mIdx) => (
+          <td key={mIdx} className="border px-2 text-right">
+            {formatPrice(getMonthPrice(i.ipd_quotation, mIdx))}
+          </td>
+        ))}
+      </tr>
+    ))
+  )}
+</tbody>
+
           </table>
         </div>
       )}
