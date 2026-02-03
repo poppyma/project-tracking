@@ -286,7 +286,7 @@ export default function ViewPricePage() {
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="border py-6 text-center text-gray-400">
-                  No data
+                  Tidak ada data price untuk supplier ini
                 </td>
               </tr>
             ) : (
