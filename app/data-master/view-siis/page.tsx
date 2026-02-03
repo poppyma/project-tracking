@@ -451,7 +451,6 @@ function downloadPDF() {
       </div>
 
       {/* ===== TABLE DATA ===== */}
-      {supplier && (
         <div className="overflow-x-auto border">
           <table className="w-full border-collapse">
             <thead className="bg-gray-200">
@@ -468,8 +467,14 @@ function downloadPDF() {
               </tr>
             </thead>
 
-            <tbody>
-  {loadingTable ? (
+           <tbody>
+  {!supplier ? (
+    <tr>
+      <td colSpan={16} className="text-center py-8 text-gray-400 italic">
+        Silakan pilih supplier terlebih dahulu
+      </td>
+    </tr>
+  ) : loadingTable ? (
     <tr>
       <td colSpan={16} className="text-center py-8 text-gray-500">
         Loading data SIIS...
@@ -499,9 +504,10 @@ function downloadPDF() {
 </tbody>
 
 
+
           </table>
         </div>
-      )}
+      
 
       {selectedQuarter && (
         <div className="flex gap-2">
