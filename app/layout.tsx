@@ -42,7 +42,7 @@ function isHome() {
             <div className="p-4 flex flex-col gap-8 h-full overflow-y-auto">
 
               {/* LOGO */}
-              <div className="flex justify-center">
+              <div className="flex justify-center mt-4">
                 <img src="/skf-logo.svg" alt="SKF" className="h-10" />
               </div>
 
