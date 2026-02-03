@@ -122,10 +122,6 @@ export default function ViewSIISPage() {
     return 0;
   }
 
-  // function formatPrice(v: number) {
-  //   return v === 0 ? "-" : v.toFixed(3);
-  // }
-
   function formatPrice(v: number) {
     if (!v || v === 0) return "-";
 
@@ -468,45 +464,42 @@ function downloadPDF() {
             </thead>
 
            <tbody>
-  {!supplier ? (
-    <tr>
-      <td colSpan={16} className="text-center py-8 text-gray-400 italic">
-        Silakan pilih supplier terlebih dahulu
-      </td>
-    </tr>
-  ) : loadingTable ? (
-    <tr>
-      <td colSpan={16} className="text-center py-8 text-gray-500">
-        Loading data SIIS...
-      </td>
-    </tr>
-  ) : ipds.length === 0 ? (
-    <tr>
-      <td colSpan={16} className="text-center py-8 text-gray-400">
-        Tidak ada data SIIS untuk supplier ini
-      </td>
-    </tr>
-  ) : (
-    ipds.map((i, idx) => (
-      <tr key={i.ipd_quotation}>
-        <td className="border px-2 text-center">{idx + 1}</td>
-        <td className="border px-2">{i.ipd}</td>
-        <td className="border px-2">{i.desc}</td>
-        <td className="border px-2">{i.material_source}</td>
-        {MONTHS.map((_, mIdx) => (
-          <td key={mIdx} className="border px-2 text-right">
-            {formatPrice(getMonthPrice(i.ipd_quotation, mIdx))}
-          </td>
-        ))}
-      </tr>
-    ))
-  )}
-</tbody>
-
-
-
-          </table>
-        </div>
+            {!supplier ? (
+              <tr>
+                <td colSpan={16} className="text-center py-8 text-gray-400 italic">
+                  Silakan pilih supplier terlebih dahulu
+                </td>
+              </tr>
+            ) : loadingTable ? (
+              <tr>
+                <td colSpan={16} className="text-center py-8 text-gray-500">
+                  Loading data SIIS...
+                </td>
+              </tr>
+            ) : ipds.length === 0 ? (
+              <tr>
+                <td colSpan={16} className="text-center py-8 text-gray-400">
+                  Tidak ada data SIIS untuk data supplier ini.
+                </td>
+              </tr>
+            ) : (
+              ipds.map((i, idx) => (
+                <tr key={i.ipd_quotation}>
+                  <td className="border px-2 text-center">{idx + 1}</td>
+                  <td className="border px-2">{i.ipd}</td>
+                  <td className="border px-2">{i.desc}</td>
+                  <td className="border px-2">{i.material_source}</td>
+                  {MONTHS.map((_, mIdx) => (
+                    <td key={mIdx} className="border px-2 text-right">
+                      {formatPrice(getMonthPrice(i.ipd_quotation, mIdx))}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
       
 
       {selectedQuarter && (
