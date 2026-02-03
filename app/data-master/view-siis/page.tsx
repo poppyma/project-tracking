@@ -451,7 +451,7 @@ function downloadPDF() {
       </div>
 
       {/* ===== TABLE DATA ===== */}
-      {supplier && selectedQuarter && (
+      {supplier && (
         <div className="overflow-x-auto border">
           <table className="w-full border-collapse">
             <thead className="bg-gray-200">
@@ -469,13 +469,7 @@ function downloadPDF() {
             </thead>
 
             <tbody>
-  {!supplier ? (
-    <tr>
-      <td colSpan={16} className="text-center py-8 text-gray-400 italic">
-        Pilih supplier terlebih dahulu
-      </td>
-    </tr>
-  ) : loadingTable ? (
+  {loadingTable ? (
     <tr>
       <td colSpan={16} className="text-center py-8 text-gray-500">
         Loading data SIIS...
@@ -484,7 +478,7 @@ function downloadPDF() {
   ) : ipds.length === 0 ? (
     <tr>
       <td colSpan={16} className="text-center py-8 text-gray-400 italic">
-        📭 Tidak ada data SIIS pada quarter ini
+        📭 Tidak ada data SIIS untuk supplier ini
       </td>
     </tr>
   ) : (
@@ -503,6 +497,7 @@ function downloadPDF() {
     ))
   )}
 </tbody>
+
 
           </table>
         </div>
