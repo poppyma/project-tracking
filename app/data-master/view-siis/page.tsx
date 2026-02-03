@@ -477,8 +477,8 @@ function downloadPDF() {
     </tr>
   ) : ipds.length === 0 ? (
     <tr>
-      <td colSpan={16} className="text-center py-8 text-gray-400 italic">
-        📭 Tidak ada data SIIS untuk supplier ini
+      <td colSpan={16} className="text-center py-8 text-gray-400">
+        Tidak ada data SIIS untuk supplier ini
       </td>
     </tr>
   ) : (
