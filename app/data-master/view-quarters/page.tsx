@@ -185,10 +185,10 @@ export default function ViewPriceQuartersPage() {
                 Diff Q1-2026 - Q4-2025
               </th>
               <th className="border px-2">
-                Diff Q2-2025 - Q1-2026
+                Diff Q2-2026 - Q1-2026
               </th>
               <th className="border px-2">
-                Diff Q3-2025 - Q2-2025
+                Diff Q3-2026 - Q2-2026
               </th>
             </tr>
           </thead>
@@ -208,7 +208,7 @@ export default function ViewPriceQuartersPage() {
     </tr>
   ) : ipds.length === 0 ? (
     <tr>
-      <td colSpan={10} className="text-center py-8 text-gray-400 italic">
+      <td colSpan={10} className="text-center py-8 text-gray-400">
         📭 Tidak ada data price untuk supplier ini
       </td>
     </tr>
