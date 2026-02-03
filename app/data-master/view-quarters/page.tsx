@@ -31,20 +31,25 @@ export default function ViewPriceQuartersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
+  const [loadingTable, setLoadingTable] = useState(false);
 
   async function fetchPriceQuarters(supplierId: string) {
-    try {
-      const res = await fetch(
-        `/api/price-quarters?supplier_id=${supplierId}`,
-        { cache: "no-store" }
-      );
-      const json = await res.json();
-      setRows(Array.isArray(json) ? json : []);
-    } catch (e) {
-      console.error("Failed fetch price quarters", e);
-      setRows([]);
-    }
+  try {
+    setLoadingTable(true);
+    const res = await fetch(
+      `/api/price-quarters?supplier_id=${supplierId}`,
+      { cache: "no-store" }
+    );
+    const json = await res.json();
+    setRows(Array.isArray(json) ? json : []);
+  } catch (e) {
+    console.error("Failed fetch price quarters", e);
+    setRows([]);
+  } finally {
+    setLoadingTable(false);
   }
+}
+
 
   /* ================= LOAD SUPPLIER LIST ================= */
   useEffect(() => {
@@ -189,32 +194,53 @@ export default function ViewPriceQuartersPage() {
           </thead>
 
           <tbody>
-            {ipds.map((i, idx) => {
-              const q4 = getPrice(i.ipd, "Q4-2025");
-              const q1 = getPrice(i.ipd, "Q1-2026");
-              const q2 = getPrice(i.ipd, "Q2-2025");
-              const q3 = getPrice(i.ipd, "Q3-2025");
+  {!supplier ? (
+    <tr>
+      <td colSpan={10} className="text-center py-8 text-gray-400 italic">
+        Pilih supplier terlebih dahulu
+      </td>
+    </tr>
+  ) : loadingTable ? (
+    <tr>
+      <td colSpan={10} className="text-center py-8 text-gray-500">
+        Loading data price quarters...
+      </td>
+    </tr>
+  ) : ipds.length === 0 ? (
+    <tr>
+      <td colSpan={10} className="text-center py-8 text-gray-400 italic">
+        📭 Tidak ada data price untuk supplier ini
+      </td>
+    </tr>
+  ) : (
+    ipds.map((i, idx) => {
+      const q4 = getPrice(i.ipd, "Q4-2025");
+      const q1 = getPrice(i.ipd, "Q1-2026");
+      const q2 = getPrice(i.ipd, "Q2-2025");
+      const q3 = getPrice(i.ipd, "Q3-2025");
 
-              return (
-                <tr key={i.ipd + idx}>
-                  <td className="border px-2 text-center">
-                    {idx + 1}
-                  </td>
-                  <td className="border px-2">{i.ipd}</td>
-                  <td className="border px-2">{i.material_source}</td>
+      return (
+        <tr key={i.ipd + idx}>
+          <td className="border px-2 text-center">
+            {idx + 1}
+          </td>
+          <td className="border px-2">{i.ipd}</td>
+          <td className="border px-2">{i.material_source}</td>
 
-                  <td className="border px-2 text-right">{formatPrice(q4)}</td>
-                  <td className="border px-2 text-right">{formatPrice(q1)}</td>
-                  <td className="border px-2 text-right">{formatPrice(q2)}</td>
-                  <td className="border px-2 text-right">{formatPrice(q3)}</td>
+          <td className="border px-2 text-right">{formatPrice(q4)}</td>
+          <td className="border px-2 text-right">{formatPrice(q1)}</td>
+          <td className="border px-2 text-right">{formatPrice(q2)}</td>
+          <td className="border px-2 text-right">{formatPrice(q3)}</td>
 
-                  <td className="border px-2">{diff(q1, q4)}</td>
-                  <td className="border px-2">{diff(q2, q1)}</td>
-                  <td className="border px-2">{diff(q3, q2)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
+          <td className="border px-2">{diff(q1, q4)}</td>
+          <td className="border px-2">{diff(q2, q1)}</td>
+          <td className="border px-2">{diff(q3, q2)}</td>
+        </tr>
+      );
+    })
+  )}
+</tbody>
+
         </table>
       )}
     </div>
