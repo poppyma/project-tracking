@@ -110,7 +110,7 @@ export default function ViewPriceQuartersPage() {
             r.ipd !== "-"
         )
         .map((r) => [
-          r.ipd,
+          r.ipd + "|" + r.material_source,
           {
             ipd: r.ipd as string,
             material_source: r.material_source || "-",
@@ -119,9 +119,9 @@ export default function ViewPriceQuartersPage() {
     ).values()
   );
 
-  function getPrice(ipd: string, quarter: string) {
+  function getPrice(ipd: string, supplier:string, quarter: string) {
     const found = rows.find(
-      r => r.ipd === ipd && r.quarter === quarter
+      r => r.ipd === ipd && r.material_source === supplier && r.quarter === quarter
     );
     return found ? Number(found.price) : 0;
   }
@@ -214,10 +214,10 @@ export default function ViewPriceQuartersPage() {
               </tr>
             ) : (
               ipds.map((i, idx) => {
-                const q4 = getPrice(i.ipd, "Q4-2025");
-                const q1 = getPrice(i.ipd, "Q1-2026");
-                const q2 = getPrice(i.ipd, "Q2-2025");
-                const q3 = getPrice(i.ipd, "Q3-2025");
+                const q4 = getPrice(i.ipd, i.material_source, "Q4-2025");
+                const q1 = getPrice(i.ipd, i.material_source, "Q1-2026");
+                const q2 = getPrice(i.ipd, i.material_source, "Q2-2026");
+                const q3 = getPrice(i.ipd, i.material_source, "Q3-2026");
 
                 return (
                   <tr key={i.ipd + idx}>
