@@ -16,21 +16,33 @@ export async function GET(req: Request) {
     const result = await query(
     `
     SELECT
-      d.ipd_quotation,
-      m.ipd_siis AS ipd,
-      d.material_source,
-      h.quarter,
-      d.price
-    FROM price_header h
-    JOIN price_detail d
-      ON d.header_id = h.id
-    LEFT JOIN ipd_master m
-      ON m.ipd_quotation = d.ipd_quotation
-    WHERE h.supplier_id = $1
-      AND m.ipd_siis IS NOT NULL
-      AND m.ipd_siis <> ''
-      AND m.ipd_siis <> '-'
-    ORDER BY m.ipd_siis, h.quarter
+  d.ipd_quotation,
+  m.ipd_siis AS ipd,
+  d.material_source,
+  h.quarter,
+  d.price
+FROM price_header h
+JOIN price_detail d
+  ON d.header_id = h.id
+
+LEFT JOIN (
+  SELECT DISTINCT ON (ipd_quotation, supplier)
+    ipd_quotation,
+    supplier,
+    ipd_siis
+  FROM ipd_master
+  ORDER BY ipd_quotation, supplier, id
+) m
+  ON m.ipd_quotation = d.ipd_quotation
+ AND UPPER(m.supplier) = UPPER(d.material_source)
+
+WHERE h.supplier_id = $1
+  AND m.ipd_siis IS NOT NULL
+  AND m.ipd_siis <> ''
+  AND m.ipd_siis <> '-'
+
+ORDER BY m.ipd_siis, d.material_source, h.quarter
+
     `,
     [supplier_id]
   );

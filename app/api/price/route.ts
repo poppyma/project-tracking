@@ -29,7 +29,7 @@ export async function GET(req: Request) {
       SELECT
         h.id AS header_id,
         h.start_date,
-        h.end_date,
+        h.end_date, 
         h.quarter,
 
         d.id AS detail_id,
