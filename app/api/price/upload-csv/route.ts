@@ -42,15 +42,17 @@ export async function POST(req: Request) {
     /* =========================
        INSERT PRICE HEADER
     ========================= */
-    const headerRes = await query(
-      `
-      INSERT INTO price_header
-        (supplier_id, start_date, end_date, quarter)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id
-      `,
-      [supplier_id, start_date, end_date, quarter]
-    );
+    const headerRes = await query(`
+  INSERT INTO price_header
+    (supplier_id, start_date, end_date, quarter)
+  VALUES ($1, $2, $3, $4)
+  ON CONFLICT (supplier_id, quarter)
+  DO UPDATE SET
+    start_date = EXCLUDED.start_date,
+    end_date = EXCLUDED.end_date
+  RETURNING id
+`, [supplier_id, start_date, end_date, quarter]);
+
 
     const header_id = headerRes.rows[0].id;
 
@@ -62,20 +64,16 @@ export async function POST(req: Request) {
     for (const r of parsed.data as any[]) {
       if (!r.ipd_quotation || !r.price) continue;
 
-      await query(
-        `
-        INSERT INTO price_detail
-          (header_id, ipd_quotation, steel_spec, material_source, price)
-        VALUES ($1, $2, $3, $4, $5)
-        `,
-        [
-          header_id,
-          r.ipd_quotation,
-          r.steel_spec || null,
-          r.material_source || null,
-          Number(String(r.price).replace(/,/g, "")),
-        ]
-      );
+      await query(`
+  INSERT INTO price_detail
+    (header_id, ipd_quotation, steel_spec, material_source, price)
+  VALUES ($1, $2, $3, $4, $5)
+  ON CONFLICT (header_id, ipd_quotation, material_source)
+  DO UPDATE SET
+    steel_spec = EXCLUDED.steel_spec,
+    price = EXCLUDED.price
+`);
+
 
       inserted++;
     }
