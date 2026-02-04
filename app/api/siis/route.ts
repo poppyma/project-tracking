@@ -25,13 +25,26 @@ export async function GET(req: Request) {
       FROM price_header h
       JOIN price_detail d
         ON d.header_id = h.id
-      LEFT JOIN ipd_master m
+
+      LEFT JOIN (
+        SELECT DISTINCT ON (ipd_quotation, supplier)
+          ipd_quotation,
+          supplier,
+          ipd_siis,
+          "DESC"
+        FROM ipd_master
+        ORDER BY ipd_quotation, supplier, id
+      ) m
         ON m.ipd_quotation = d.ipd_quotation
+      AND UPPER(m.supplier) = UPPER(d.material_source)
+
       WHERE h.supplier_id = $1
         AND m.ipd_siis IS NOT NULL
         AND m.ipd_siis <> ''
         AND m.ipd_siis <> '-'
-      ORDER BY m.ipd_siis, h.quarter
+
+      ORDER BY m.ipd_siis, d.material_source, h.quarter
+
       `,
       [supplier_id]
     );
