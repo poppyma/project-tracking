@@ -98,7 +98,7 @@ export default function ViewSIISPage() {
           filteredRows
             .filter(r => r.ipd && r.ipd !== "-" && r.ipd.trim() !== "")
             .map(r => [
-              r.ipd_quotation,
+              r.ipd_quotation + "|" + r.material_source,
               {
                 ipd_quotation: r.ipd_quotation,
                 ipd: r.ipd as string,

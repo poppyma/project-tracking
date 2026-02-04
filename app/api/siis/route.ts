@@ -46,7 +46,6 @@ ORDER BY m.ipd_siis, d.material_source, h.quarter
       [supplier_id]
     );
 
-
     return NextResponse.json(result.rows);
   } catch (err) {
     console.error("SIIS API ERROR:", err);
