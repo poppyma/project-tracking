@@ -15,7 +15,11 @@ export async function GET(req: Request) {
 
     const result = await query(
     `
-    SELECT
+    SELECT DISTINCT ON (
+    d.ipd_quotation,
+    d.material_source,
+    h.quarter
+)
   d.ipd_quotation,
   m.ipd_siis AS ipd,
   d.material_source,
@@ -43,7 +47,11 @@ WHERE h.supplier_id = $1
   AND m.ipd_siis <> ''
   AND m.ipd_siis <> '-'
 
-ORDER BY m.ipd_siis, d.material_source, h.quarter
+ORDER BY
+  d.ipd_quotation,
+  d.material_source,
+  h.quarter,
+  h.start_date DESC;
 
     `,
     [supplier_id]
