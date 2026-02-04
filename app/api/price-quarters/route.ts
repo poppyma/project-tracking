@@ -26,15 +26,13 @@ JOIN price_detail d
   ON d.header_id = h.id
 
 LEFT JOIN (
-  SELECT DISTINCT ON (ipd_quotation, supplier)
+  SELECT DISTINCT ON (ipd_quotation)
     ipd_quotation,
-    supplier,
     ipd_siis
   FROM ipd_master
-  ORDER BY ipd_quotation, supplier, id
+  ORDER BY ipd_quotation, id
 ) m
   ON m.ipd_quotation = d.ipd_quotation
- AND UPPER(m.supplier) = UPPER(d.material_source)
 
 WHERE h.supplier_id = $1
   AND m.ipd_siis IS NOT NULL
