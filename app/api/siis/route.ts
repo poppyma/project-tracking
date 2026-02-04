@@ -27,15 +27,15 @@ export async function GET(req: Request) {
         ON d.header_id = h.id
 
       LEFT JOIN (
-        SELECT DISTINCT ON (ipd_quotation, supplier)
-          ipd_quotation,
-          supplier,
-          ipd_siis,
-          "DESC"
-        FROM ipd_master
-        ORDER BY ipd_quotation, supplier, id
-      ) m
-        ON m.ipd_quotation = d.ipd_quotation
+  SELECT DISTINCT ON (ipd_quotation)
+    ipd_quotation,
+    ipd_siis,
+    "DESC"
+  FROM ipd_master
+  ORDER BY ipd_quotation, id
+) m
+  ON m.ipd_quotation = d.ipd_quotation
+
       AND UPPER(m.supplier) = UPPER(d.material_source)
 
       WHERE h.supplier_id = $1
