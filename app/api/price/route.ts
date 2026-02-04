@@ -47,9 +47,17 @@ export async function GET(req: Request) {
       JOIN supplier_master s
         ON s.id = h.supplier_id
 
-      LEFT JOIN ipd_master m
+      LEFT JOIN (
+        SELECT DISTINCT ON (ipd_quotation, supplier)
+          ipd_quotation,
+          supplier,
+          ipd_siis
+        FROM ipd_master
+        ORDER BY ipd_quotation, supplier, id
+      ) m
         ON m.ipd_quotation = d.ipd_quotation
       AND UPPER(m.supplier) = UPPER(s.supplier_name)
+
 
       WHERE h.supplier_id = $1
       ${quarter ? "AND h.quarter = $2" : ""}
